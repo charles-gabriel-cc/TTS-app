@@ -2,3 +2,8 @@ fastapi
 openai-whisper
 uvicorn
 python-multipart
+langchain
+openai
+python-dotenv
+dotenv
+ollama
