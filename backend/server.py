@@ -7,8 +7,13 @@ from config import (
     WHISPER_MODEL, 
     OPENAI_API_KEY,
     USE_LOCAL_MODEL,
-    LOCAL_MODEL_NAME,
-    OPENAI_MODEL
+    EMBED_MODEL,
+    MODEL_NAME,
+    USE_LOCAL_COLLECTION,
+    COLLECTION_NAME,
+    QDRANT_URL,
+    QDRANT_API_KEY,
+    DOCS
 )
 from services.transcription_service import TranscriptionService
 from services.chat_service import ChatService
@@ -34,17 +39,34 @@ transcription_service = TranscriptionService(model_name=WHISPER_MODEL)
 
 # Inicializar o serviço de chat
 if USE_LOCAL_MODEL:
-    logger.info(f"Usando modelo local: {LOCAL_MODEL_NAME}")
+    logger.info(f"Usando modelo local: {MODEL_NAME}")
     chat_service = ChatService(
         use_local_model=True,
-        model_name=LOCAL_MODEL_NAME
+        model_name=MODEL_NAME,
     )
 else:
-    logger.info(f"Usando modelo OpenAI: {OPENAI_MODEL}")
+    logger.info(f"Usando modelo OpenAI: {MODEL_NAME}")
     chat_service = ChatService(
         use_local_model=False,
-        model_name=OPENAI_MODEL,
+        model_name=MODEL_NAME,
         api_key=OPENAI_API_KEY
+    )
+
+# Configurar a coleção apenas se necessário
+if USE_LOCAL_COLLECTION:
+    chat_service.set_collection(
+        use_local_collection=True,
+        collection_name=COLLECTION_NAME,
+        embed_model=EMBED_MODEL,
+        docs=DOCS
+    )
+else:
+    chat_service.set_collection(
+        use_local_collection=False,
+        collection_name=COLLECTION_NAME,
+        embed_model=EMBED_MODEL,
+        qdrant_url=QDRANT_URL,
+        qdrant_api_key=QDRANT_API_KEY
     )
 
 # Modelo para requisições de chat

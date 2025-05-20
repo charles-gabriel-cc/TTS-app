@@ -13,7 +13,11 @@ WHISPER_MODEL = "base"  # ou "tiny", "small", "medium", "large"
 
 # Configurações do Chat
 USE_LOCAL_MODEL = True  # Alternar entre modelo local e OpenAI
-LOCAL_MODEL_TYPE = "ollama"  # "ollama", "llamacpp", "localai", "transformers"
-LOCAL_MODEL_NAME = "llama3.2:1b"  # Nome do modelo local (ex: "llama2", "mistral", "codellama")
+MODEL_NAME = "phi4:latest"
+EMBED_MODEL = "all-minilm:l6-v2"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = "gpt-3.5-turbo"  # Usado apenas quando USE_LOCAL_MODEL = False
+USE_LOCAL_COLLECTION = True
+COLLECTION_NAME = "ccen-docentes-vetores"
+QDRANT_URL = 'URL'
+QDRANT_API_KEY = 'API_KEY'
+DOCS = "ccen-docentes"

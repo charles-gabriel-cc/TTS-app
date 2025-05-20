@@ -5,18 +5,23 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 import os
 import uuid
+from config import (
+    QDRANT_URL,
+    QDRANT_API_KEY,
+    COLLECTION_NAME
+)
 
 # 1. Configurações
 diretorio = 'ccen-docentes'
-collection_name = 'ccen-docentes-vetores'
+collection_name = COLLECTION_NAME
 
 # 2. Inicializa componentes
 embed_model = OllamaEmbedding(model_name="all-minilm:l6-v2")
 parser = SemanticSplitterNodeParser.from_defaults(embed_model=embed_model)
 
 qdrant_client = QdrantClient(
-    url="URL", 
-    api_key="API-KEY"
+    url=QDRANT_URL, 
+    api_key=QDRANT_API_KEY
 )
 
 # 3. Cria a coleção se não existir
@@ -96,7 +101,7 @@ for root, dirs, files in os.walk(diretorio):
                             "nome_professor": nome_professor,
                             "departamento": departamento,
                             "source": caminho_pdf,
-                            "text": texto[:500]
+                            "text": texto
                         }
                     )
                     points.append(ponto)

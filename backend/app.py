@@ -1,11 +1,17 @@
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from qdrant_client import QdrantClient
 import gradio as gr
+from langchain_core.prompts import ChatPromptTemplate
+from config import (
+    QDRANT_URL,
+    QDRANT_API_KEY,
+    COLLECTION_NAME
+)
 
 embeddings = OllamaEmbeddings(model="all-minilm:l6-v2")
 qdrant_client = QdrantClient(
-    url="https://78438833-659a-47b2-89f5-235fd08b6bd5.us-west-1-0.aws.cloud.qdrant.io:6333", 
-    api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.foFx76lzwWu9jtJ0b_C9yw063Sc0zKs2-dPKA11ej84"
+    url=QDRANT_URL, 
+    api_key=QDRANT_API_KEY
 )
 
 def search_qdrant(query: str) -> str:
@@ -14,7 +20,7 @@ def search_qdrant(query: str) -> str:
     # Get query embedding and search
     query_vector = embeddings.embed_query(query)
     results = qdrant_client.search(
-        collection_name="ccen-docentes-vetores",
+        collection_name=COLLECTION_NAME,
         query_vector=query_vector,
         limit=5
     )
@@ -42,9 +48,9 @@ Evite frases genéricas como "com base nas informações fornecidas". Em vez dis
 - Se não souber a resposta, diga isso de forma natural e oriente o usuário.
 - Se souber parcialmente, explique o que é conhecido e o que pode ser consultado depois.
 
-Fale como se estivesse ajudando um visitante num evento ou feira. Seja claro, acolhedor e evite termos técnicos ou linguagem robótica."""
+Fale como se estivesse ajudando um visitante num evento ou feira. Seja claro, acolhedor e evite termos técnicos ou linguagem robótica.
 
-    user_prompt = f"""Aqui estão os dados disponíveis:
+\n\nAqui estão os dados disponíveis:
 
 {context}
 
@@ -52,7 +58,7 @@ Pergunta: {message}
 
 Responda à pergunta acima de forma clara e útil, com linguagem acessível ao público geral."""
 
-    full_prompt = f"{system_prompt}\n\n{user_prompt}"
+    full_prompt = system_prompt
     
     # Get and return response
     return llm.invoke(full_prompt)
