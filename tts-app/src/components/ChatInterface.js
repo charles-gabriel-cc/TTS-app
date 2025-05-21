@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { Send as SendIcon, Mic as MicIcon, FiberManualRecord as RecordIcon, Stop as StopIcon, Close as CloseIcon } from '@mui/icons-material';
 import styled from 'styled-components';
+import { v4 as uuidv4 } from 'uuid';
 
 const ChatContainer = styled(Paper)`
   display: flex;
@@ -112,10 +113,18 @@ const ChatInterface = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [error, setError] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
   const [wasCancelled, setWasCancelled] = useState(false);
   const messagesEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+
+  useEffect(() => {
+    // Gerar um session_id usando UUID quando o componente é montado
+    const generatedSessionId = uuidv4();
+    setSessionId(generatedSessionId);
+    console.log('Session ID gerado:', generatedSessionId);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -139,7 +148,7 @@ const ChatInterface = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ message: userMessage, session_id: sessionId }),
       });
 
       if (!response.ok) {
@@ -288,7 +297,7 @@ const ChatInterface = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ message: transcribedText }),
+          body: JSON.stringify({ message: transcribedText, session_id: sessionId }),
         });
 
         if (!chatResponse.ok) {
