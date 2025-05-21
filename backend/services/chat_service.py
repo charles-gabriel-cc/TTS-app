@@ -1,10 +1,12 @@
 import openai
-import ollama
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from utils.logger import setup_logger
 from qdrant_client import QdrantClient
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from services.embeddings import create_collection
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory
 
 # Configurar logger
 logger = setup_logger(__name__)
@@ -22,11 +24,11 @@ class ChatService:
         self.use_local_model = use_local_model
         self.model_name = model_name
         self.api_key = api_key
-
+        self.store = {}
 
         
         if use_local_model:
-            self.llm = OllamaLLM(model=model_name)
+            self.llm = OllamaLLM(model=model_name, temperature=0.5)
             logger.info(f"Inicializando serviço de chat local com modelo: {model_name}")
         else:
             if not api_key:
@@ -74,7 +76,7 @@ class ChatService:
         
         return "\n".join(contexts) if contexts else "Nenhum resultado encontrado."
 
-    async def get_response(self, message):
+    async def get_response(self, message, session_id):
         """
         Obtém uma resposta do modelo para a mensagem fornecida.
         
@@ -87,7 +89,7 @@ class ChatService:
         context = self.search_qdrant(message)
         print(context)
 
-        system_prompt = """Você é um assistente simpático e informativo que responde dúvidas sobre os professores do CCEN da UFPE.
+        system_prompt = f"""Você é um assistente simpático e informativo que responde dúvidas sobre os professores do CCEN da UFPE.
 
         Evite frases genéricas como "com base nas informações fornecidas". Em vez disso, seja direto e útil. Por exemplo:
         - Se não souber a resposta, diga isso de forma natural e oriente o usuário.
@@ -95,21 +97,41 @@ class ChatService:
 
         Fale como se estivesse ajudando um visitante num evento ou feira. Seja claro, acolhedor e evite termos técnicos ou linguagem robótica.
 
-        \n\nAqui estão os dados disponíveis:
+        \n\nDados disponíveis para contexto:
 
         {context}
 
-        Pergunta: {message}
+        \n\nHistórico de conversa:
+
+        {{history}}
+
+        \n\nPergunta: {{message}}
 
         Responda à pergunta acima de forma clara e útil, com linguagem acessível ao público geral."""
 
-        prompt = ChatPromptTemplate.from_template(system_prompt)
+        prompt = ChatPromptTemplate.from_messages([
+            ('system', system_prompt),
+            MessagesPlaceholder(variable_name="history"),
+            ('user', '{message}')
+            ])
 
         chain = prompt | self.llm
+        
+        def get_session_history(session_id: str) -> BaseChatMessageHistory:
+            if session_id not in self.store:
+                self.store[session_id] = ChatMessageHistory()
+            return self.store[session_id]
+
+        chain = RunnableWithMessageHistory(
+            chain,
+            get_session_history,
+            input_messages_key="message",
+            history_messages_key="history"
+        )
+
         try:
             if self.use_local_model:
-                response = chain.invoke({"message": message, "context": context})
-                print(response)
+                response = chain.invoke({"message": message}, {'configurable': {'session_id': session_id}})
                 return response
             else:
                 response = await openai.ChatCompletion.acreate(

@@ -15,6 +15,7 @@ from config import (
     QDRANT_API_KEY,
     DOCS
 )
+import os
 from services.transcription_service import TranscriptionService
 from services.chat_service import ChatService
 from utils.logger import setup_logger
@@ -72,6 +73,7 @@ else:
 # Modelo para requisições de chat
 class ChatRequest(BaseModel):
     message: str
+    session_id: str
 
 # Rota para transcrição de áudio
 @app.post("/transcribe/")
@@ -87,7 +89,7 @@ async def transcribe_audio(audio: UploadFile = File(...)):
 @app.post("/chat/")
 async def chat(request: ChatRequest):
     try:
-        response = await chat_service.get_response(request.message)
+        response = await chat_service.get_response(request.message, request.session_id)
         return {"response": response}
     except Exception as e:
         logger.error(f"Erro na rota de chat: {str(e)}")
