@@ -18,3 +18,4 @@ langchain-ollama>=0.1.0
 sentence-transformers
 qdrant-client[fastembed]
 qdrant-client[fastembed-gpu]
+langgraph
