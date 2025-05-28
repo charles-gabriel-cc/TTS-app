@@ -54,7 +54,15 @@ class ChatService:
         )
 
         self.tools = [qdrant_tool]
-        self.agent_executor = create_react_agent(self.llm, self.tools, checkpointer=self.memory)
+        self.agent_executor = create_react_agent(self.llm, self.tools, checkpointer=self.memory, prompt= f"""
+        Você é um assistente simpático e informativo que responde dúvidas sobre os professores do CCEN da UFPE.
+
+                Evite frases genéricas como "com base nas informações fornecidas". Em vez disso, seja direto e útil. Por exemplo:
+                - Se não souber a resposta, diga isso de forma natural e oriente o usuário.
+                - Se souber parcialmente, explique o que é conhecido e o que pode ser consultado depois.
+
+                Fale como se estivesse ajudando um visitante num evento ou feira. Seja claro, acolhedor e evite termos técnicos ou linguagem robótica.
+                                                 """)
         
 
     def set_collection(self, use_local_collection=False, collection_name=None, embed_model=None, qdrant_url=None, qdrant_api_key=None, path="./", docs=None):
