@@ -1,7 +1,7 @@
 from llama_index.readers.file import PDFReader
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.embeddings.ollama import OllamaEmbedding
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 from qdrant_client.models import Distance, VectorParams, PointStruct
 import os
 import uuid
@@ -30,7 +30,13 @@ def create_collection(embed_model, qdrant_client, collection_name, diretorio):
             qdrant_client.create_payload_index(
                 collection_name=collection_name,
                 field_name=campo,
-                field_schema=PayloadSchemaType.KEYWORD
+                field_schema=models.TextIndexParams(
+                    type="text",
+                    tokenizer=models.TokenizerType.MULTILINGUAL,
+                    min_token_len=2,
+                    max_token_len=15,
+                    lowercase=True,
+                ),
             )
             
             print(f"🔧 Índice criado para '{campo}'.")
