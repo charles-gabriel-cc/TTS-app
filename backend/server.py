@@ -29,7 +29,7 @@ app = FastAPI()
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", f'http://{SERVER_HOST}:3000'],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -98,4 +98,4 @@ async def chat(request: ChatRequest):
 if __name__ == "__main__":
     import uvicorn
     logger.info(f"Iniciando servidor em {SERVER_HOST}:{SERVER_PORT}")
-    uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)
+    uvicorn.run(app, host=str(SERVER_HOST), port=int(SERVER_PORT))
