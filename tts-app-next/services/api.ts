@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from '@/config/api'
+import { v4 as uuidv4 } from 'uuid'
 
 interface ChatMessage {
   id: string
@@ -9,7 +10,7 @@ interface ChatMessage {
 
 // Função para gerar um session_id único
 const generateSessionId = () => {
-  return crypto.randomUUID()
+  return uuidv4()
 }
 
 // Armazenar o session_id
@@ -57,7 +58,7 @@ export const api = {
 
     const data = await response.json()
     return {
-      id: crypto.randomUUID(),
+      id: sessionId,
       text: data.response,
       sender: 'assistant',
       timestamp: new Date()
