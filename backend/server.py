@@ -16,9 +16,14 @@ from config import (
     DOCS
 )
 import os
+import base64
+import io
+import tempfile
 from services.transcription_service import TranscriptionService
 from services.chat_service import ChatService
 from utils.logger import setup_logger
+
+from gtts import gTTS
 
 # Configurar logger
 logger = setup_logger(__name__)
@@ -37,6 +42,9 @@ app.add_middleware(
 
 # Inicializar serviços
 transcription_service = TranscriptionService(model_name=WHISPER_MODEL)
+
+# Configurar gTTS (Google Text-to-Speech)
+logger.info("Configurando Google Text-to-Speech (gTTS) - Suporte nativo ao pt-br")
 
 # Inicializar o serviço de chat
 if USE_LOCAL_MODEL:
@@ -93,6 +101,52 @@ async def chat(request: ChatRequest):
         return {"response": response}
     except Exception as e:
         logger.error(f"Erro na rota de chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/chat_with_tts/")
+async def chat_with_tts(request: ChatRequest):
+    try:
+        # 1. Obter a resposta de texto do chat service
+        text_response = await chat_service.get_response(request.message, request.session_id)
+        logger.info(f"Resposta de texto gerada: {text_response[:100]}...")
+        
+        # 2. Gerar áudio usando gTTS
+        logger.info("Gerando áudio com gTTS (pt-br)...")
+        
+        # Criar objeto gTTS para português brasileiro
+        tts_obj = gTTS(text=text_response, lang='pt-br', slow=False)
+        
+        # Usar um arquivo temporário para o áudio
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_audio_file:
+            temp_audio_path = temp_audio_file.name
+        
+        # Salvar o áudio no arquivo temporário
+        tts_obj.save(temp_audio_path)
+        
+        # 3. Ler os bytes do áudio do arquivo temporário
+        with open(temp_audio_path, "rb") as audio_file:
+            audio_bytes = audio_file.read()
+        
+        # Limpar o arquivo temporário
+        os.unlink(temp_audio_path)
+        
+        logger.info(f"Áudio gerado com sucesso. Tamanho: {len(audio_bytes)} bytes")
+        
+        # 4. Codificar o áudio em Base64
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        
+        # 5. Criar a resposta JSON
+        response_data = {
+            "text": text_response,
+            "audio": audio_base64,
+            "audio_format": "mp3"
+        }
+        
+        logger.info("Chat com TTS processado com sucesso")
+        return response_data
+        
+    except Exception as e:
+        logger.error(f"Erro na rota de chat com TTS: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

@@ -19,3 +19,5 @@ sentence-transformers
 qdrant-client[fastembed]
 qdrant-client[fastembed-gpu]
 langgraph
+TTS
+gtts
