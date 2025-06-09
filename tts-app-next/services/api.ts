@@ -6,6 +6,8 @@ interface ChatMessage {
   text: string
   sender: 'user' | 'assistant'
   timestamp: Date
+  audio?: string // Base64 audio data
+  audioFormat?: string // 'mp3' | 'wav'
 }
 
 // Função para gerar um session_id único
@@ -40,8 +42,10 @@ export const api = {
     return data.text
   },
 
-  async sendChatMessage(message: string): Promise<ChatMessage> {
-    const response = await fetch(API_ENDPOINTS.chat, {
+  async sendChatMessage(message: string, useTTS: boolean = false): Promise<ChatMessage> {
+    const endpoint = useTTS ? API_ENDPOINTS.chatWithTTS : API_ENDPOINTS.chat
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,11 +61,25 @@ export const api = {
     }
 
     const data = await response.json()
-    return {
-      id: sessionId,
-      text: data.response,
-      sender: 'assistant',
-      timestamp: new Date()
+    
+    // Se for TTS, a resposta tem formato diferente
+    if (useTTS && data.text && data.audio) {
+      return {
+        id: sessionId,
+        text: data.text,
+        sender: 'assistant',
+        timestamp: new Date(),
+        audio: data.audio,
+        audioFormat: data.audio_format || 'mp3'
+      }
+    } else {
+      // Resposta padrão sem TTS
+      return {
+        id: sessionId,
+        text: data.response || data.text,
+        sender: 'assistant',
+        timestamp: new Date()
+      }
     }
   }
 } 

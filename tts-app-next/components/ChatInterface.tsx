@@ -5,12 +5,15 @@ import styled from 'styled-components'
 import { v4 as uuidv4 } from 'uuid'
 import AudioRecorder from './AudioRecorder'
 import { api } from '@/services/api'
+import { Switch } from '@mui/material'
 
 interface Message {
   id: string
   text: string
   sender: 'user' | 'assistant'
   timestamp: Date
+  audio?: string // Base64 audio data
+  audioFormat?: string // 'mp3' | 'wav'
 }
 
 const ChatContainer = styled.div`
@@ -39,6 +42,24 @@ const MessageBubble = styled.div<{ isUser: boolean }>`
   align-self: ${props => props.isUser ? 'flex-end' : 'flex-start'};
   background-color: ${props => props.isUser ? '#007bff' : '#e9ecef'};
   color: ${props => props.isUser ? 'white' : 'black'};
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`
+
+const AudioButton = styled.button`
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  align-self: flex-start;
+
+  &:hover {
+    background-color: #218838;
+  }
 `
 
 const InputContainer = styled.div`
@@ -76,10 +97,52 @@ const Button = styled.button`
   }
 `
 
+const ToggleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background-color: white;
+  border-bottom: 1px solid #dee2e6;
+`
+
+const ToggleLabel = styled.span`
+  font-size: 14px;
+  color: #666;
+`
+
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [ttsEnabled, setTtsEnabled] = useState(false)
+
+  // Função para reproduzir áudio a partir de Base64
+  const playAudio = (audioBase64: string, format: string = 'mp3') => {
+    try {
+      // Decodificar Base64 para bytes
+      const audioBytes = atob(audioBase64)
+      const audioArray = new Uint8Array(audioBytes.length)
+      for (let i = 0; i < audioBytes.length; i++) {
+        audioArray[i] = audioBytes.charCodeAt(i)
+      }
+      
+      // Criar blob de áudio
+      const audioBlob = new Blob([audioArray], { type: `audio/${format}` })
+      const audioUrl = URL.createObjectURL(audioBlob)
+      
+      // Criar e reproduzir elemento audio
+      const audio = new Audio(audioUrl)
+      audio.play()
+      
+      // Limpar URL quando terminar
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl)
+      }
+    } catch (error) {
+      console.error('Erro ao reproduzir áudio:', error)
+    }
+  }
 
   const handleSendMessage = async () => {
     if (inputText.trim() && !isLoading) {
@@ -94,20 +157,26 @@ const ChatInterface: React.FC = () => {
         setMessages(prev => [...prev, userMessage])
         setInputText('')
 
-        // Enviar mensagem para o backend
-        const response = await api.sendChatMessage(inputText)
+        // Enviar mensagem para o backend usando o endpoint apropriado
+        const response = await api.sendChatMessage(inputText, ttsEnabled)
         
         // Adicionar resposta do assistente
         const assistantMessage: Message = {
           id: uuidv4(),
           text: response.text,
           sender: 'assistant',
-          timestamp: new Date()
+          timestamp: new Date(),
+          audio: response.audio,
+          audioFormat: response.audioFormat
         }
         setMessages(prev => [...prev, assistantMessage])
+        
+        // Se há áudio e TTS está habilitado, reproduzir automaticamente
+        if (response.audio && ttsEnabled) {
+          playAudio(response.audio, response.audioFormat)
+        }
       } catch (error) {
         console.error('Error sending message:', error)
-        // Adicionar mensagem de erro
         const errorMessage: Message = {
           id: uuidv4(),
           text: 'Desculpe, ocorreu um erro ao processar sua mensagem.',
@@ -138,16 +207,23 @@ const ChatInterface: React.FC = () => {
         setMessages(prev => [...prev, userMessage])
 
         // Enviar mensagem para o backend
-        const response = await api.sendChatMessage(text)
+        const response = await api.sendChatMessage(text, ttsEnabled)
         
         // Adicionar resposta do assistente
         const assistantMessage: Message = {
           id: uuidv4(),
           text: response.text,
           sender: 'assistant',
-          timestamp: new Date()
+          timestamp: new Date(),
+          audio: response.audio,
+          audioFormat: response.audioFormat
         }
         setMessages(prev => [...prev, assistantMessage])
+        
+        // Se há áudio e TTS está habilitado, reproduzir automaticamente
+        if (response.audio && ttsEnabled) {
+          playAudio(response.audio, response.audioFormat)
+        }
       } catch (error) {
         console.error('Error processing audio:', error)
         const errorMessage: Message = {
@@ -171,10 +247,25 @@ const ChatInterface: React.FC = () => {
 
   return (
     <ChatContainer>
+      <ToggleContainer>
+        <ToggleLabel>Resposta com áudio</ToggleLabel>
+        <Switch
+          checked={ttsEnabled}
+          onChange={(e) => setTtsEnabled(e.target.checked)}
+          color="primary"
+        />
+      </ToggleContainer>
       <MessagesContainer>
         {messages.map(message => (
           <MessageBubble key={message.id} isUser={message.sender === 'user'}>
-            {message.text}
+            <span>{message.text}</span>
+            {message.audio && message.sender === 'assistant' && (
+              <AudioButton 
+                onClick={() => playAudio(message.audio!, message.audioFormat)}
+              >
+                🔊 Reproduzir áudio
+              </AudioButton>
+            )}
           </MessageBubble>
         ))}
       </MessagesContainer>
