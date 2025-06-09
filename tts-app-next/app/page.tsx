@@ -1,25 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import styled from 'styled-components'
 import dynamic from 'next/dynamic'
 import IdleScreen from '@/components/ui/idle-screen'
 
-const ChatInterface = dynamic(() => import('@/components/ChatInterface'), {
+const ModernChatInterface = dynamic(() => import('@/components/ModernChatInterface'), {
   ssr: false
 })
-
-const AppContainer = styled.div`
-  text-align: center;
-  background-color: #f5f5f5;
-  min-height: 100vh;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-`
 
 export default function Home() {
   const [showIdleScreen, setShowIdleScreen] = useState(true)
@@ -73,8 +60,8 @@ export default function Home() {
   }
 
   return (
-    <AppContainer>
-      <ChatInterface />
+    <div className="h-screen bg-gray-50">
+      <ModernChatInterface />
       <IdleScreen
         isVisible={showIdleScreen}
         onDismiss={handleIdleScreenDismiss}
@@ -82,6 +69,6 @@ export default function Home() {
         description="Faça perguntas sobre professores da faculdade. Obtenha acesso instantâneo a detalhes do corpo docente, horários de atendimento e informações de contato para melhorar sua experiência acadêmica."
         callToAction="Toque em qualquer lugar para começar"
       />
-    </AppContainer>
+    </div>
   )
 } 
