@@ -116,10 +116,29 @@ const ChatInterface: React.FC = () => {
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState(false)
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null)
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null)
 
   // Função para reproduzir áudio a partir de Base64
-  const playAudio = (audioBase64: string, format: string = 'mp3') => {
+  const playAudio = (audioBase64: string, format: string = 'mp3', messageId?: string) => {
     try {
+      // Se o mesmo áudio está tocando, pausar
+      if (currentAudio && playingMessageId === messageId) {
+        currentAudio.pause()
+        currentAudio.currentTime = 0
+        setCurrentAudio(null)
+        setPlayingMessageId(null)
+        return
+      }
+
+      // Parar qualquer áudio que esteja tocando
+      if (currentAudio) {
+        currentAudio.pause()
+        currentAudio.currentTime = 0
+        setCurrentAudio(null)
+        setPlayingMessageId(null)
+      }
+
       // Decodificar Base64 para bytes
       const audioBytes = atob(audioBase64)
       const audioArray = new Uint8Array(audioBytes.length)
@@ -133,14 +152,27 @@ const ChatInterface: React.FC = () => {
       
       // Criar e reproduzir elemento audio
       const audio = new Audio(audioUrl)
+      setCurrentAudio(audio)
+      if (messageId) {
+        setPlayingMessageId(messageId)
+      }
+      
       audio.play()
       
-      // Limpar URL quando terminar
-      audio.onended = () => {
+      // Limpar URL quando terminar ou parar
+      const cleanup = () => {
         URL.revokeObjectURL(audioUrl)
+        setCurrentAudio(null)
+        setPlayingMessageId(null)
       }
+      
+      audio.onended = cleanup
+      audio.onerror = cleanup
+      
     } catch (error) {
       console.error('Erro ao reproduzir áudio:', error)
+      setCurrentAudio(null)
+      setPlayingMessageId(null)
     }
   }
 
@@ -173,7 +205,7 @@ const ChatInterface: React.FC = () => {
         
         // Se há áudio e TTS está habilitado, reproduzir automaticamente
         if (response.audio && ttsEnabled) {
-          playAudio(response.audio, response.audioFormat)
+          playAudio(response.audio, response.audioFormat, assistantMessage.id)
         }
       } catch (error) {
         console.error('Error sending message:', error)
@@ -222,7 +254,7 @@ const ChatInterface: React.FC = () => {
         
         // Se há áudio e TTS está habilitado, reproduzir automaticamente
         if (response.audio && ttsEnabled) {
-          playAudio(response.audio, response.audioFormat)
+          playAudio(response.audio, response.audioFormat, assistantMessage.id)
         }
       } catch (error) {
         console.error('Error processing audio:', error)
@@ -261,9 +293,12 @@ const ChatInterface: React.FC = () => {
             <span>{message.text}</span>
             {message.audio && message.sender === 'assistant' && (
               <AudioButton 
-                onClick={() => playAudio(message.audio!, message.audioFormat)}
+                onClick={() => playAudio(message.audio!, message.audioFormat, message.id)}
+                style={{
+                  backgroundColor: playingMessageId === message.id ? '#dc3545' : '#28a745'
+                }}
               >
-                🔊 Reproduzir áudio
+                {playingMessageId === message.id ? '⏸️ Pausar áudio' : '🔊 Reproduzir áudio'}
               </AudioButton>
             )}
           </MessageBubble>
