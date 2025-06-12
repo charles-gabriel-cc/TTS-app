@@ -67,33 +67,5 @@ ENV PYTHONUNBUFFERED=1
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV CUDA_VISIBLE_DEVICES=0
 
-# Script de inicialização para desenvolvimento
-RUN echo '#!/bin/bash\n\
-echo "=== TTS-APP DESENVOLVIMENTO com CUDA 11.8 e Python $(python --version) ==="\n\
-echo "🔧 Verificando CUDA..."\n\
-nvidia-smi\n\
-echo "⏳ Aguardando Qdrant ficar disponível..."\n\
-while ! curl -s http://qdrant:6333/health > /dev/null 2>&1; do\n\
-  echo "   Qdrant ainda não disponível, aguardando..."\n\
-  sleep 2\n\
-done\n\
-echo "✅ Qdrant está disponível!"\n\
-echo "🔥 Aquecendo Ollama..."\n\
-echo "   Enviando mensagem inicial para carregar modelo..."\n\
-response=$(curl -s -X POST http://ollama:11434/api/generate \\\n\
-  -H "Content-Type: application/json" \\\n\
-  -d "{\"model\":\"qwen2.5:14b\",\"prompt\":\"Hello\",\"stream\":false}" | \\\n\
-  python -c "import json,sys; print(json.load(sys.stdin).get(\"response\",\"OK\"))" 2>/dev/null || echo "Ollama aquecido")\n\
-echo "🚀 Ollama respondeu: $response"\n\
-echo ""\n\
-echo "🎯 AMBIENTE PRONTO PARA DESENVOLVIMENTO!"\n\
-echo "📝 Para iniciar o servidor Python, execute:"\n\
-echo "   python server.py"\n\
-echo ""\n\
-echo "💡 Ou use o container interativamente:"\n\
-echo "   docker exec -it tts-app-backend-dev bash"\n\
-echo ""\n\
-' > /app/entrypoint-dev.sh && chmod +x /app/entrypoint-dev.sh
-
-# Comando padrão para desenvolvimento (executa setup e fica disponível)
-CMD ["/app/entrypoint-dev.sh"] 
+# Comando de inicialização padrão (será sobrescrito pelo docker-compose)
+CMD ["bash"] 

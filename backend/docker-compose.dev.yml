@@ -76,6 +76,10 @@ services:
       # Desenvolvimento
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
+      # Configurações Langsmith
+      - LANGSMITH_TRACING=true
+      - LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+      - LANGSMITH_PROJECT=backend
     depends_on:
       - qdrant
       - ollama

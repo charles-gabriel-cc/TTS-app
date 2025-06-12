@@ -42,13 +42,18 @@ services:
 
   # Aplicação TTS principal
   tts-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: charlescc/backend-tts-app:latest
     container_name: tts-app-backend
     ports:
       - "8000:8000"
     volumes:
+      # CÓDIGO MONTADO COMO VOLUME (mudanças em tempo real)
+      - .:/app
+      # Excluir diretórios que não devem ser montados
+      - /app/tts-env
+      - /app/__pycache__
+      - /app/.gradio
+      # Volumes para dados
       - ./logs:/app/logs
       - ./uploads:/app/uploads
       - ./data:/app/data
@@ -66,10 +71,40 @@ services:
       # Configurações CUDA
       - NVIDIA_VISIBLE_DEVICES=all
       - CUDA_VISIBLE_DEVICES=0
+      #Configurações Langsmith
+      - LANGSMITH_TRACING=true
+      - LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+      - LANGSMITH_PROJECT=backend
     depends_on:
       - qdrant
       - ollama
-    restart: unless-stopped
+    restart: on-failure
+    command: >
+      bash -c "
+      echo '=== TTS-APP com CUDA 11.8 e Python $$(python --version) ===';
+      echo '🔧 Verificando CUDA...';
+      nvidia-smi;
+      echo '⏳ Aguardando Qdrant ficar disponível...';
+      while ! curl -s http://qdrant:6333/health > /dev/null 2>&1; do
+        echo '   Qdrant ainda não disponível, aguardando...';
+        sleep 2;
+      done;
+      echo '✅ Qdrant está disponível!';
+      echo '🔥 Aquecendo Ollama...';
+      echo '   Enviando mensagem inicial para carregar modelo...';
+      response=$$(curl -s -X POST http://ollama:11434/api/generate -H 'Content-Type: application/json' -d '{\"model\":\"qwen2.5:14b\",\"prompt\":\"Hello\",\"stream\":false}' | python -c 'import json,sys; print(json.load(sys.stdin).get(\"response\",\"OK\"))' 2>/dev/null || echo 'Ollama aquecido');
+      echo '🚀 Ollama respondeu:' $$response;
+      echo '';
+      echo '🎯 AMBIENTE PRONTO!';
+      echo '📝 Para iniciar o servidor Python, execute:';
+      echo '   python server.py';
+      echo '';
+      echo '💡 Ou use o container interativamente:';
+      echo '   docker exec -it tts-app-backend bash';
+      echo '';
+      echo '🔄 Mantendo container rodando...';
+      tail -f /dev/null
+      "
     networks:
       - tts-network
     # Suporte para GPU (requer NVIDIA Docker runtime)

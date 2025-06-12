@@ -18,6 +18,8 @@ EMBED_MODEL = "all-minilm:l6-v2"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 USE_LOCAL_COLLECTION = True
 COLLECTION_NAME = "ccen-docentes"
-QDRANT_URL = "http://qdrant:6333"
+QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 DOCS = "ccen-docentes"
+
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")
