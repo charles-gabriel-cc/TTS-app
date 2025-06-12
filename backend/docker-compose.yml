@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # Serviço Ollama para modelos locais
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tts-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+    restart: unless-stopped
+    networks:
+      - tts-network
+    # Suporte para GPU (requer NVIDIA Docker runtime)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Serviço Qdrant standalone (opcional - pode usar o integrado)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: tts-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    restart: unless-stopped
+    networks:
+      - tts-network
+
+  # Aplicação TTS principal
+  tts-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tts-app-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+      - ./ccen-docentes:/app/ccen-docentes
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+      - QDRANT_URL=http://qdrant:6333
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - USE_LOCAL_COLLECTION=true
+      - COLLECTION_NAME=ccen-docentes
+      - USE_LOCAL_MODEL=true
+      - MODEL_NAME=qwen2.5:14b
+      - EMBED_MODEL=all-minilm:l6-v2
+      # Configurações CUDA
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+    depends_on:
+      - qdrant
+      - ollama
+    restart: unless-stopped
+    networks:
+      - tts-network
+    # Suporte para GPU (requer NVIDIA Docker runtime)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  qdrant_data:
+    driver: local
+  ollama_data:
+    driver: local
+
+networks:
+  tts-network:
+    driver: bridge 

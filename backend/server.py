@@ -34,7 +34,7 @@ app = FastAPI()
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", f'http://{SERVER_HOST}:3000'],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,6 +67,7 @@ if USE_LOCAL_COLLECTION:
         use_local_collection=True,
         collection_name=COLLECTION_NAME,
         embed_model=EMBED_MODEL,
+        qdrant_url=QDRANT_URL,
         docs=DOCS
     )
 else:

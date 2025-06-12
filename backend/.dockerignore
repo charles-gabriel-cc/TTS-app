@@ -1,0 +1,75 @@
+# Arquivos e diretórios a serem ignorados durante o build do Docker
+
+# Ambientes virtuais Python
+tts-env/
+venv/
+env/
+.venv/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Arquivos de log
+*.log
+logs/
+
+# Arquivos temporários
+*.tmp
+*.temp
+.tmp/
+
+# Dados e uploads
+uploads/
+data/
+*.mp3
+*.wav
+*.mp4
+
+# Configurações locais
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentação
+README.md
+*.md
+
+# Gradio cache
+.gradio/
+
+# Modelos baixados (podem ser muito grandes)
+models/
+*.bin
+*.safetensors
+*.onnx
+
+# Arquivos de teste
+test_*
+*_test.py
+tests/ 

@@ -1,0 +1,99 @@
+# Dockerfile para DESENVOLVIMENTO - apenas ambiente e dependências
+FROM nvidia/cuda:11.8.0-devel-ubuntu20.04
+
+# Evitar prompts interativos
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Instalar dependências do sistema e Python 3.10
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y \
+    python3.10 \
+    python3.10-dev \
+    python3.10-distutils \
+    python3-pip \
+    curl \
+    git \
+    build-essential \
+    ffmpeg \
+    libsndfile1 \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configurar Python 3.10 como padrão
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+
+# Instalar pip para Python 3.10
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
+
+# Verificar versão Python
+RUN python --version && python -c "import sys; print(sys.version)"
+
+# Instalar Rust para py-rust-stemmers
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:$PATH"
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar APENAS requirements
+COPY requirements-fixed.txt ./requirements.txt
+
+# Atualizar pip e instalar dependências básicas
+RUN python -m pip install --no-cache-dir --upgrade pip wheel setuptools
+
+# Instalar PyTorch com CUDA 11.8 primeiro
+RUN python -m pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# Instalar outras dependências Python
+RUN python -m pip install --no-cache-dir -r requirements.txt
+
+# Instalar fastembed-gpu e qdrant-client
+RUN python -m pip install --no-cache-dir fastembed-gpu
+RUN python -m pip install --no-cache-dir "qdrant-client[fastembed-gpu]"
+
+# Criar apenas diretório temporário (outros são criados por volumes)
+RUN mkdir -p temp
+
+# Expor porta
+EXPOSE 8000
+
+# Variáveis de ambiente
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV CUDA_VISIBLE_DEVICES=0
+
+# Script de inicialização para desenvolvimento
+RUN echo '#!/bin/bash\n\
+echo "=== TTS-APP DESENVOLVIMENTO com CUDA 11.8 e Python $(python --version) ==="\n\
+echo "🔧 Verificando CUDA..."\n\
+nvidia-smi\n\
+echo "⏳ Aguardando Qdrant ficar disponível..."\n\
+while ! curl -s http://qdrant:6333/health > /dev/null 2>&1; do\n\
+  echo "   Qdrant ainda não disponível, aguardando..."\n\
+  sleep 2\n\
+done\n\
+echo "✅ Qdrant está disponível!"\n\
+echo "🔥 Aquecendo Ollama..."\n\
+echo "   Enviando mensagem inicial para carregar modelo..."\n\
+response=$(curl -s -X POST http://ollama:11434/api/generate \\\n\
+  -H "Content-Type: application/json" \\\n\
+  -d "{\"model\":\"qwen2.5:14b\",\"prompt\":\"Hello\",\"stream\":false}" | \\\n\
+  python -c "import json,sys; print(json.load(sys.stdin).get(\"response\",\"OK\"))" 2>/dev/null || echo "Ollama aquecido")\n\
+echo "🚀 Ollama respondeu: $response"\n\
+echo ""\n\
+echo "🎯 AMBIENTE PRONTO PARA DESENVOLVIMENTO!"\n\
+echo "📝 Para iniciar o servidor Python, execute:"\n\
+echo "   python server.py"\n\
+echo ""\n\
+echo "💡 Ou use o container interativamente:"\n\
+echo "   docker exec -it tts-app-backend-dev bash"\n\
+echo ""\n\
+' > /app/entrypoint-dev.sh && chmod +x /app/entrypoint-dev.sh
+
+# Comando padrão para desenvolvimento (executa setup e fica disponível)
+CMD ["/app/entrypoint-dev.sh"] 

@@ -7,7 +7,8 @@ import os
 import uuid
 
 def create_collection(embed_model, qdrant_client, collection_name, diretorio):
-    embed_model = OllamaEmbedding(model_name=embed_model)
+    ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    embed_model = OllamaEmbedding(model_name=embed_model, base_url=ollama_base_url)
     parser = SemanticSplitterNodeParser.from_defaults(embed_model=embed_model)
 
     # 3. Cria a coleção se não existir

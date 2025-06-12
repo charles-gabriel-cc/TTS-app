@@ -44,7 +44,9 @@ class ChatService:
 
         
         if use_local_model:
-            self.llm = ChatOllama(model=model_name, temperature=0.5)
+            import os
+            ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            self.llm = ChatOllama(model=model_name, temperature=0.5, base_url=ollama_base_url)
             logger.info(f"Inicializando serviço de chat local com modelo: {model_name}")
         else:
             if not api_key:
@@ -95,12 +97,14 @@ class ChatService:
     def set_collection(self, use_local_collection=False, collection_name=None, embed_model=None, qdrant_url=None, qdrant_api_key=None, path="./", docs=None):
         self.use_local_collection = use_local_collection
         self.collection_name = collection_name
-        self.embeddings = OllamaEmbeddings(model=embed_model)
+        import os
+        ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        self.embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
         self.path = path
         self.docs = docs
 
         if use_local_collection:
-            self.qdrant_client = QdrantClient(url="http://localhost:6333")
+            self.qdrant_client = QdrantClient(url=qdrant_url or "http://localhost:6333")
         else:
             self.qdrant_url = qdrant_url
             self.qdrant_api_key = qdrant_api_key
