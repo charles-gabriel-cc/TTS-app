@@ -24,7 +24,7 @@ def create_collection(embed_model, qdrant_client, collection_name, diretorio):
     from qdrant_client.models import PayloadSchemaType
 
     # ⚙️ Criação manual de índices em coleção já existente
-    campos_indexados = ["id_lattes", "nome_professor", "departamento"]
+    campos_indexados = ["id_lattes", "nome_professor", "departamento", "tipo_de_documento"]
 
     for campo in campos_indexados:
         try:
@@ -95,6 +95,55 @@ def create_collection(embed_model, qdrant_client, collection_name, diretorio):
                                 "nome_professor": nome_professor,
                                 "departamento": departamento,
                                 "source": caminho_pdf,
+                                "tipo_de_documento": "curriculo",
+                                "text": texto
+                            }
+                        )
+                        points.append(ponto)
+
+                    if points:
+                        qdrant_client.upsert(collection_name=collection_name, points=points)
+                        print(f"✅ Inseridos {len(points)} vetores de '{file}'")
+                except Exception as e:
+                    print(f"❌ Erro ao processar '{file}': {e}")
+
+    for root, dirs, files in os.walk("articles"):
+        for file in files:
+            if file.lower().endswith(".pdf"):
+                try:
+                    caminho_pdf = os.path.join(root, file)
+
+                    # Extrai o id do lattes (sem extensão)
+                    nome_professor = os.path.splitext(file)[0]
+
+                    # ⚠️ Verifica se o id_lattes já está no Qdrant
+                    response = qdrant_client.scroll(
+                        collection_name=collection_name,
+                        scroll_filter={"must": [{"key": "nome_professor", "match": {"value": nome_professor}}]},
+                        limit=1
+                    )
+                    if response[0]:  # Já existe vetor com esse id_lattes
+                        print(f"⏭️ Já processado: {nome_professor}, pulando...")
+                        continue
+
+                    print(f"\n📄 Processando: {caminho_pdf}")
+
+                    # Lê e divide em nós
+                    documents = PDFReader().load_data(caminho_pdf)
+                    nodes = parser.get_nodes_from_documents(documents)
+
+                    # Converte cada nó em vetor e insere
+                    points = []
+                    for node in nodes:
+                        texto = node.text
+                        vetor = embed_model.get_text_embedding(texto)
+                        ponto = PointStruct(
+                            id=str(uuid.uuid4()),
+                            vector=vetor,
+                            payload={
+                                "nome_professor": nome_professor,
+                                "source": caminho_pdf,
+                                "tipo_de_documento": "artigo",
                                 "text": texto
                             }
                         )
