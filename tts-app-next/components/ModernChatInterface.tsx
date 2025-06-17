@@ -433,10 +433,10 @@ export default function ModernChatInterface() {
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
 
   const suggestedActions: SuggestedAction[] = [
-    { id: "1", text: "Como posso te ajudar hoje?", icon: <Globe className="w-3 h-3" /> },
-    { id: "2", text: "Fale sobre professores", icon: <ImageIcon className="w-3 h-3" /> },
-    { id: "3", text: "Horários de atendimento", icon: <ImageIcon className="w-3 h-3" /> },
-    { id: "4", text: "Informações da faculdade", icon: <QrCode className="w-3 h-3" /> }
+    { id: "1", text: "Trabalhos sobre matemática discreta", icon: <Globe className="w-3 h-3" /> },
+    { id: "2", text: "Fale sobre professores do departamento de matemática", icon: <ImageIcon className="w-3 h-3" /> },
+    { id: "3", text: "Quais professores trabalham com física quântica?", icon: <ImageIcon className="w-3 h-3" /> },
+    { id: "4", text: "Quero saber mais sobre o professor Pavão", icon: <QrCode className="w-3 h-3" /> }
   ];
 
   // Função para reproduzir áudio a partir de Base64
@@ -641,8 +641,8 @@ export default function ModernChatInterface() {
     <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">
       {/* Header */}
       <div className="border-b bg-white p-4">
-        <h1 className="text-xl font-semibold text-gray-900">Assistente Virtual da Faculdade</h1>
-        <p className="text-sm text-gray-500">Faça perguntas sobre professores da faculdade com suporte completo de voz</p>
+        <h1 className="text-xl font-semibold text-gray-900">Assistente Virtual do CCEN</h1>
+        <p className="text-sm text-gray-500">Conheça os professores do CCEN</p>
       </div>
 
       {/* Messages */}

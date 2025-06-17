@@ -65,8 +65,8 @@ export default function Home() {
       <IdleScreen
         isVisible={showIdleScreen}
         onDismiss={handleIdleScreenDismiss}
-        title="Assistente Virtual da Faculdade"
-        description="Faça perguntas sobre professores da faculdade. Obtenha acesso instantâneo a detalhes do corpo docente, horários de atendimento e informações de contato para melhorar sua experiência acadêmica."
+        title="Assistente Virtual do CCEN"
+        description="Conheça os professores do CCEN. Obtenha informações sobre os professores, suas áreas de atuação, acesso aos seus currículos lattes e outras informações."
         callToAction="Toque em qualquer lugar para começar"
       />
     </div>
