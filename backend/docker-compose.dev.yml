@@ -68,7 +68,7 @@ services:
       - USE_LOCAL_COLLECTION=true
       - COLLECTION_NAME=ccen-docentes
       - USE_LOCAL_MODEL=true
-      - MODEL_NAME=qwen2.5:14b
+      - MODEL_NAME=qwen3:8b
       - EMBED_MODEL=all-minilm:l6-v2
       # Configurações CUDA
       - NVIDIA_VISIBLE_DEVICES=all
@@ -109,8 +109,8 @@ services:
       done;
       echo '✅ Qdrant está disponível!';
       echo '🔥 Aquecendo Ollama...';
-      echo '   Enviando mensagem inicial para carregar modelo...';
-      response=$$(curl -s -X POST http://ollama:11434/api/generate -H 'Content-Type: application/json' -d '{\"model\":\"qwen2.5:14b\",\"prompt\":\"Hello\",\"stream\":false}' | python -c 'import json,sys; print(json.load(sys.stdin).get(\"response\",\"OK\"))' 2>/dev/null || echo 'Ollama aquecido');
+      echo \"   Enviando mensagem inicial para carregar modelo: $${MODEL_NAME}...\";
+      response=$$(curl -s -X POST http://ollama:11434/api/generate -H 'Content-Type: application/json' -d '{\"model\":\"$${MODEL_NAME}\",\"prompt\":\"Hello\",\"stream\":false}' | python -c 'import json,sys; print(json.load(sys.stdin).get(\"response\",\"OK\"))' 2>/dev/null || echo 'Ollama aquecido');
       echo '🚀 Ollama respondeu:' $$response;
       echo '';
       echo '🎯 AMBIENTE PRONTO PARA DESENVOLVIMENTO!';
