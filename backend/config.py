@@ -13,7 +13,7 @@ WHISPER_MODEL = "base"  # ou "tiny", "small", "medium", "large"
 
 # Configurações do Chat
 USE_LOCAL_MODEL = True  # Alternar entre modelo local e OpenAI
-MODEL_NAME = "qwen2.5:14b"
+MODEL_NAME = os.getenv("MODEL_NAME")
 EMBED_MODEL = "all-minilm:l6-v2"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 USE_LOCAL_COLLECTION = True
