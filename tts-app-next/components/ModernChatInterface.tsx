@@ -5,6 +5,7 @@ import { Mic, Square, X, Play, Pause, Volume2, VolumeX, Send, Globe, QrCode, Ima
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import ReactMarkdown from 'react-markdown';
 
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -180,7 +181,17 @@ function ChatBubble({ message, isUser, playingMessageId, onToggleAudio }: ChatBu
     return (
       <div className="flex justify-end">
         <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-blue-500 text-white">
-          <div className="text-base leading-relaxed">{message.content}</div>
+          <div className="text-base leading-relaxed">
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <span>{children}</span>,
+                strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                em: ({ children }) => <em className="italic">{children}</em>,
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+          </div>
         </div>
       </div>
     );
@@ -214,7 +225,17 @@ function ChatBubble({ message, isUser, playingMessageId, onToggleAudio }: ChatBu
         </div>
       )}
       
-      <div className="text-base leading-relaxed text-gray-900 mb-2">{message.content}</div>
+      <div className="text-base leading-relaxed text-gray-900 mb-2">
+        <ReactMarkdown
+          components={{
+            p: ({ children }) => <span>{children}</span>,
+            strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+            em: ({ children }) => <em className="italic">{children}</em>,
+          }}
+        >
+          {message.content}
+        </ReactMarkdown>
+      </div>
       
       {message.audioUrl && onToggleAudio && (
         <div className="mt-3">

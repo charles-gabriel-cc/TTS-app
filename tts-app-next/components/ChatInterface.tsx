@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 import AudioRecorder from './AudioRecorder'
 import { api } from '@/services/api'
 import { Switch } from '@mui/material'
+import ReactMarkdown from 'react-markdown'
 
 interface Message {
   id: string
@@ -290,7 +291,15 @@ const ChatInterface: React.FC = () => {
       <MessagesContainer>
         {messages.map(message => (
           <MessageBubble key={message.id} isUser={message.sender === 'user'}>
-            <span>{message.text}</span>
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <span>{children}</span>,
+                strong: ({ children }) => <strong style={{ fontWeight: 'bold' }}>{children}</strong>,
+                em: ({ children }) => <em style={{ fontStyle: 'italic' }}>{children}</em>,
+              }}
+            >
+              {message.text}
+            </ReactMarkdown>
             {message.audio && message.sender === 'assistant' && (
               <AudioButton 
                 onClick={() => playAudio(message.audio!, message.audioFormat, message.id)}

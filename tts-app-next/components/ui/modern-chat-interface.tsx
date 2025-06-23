@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from 'react-markdown';
 
 interface Attachment {
   url: string;
@@ -189,7 +190,17 @@ function ChatBubble({ message, isUser }: ChatBubbleProps) {
           </div>
         )}
         
-        <div className="text-sm leading-relaxed">{message.content}</div>
+        <div className="text-sm leading-relaxed">
+          <ReactMarkdown
+            components={{
+              p: ({ children }) => <span>{children}</span>,
+              strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+              em: ({ children }) => <em className="italic">{children}</em>,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
+        </div>
         
         {message.audioUrl && (
           <div className="mt-3">
