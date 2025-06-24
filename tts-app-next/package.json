@@ -9,9 +9,17 @@
     "start": "next start",
     "prod": "npm run build && npm run start",
     "preview": "npm run build && npm run start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cap:init": "npx cap add android",
+    "cap:build": "npm run build && npx cap copy && npx cap sync",
+    "cap:open": "npx cap open android",
+    "cap:run": "npm run cap:build && npx cap run android",
+    "cap:dev": "npm run build && npx cap copy && npx cap run android --livereload --external"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/cli": "^7.4.0",
+    "@capacitor/core": "^7.4.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",

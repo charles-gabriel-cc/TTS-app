@@ -11,7 +11,11 @@ const nextConfig = {
     styledComponents: true,
   },
   reactStrictMode: true,
-  output: 'standalone',
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  },
   async headers() {
     return [
       {
