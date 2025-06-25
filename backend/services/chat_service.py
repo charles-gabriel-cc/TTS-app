@@ -27,6 +27,8 @@ class SearchTeacherInformation(BaseModel):
 class getTeacherNames(BaseModel):
     query: str = PydanticV1Field(description="Consulta para buscar os nomes dos professores do CCEN da UFPE.")
 
+
+
 class ChatService:
     def __init__(self, use_local_model=False, model_name=None, api_key=None):
         """
@@ -81,6 +83,7 @@ class ChatService:
                       #teacher_names_tool
                       ]
         self.agent_executor = create_react_agent(self.llm, self.tools, checkpointer=self.memory, prompt= f"""
+        /nothink
         Você é um assistente simpático e informativo que responde dúvidas sobre os professores do CCEN da UFPE, 
 
 

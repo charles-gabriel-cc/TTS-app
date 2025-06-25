@@ -19,6 +19,7 @@ import os
 import base64
 import io
 import tempfile
+import re
 from services.transcription_service import TranscriptionService
 from services.chat_service import ChatService
 from utils.logger import setup_logger
@@ -79,6 +80,25 @@ else:
         qdrant_api_key=QDRANT_API_KEY
     )
 
+# Função para limpar comandos de controle das mensagens do usuário
+def clean_user_message(message: str) -> str:
+    """Remove comandos de controle como /think, /nothink, /no_think da mensagem do usuário"""
+    cleaned_message = re.sub(r'/(?:no_?think|think)', '', message, flags=re.IGNORECASE)
+    return cleaned_message.strip()
+
+# Função para limpar texto de resposta para o frontend
+def clean_response_text(text: str) -> str:
+    """Remove tags <think>...</think> e todo o conteúdo entre elas do texto de resposta"""
+    # Remover tags <think>...</think> e todo o conteúdo entre elas
+    cleaned_text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    # Limpar apenas espaços múltiplos na mesma linha (preservar quebras de linha)
+    cleaned_text = re.sub(r'[ \t]+', ' ', cleaned_text)
+    # Remover múltiplas quebras de linha consecutivas (máximo 2)
+    cleaned_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', cleaned_text)
+    # Limpar espaços no início e fim
+    cleaned_text = cleaned_text.strip()
+    return cleaned_text
+
 # Modelo para requisições de chat
 class ChatRequest(BaseModel):
     message: str
@@ -98,8 +118,18 @@ async def transcribe_audio(audio: UploadFile = File(...)):
 @app.post("/chat/")
 async def chat(request: ChatRequest):
     try:
-        response = await chat_service.get_response(request.message, request.session_id)
-        return {"response": response}
+        # Limpar comandos de controle da mensagem do usuário
+        cleaned_message = clean_user_message(request.message)
+        logger.info(f"Mensagem original: {request.message}")
+        logger.info(f"Mensagem limpa: {cleaned_message}")
+        
+        response = await chat_service.get_response(cleaned_message, request.session_id)
+        
+        # Limpar tags <think> da resposta antes de retornar ao frontend
+        cleaned_response = clean_response_text(response)
+        logger.info(f"Resposta limpa para frontend: {cleaned_response[:100]}...")
+        
+        return {"response": cleaned_response}
     except Exception as e:
         logger.error(f"Erro na rota de chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -107,15 +137,32 @@ async def chat(request: ChatRequest):
 @app.post("/chat_with_tts/")
 async def chat_with_tts(request: ChatRequest):
     try:
-        # 1. Obter a resposta de texto do chat service
-        text_response = await chat_service.get_response(request.message, request.session_id)
+        # 1. Limpar comandos de controle da mensagem do usuário
+        cleaned_message = clean_user_message(request.message)
+        logger.info(f"Mensagem original: {request.message}")
+        logger.info(f"Mensagem limpa: {cleaned_message}")
+        
+        # 2. Obter a resposta de texto do chat service
+        text_response = await chat_service.get_response(cleaned_message, request.session_id)
         logger.info(f"Resposta de texto gerada: {text_response[:100]}...")
         
-        # 2. Gerar áudio usando gTTS
+        # 3. Limpar texto de resposta para o frontend (remover tags <think>)
+        cleaned_response = clean_response_text(text_response)
+        logger.info(f"Resposta limpa para frontend: {cleaned_response[:100]}...")
+        
+        # 4. Limpar texto para TTS (remover tags <think> e asteriscos)
+        cleaned_text_for_tts = re.sub(r'<think>.*?</think>', '', text_response, flags=re.DOTALL | re.IGNORECASE)
+        # Remover asteriscos
+        cleaned_text_for_tts = re.sub(r'\*', '', cleaned_text_for_tts)
+        # Limpar espaços extras
+        cleaned_text_for_tts = re.sub(r'\s+', ' ', cleaned_text_for_tts).strip()
+        logger.info(f"Texto limpo para TTS: {cleaned_text_for_tts[:100]}...")
+        
+        # 5. Gerar áudio usando gTTS
         logger.info("Gerando áudio com gTTS (pt-br)...")
         
         # Criar objeto gTTS para português brasileiro
-        tts_obj = gTTS(text=text_response, lang='pt-br', slow=False)
+        tts_obj = gTTS(text=cleaned_text_for_tts, lang='pt-br', slow=False)
         
         # Usar um arquivo temporário para o áudio
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_audio_file:
@@ -124,7 +171,7 @@ async def chat_with_tts(request: ChatRequest):
         # Salvar o áudio no arquivo temporário
         tts_obj.save(temp_audio_path)
         
-        # 3. Ler os bytes do áudio do arquivo temporário
+        # 6. Ler os bytes do áudio do arquivo temporário
         with open(temp_audio_path, "rb") as audio_file:
             audio_bytes = audio_file.read()
         
@@ -133,12 +180,12 @@ async def chat_with_tts(request: ChatRequest):
         
         logger.info(f"Áudio gerado com sucesso. Tamanho: {len(audio_bytes)} bytes")
         
-        # 4. Codificar o áudio em Base64
+        # 7. Codificar o áudio em Base64
         audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
         
-        # 5. Criar a resposta JSON
+        # 8. Criar a resposta JSON com texto limpo
         response_data = {
-            "text": text_response,
+            "text": cleaned_response,
             "audio": audio_base64,
             "audio_format": "mp3"
         }
