@@ -5,9 +5,14 @@ const config: CapacitorConfig = {
   appName: 'TTS App',
   webDir: 'out',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'http',
+    allowNavigation: ['*'],
+    cleartext: true
   },
   android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true,
     buildOptions: {
       keystorePath: undefined,
       keystorePassword: undefined,

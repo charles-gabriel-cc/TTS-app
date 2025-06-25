@@ -1,5 +1,6 @@
-// Lembrar de setar o ip+porta do backend no .env
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || `http://localhost:8000`;
+// A URL da API é definida pela variável de ambiente NEXT_PUBLIC_API_URL
+// Configure no arquivo .env: NEXT_PUBLIC_API_URL='http://SEU_IP:8000'
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export const API_ENDPOINTS = {
   speechToText: `${API_BASE_URL}/transcribe/`,
