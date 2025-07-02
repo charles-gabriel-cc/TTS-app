@@ -454,10 +454,10 @@ export default function ModernChatInterface() {
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
 
   const suggestedActions: SuggestedAction[] = [
-    { id: "1", text: "Trabalhos sobre matemática discreta", icon: <Globe className="w-3 h-3" /> },
-    { id: "2", text: "Fale sobre professores do departamento de matemática", icon: <ImageIcon className="w-3 h-3" /> },
-    { id: "3", text: "Quais professores trabalham com física quântica?", icon: <ImageIcon className="w-3 h-3" /> },
-    { id: "4", text: "Quero saber mais sobre o professor Pavão", icon: <QrCode className="w-3 h-3" /> }
+    { id: "1", text: "Trabalhos sobre matemática discreta"},
+    { id: "2", text: "Fale sobre professores do departamento de matemática"},
+    { id: "3", text: "Quais professores trabalham com física quântica?"},
+    { id: "4", text: "Quero saber mais sobre o professor Pavão"}
   ];
 
   // Função para reproduzir áudio a partir de Base64
