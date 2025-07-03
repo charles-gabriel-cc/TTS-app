@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.ttsapp.android',
-  appName: 'TTS App',
+  appId: 'com.assistenteccen.android',
+  appName: 'Assistente CCEN',
   webDir: 'out',
   server: {
     androidScheme: 'http',

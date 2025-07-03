@@ -4,4 +4,5 @@ export { Button } from './button';
 export { Textarea } from './textarea';
 export { Switch } from './switch';
 export { Avatar, AvatarImage, AvatarFallback } from './avatar';
-export { default as ModernChatInterface } from './modern-chat-interface'; 
+export { default as ModernChatInterface } from './modern-chat-interface';
+export { ConnectivityStatus, ConnectivityBadge, PendingMessagesIndicator } from './connectivity-status'; 

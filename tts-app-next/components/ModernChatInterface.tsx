@@ -452,6 +452,8 @@ export default function ModernChatInterface() {
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
 
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
+  const lastSentMessageRef = useRef<string>('');
+  const lastSentTimeRef = useRef<number>(0);
 
   const suggestedActions: SuggestedAction[] = [
     { id: "1", text: "Trabalhos sobre matemática discreta"},
@@ -519,10 +521,31 @@ export default function ModernChatInterface() {
 
   const handleSend = useCallback(async () => {
     if (!inputValue.trim()) return;
+    
+    // Proteção contra envio duplicado
+    const currentTime = Date.now();
+    const messageContent = inputValue.trim();
+    
+    // Evitar envio da mesma mensagem em menos de 2 segundos
+    if (lastSentMessageRef.current === messageContent && 
+        currentTime - lastSentTimeRef.current < 2000) {
+      console.log('Envio duplicado bloqueado');
+      return;
+    }
+    
+    // Não enviar se já está processando
+    if (isLoading) {
+      console.log('Envio bloqueado - já processando');
+      return;
+    }
+    
+    // Atualizar referências de controle
+    lastSentMessageRef.current = messageContent;
+    lastSentTimeRef.current = currentTime;
 
     const userMessage: ChatMessage = {
       id: uuidv4(),
-      content: inputValue,
+      content: messageContent,
       role: "user",
       timestamp: new Date()
     };
@@ -533,7 +556,7 @@ export default function ModernChatInterface() {
 
     try {
       // Enviar mensagem para o backend usando o endpoint apropriado
-      const response = await api.sendChatMessage(inputValue, audioOutputEnabled);
+      const response = await api.sendChatMessage(messageContent, audioOutputEnabled);
       
       // Adicionar resposta do assistente
       const assistantMessage: ChatMessage = {
@@ -553,9 +576,13 @@ export default function ModernChatInterface() {
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      const errorContent = `Desculpe, ocorreu um erro ao processar sua mensagem`;
+      //: ${error instanceof Error ? error.message : 'Erro desconhecido'}
+      
       const errorMessage: ChatMessage = {
         id: uuidv4(),
-        content: 'Desculpe, ocorreu um erro ao processar sua mensagem.',
+        content: errorContent,
         role: "assistant",
         timestamp: new Date()
       };
@@ -563,7 +590,7 @@ export default function ModernChatInterface() {
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, audioOutputEnabled]);
+  }, [inputValue, audioOutputEnabled, isLoading]);
 
   const handleStartRecording = useCallback(() => {
     setIsRecording(true);
@@ -580,8 +607,13 @@ export default function ModernChatInterface() {
     }
     setRecordingDuration(0);
 
-    if (!isLoading) {
-      setIsLoading(true);
+    // Proteção contra processamento duplo
+    if (isLoading) {
+      console.log('Processamento de áudio bloqueado - já processando');
+      return;
+    }
+
+    setIsLoading(true);
       try {
         // Converter áudio em texto
         const text = await api.speechToText(audioBlob);
@@ -615,9 +647,13 @@ export default function ModernChatInterface() {
         }
       } catch (error) {
         console.error('Error processing audio:', error);
+        
+        const errorContent = `Desculpe, não consegui processar o áudio`;
+        //${error instanceof Error ? error.message : 'Erro desconhecido'}
+        
         const errorMessage: ChatMessage = {
           id: uuidv4(),
-          content: 'Desculpe, não consegui processar o áudio.',
+          content: errorContent,
           role: "assistant",
           timestamp: new Date()
         };
@@ -625,7 +661,6 @@ export default function ModernChatInterface() {
       } finally {
         setIsLoading(false);
       }
-    }
   }, [isLoading, audioOutputEnabled]);
 
   const handleCancelRecording = useCallback(() => {
@@ -662,8 +697,12 @@ export default function ModernChatInterface() {
     <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">
       {/* Header */}
       <div className="border-b bg-white p-4">
-        <h1 className="text-xl font-semibold text-gray-900">Assistente Virtual do CCEN</h1>
-        <p className="text-sm text-gray-500">Conheça os professores do CCEN</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">Assistente Virtual do CCEN</h1>
+            <p className="text-sm text-gray-500">Conheça os professores do CCEN</p>
+          </div>
+        </div>
       </div>
 
       {/* Messages */}
