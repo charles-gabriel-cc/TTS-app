@@ -441,7 +441,12 @@ function ChatInput({
   );
 }
 
-export default function ModernChatInterface() {
+interface ModernChatInterfaceProps {
+  onResetChat?: () => void; // Callback para notificar quando chat é resetado
+  resetTrigger?: number; // Trigger para resetar o chat externamente
+}
+
+export default function ModernChatInterface({ onResetChat, resetTrigger }: ModernChatInterfaceProps = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -692,6 +697,46 @@ export default function ModernChatInterface() {
   }, [currentAudio]);
 
   const showSuggestedActions = messages.length === 0 && !inputValue && !isRecording;
+
+  // Função para resetar completamente o chat
+  const resetChat = useCallback(() => {
+    // Parar qualquer áudio que esteja tocando
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+      setPlayingMessageId(null);
+    }
+
+    // Parar gravação se estiver ativa
+    if (isRecording && recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      setIsRecording(false);
+      setRecordingDuration(0);
+    }
+
+    // Limpar todas as mensagens e resetar estado
+    setMessages([]);
+    setInputValue("");
+    setIsLoading(false);
+    setAudioOutputEnabled(false);
+    
+    // Resetar referências de controle
+    lastSentMessageRef.current = '';
+    lastSentTimeRef.current = 0;
+
+    // Notificar componente pai se callback foi fornecido
+    if (onResetChat) {
+      onResetChat();
+    }
+  }, [currentAudio, isRecording, onResetChat]);
+
+  // Effect para escutar mudanças no resetTrigger
+  useEffect(() => {
+    if (resetTrigger && resetTrigger > 0) {
+      resetChat();
+    }
+  }, [resetTrigger, resetChat]);
 
   return (
     <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">

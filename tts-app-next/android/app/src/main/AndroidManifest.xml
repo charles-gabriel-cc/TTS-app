@@ -17,7 +17,13 @@
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:resizeableActivity="false"
+            android:supportsPictureInPicture="false"
+            android:excludeFromRecents="false"
+            android:stateNotNeeded="true"
+            android:lockTaskMode="normal">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -46,6 +52,9 @@
     
     <!-- Optional: for better audio handling -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- Kiosk Mode permissions -->
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
     
     <!-- Feature declarations -->
     <uses-feature 
