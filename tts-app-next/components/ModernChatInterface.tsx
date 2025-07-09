@@ -459,6 +459,7 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
   const lastSentMessageRef = useRef<string>('');
   const lastSentTimeRef = useRef<number>(0);
+  const lastResetTriggerRef = useRef<number>(0);
 
   const suggestedActions: SuggestedAction[] = [
     { id: "1", text: "Trabalhos sobre matemática discreta"},
@@ -698,45 +699,44 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
 
   const showSuggestedActions = messages.length === 0 && !inputValue && !isRecording;
 
-  // Função para resetar completamente o chat
-  const resetChat = useCallback(() => {
-    // Parar qualquer áudio que esteja tocando
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-      setCurrentAudio(null);
-      setPlayingMessageId(null);
-    }
 
-    // Parar gravação se estiver ativa
-    if (isRecording && recordingIntervalRef.current) {
-      clearInterval(recordingIntervalRef.current);
-      setIsRecording(false);
-      setRecordingDuration(0);
-    }
 
-    // Limpar todas as mensagens e resetar estado
-    setMessages([]);
-    setInputValue("");
-    setIsLoading(false);
-    setAudioOutputEnabled(false);
-    
-    // Resetar referências de controle
-    lastSentMessageRef.current = '';
-    lastSentTimeRef.current = 0;
-
-    // Notificar componente pai se callback foi fornecido
-    if (onResetChat) {
-      onResetChat();
-    }
-  }, [currentAudio, isRecording, onResetChat]);
-
-  // Effect para escutar mudanças no resetTrigger
+  // Effect para escutar mudanças no resetTrigger - versão estável
   useEffect(() => {
-    if (resetTrigger && resetTrigger > 0) {
-      resetChat();
+    if (resetTrigger && resetTrigger > 0 && resetTrigger !== lastResetTriggerRef.current) {
+      lastResetTriggerRef.current = resetTrigger;
+      
+      // Parar qualquer áudio que esteja tocando
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        setCurrentAudio(null);
+        setPlayingMessageId(null);
+      }
+
+      // Parar gravação se estiver ativa
+      if (isRecording && recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+        setIsRecording(false);
+        setRecordingDuration(0);
+      }
+
+      // Limpar todas as mensagens e resetar estado
+      setMessages([]);
+      setInputValue("");
+      setIsLoading(false);
+      setAudioOutputEnabled(false);
+      
+      // Resetar referências de controle
+      lastSentMessageRef.current = '';
+      lastSentTimeRef.current = 0;
+
+      // Notificar componente pai se callback foi fornecido
+      if (onResetChat) {
+        onResetChat();
+      }
     }
-  }, [resetTrigger, resetChat]);
+     }, [resetTrigger, onResetChat]); // resetTrigger e onResetChat como dependências
 
   return (
     <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">
