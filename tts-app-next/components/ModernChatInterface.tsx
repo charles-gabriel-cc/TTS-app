@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, Square, X, Play, Pause, Volume2, VolumeX, Send, Globe, QrCode, Image as ImageIcon } from "lucide-react";
+import { Mic, Square, X, Play, Pause, Volume2, VolumeX, Send, Globe, QrCode, Image as ImageIcon, GraduationCap, Users, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -35,6 +35,160 @@ interface SuggestedAction {
   icon?: React.ReactNode;
 }
 
+// Componente de fundo animado separado para evitar re-renders
+const AcademicBackground = React.memo(() => {
+  // Posições fixas para as partículas (calculadas uma vez)
+  const particles = React.useMemo(() => 
+    Array.from({ length: 16 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 3 + Math.random() * 4,
+      delay: Math.random() * 2,
+      xMovement: Math.random() * 30 - 15,
+    })), []
+  );
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-500 via-cyan-500 via-purple-500 via-violet-500 to-pink-500 dark:from-green-600 dark:via-teal-700 dark:via-blue-700 dark:via-purple-700 dark:to-pink-600"></div>
+      <div className="absolute inset-0 bg-gradient-to-tl from-green-400 via-emerald-500 via-teal-500 to-cyan-400 opacity-35"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-400 via-teal-400 via-blue-500 to-purple-600 opacity-25"></div>
+      <div className="absolute inset-0 bg-gradient-to-bl from-purple-400 via-violet-500 via-fuchsia-500 to-pink-500 opacity-30"></div>
+      
+      {/* Mathematical Symbols */}
+      <div className="absolute inset-0 opacity-30">
+        <motion.div 
+          className="absolute top-20 left-16 text-6xl font-bold text-yellow-300 drop-shadow-lg"
+          animate={{ rotate: [0, 5, -5, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ∫
+        </motion.div>
+        <motion.div 
+          className="absolute top-40 right-20 text-4xl font-bold text-pink-400 drop-shadow-lg"
+          animate={{ y: [0, -10, 10, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        >
+          π
+        </motion.div>
+        
+        <motion.div 
+          className="absolute bottom-32 left-24 text-5xl font-bold text-lime-400 drop-shadow-lg"
+          animate={{ scale: [1, 1.1, 0.9, 1] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        >
+          E=mc²
+        </motion.div>
+        <motion.div 
+          className="absolute top-60 left-1/4 text-3xl font-bold text-emerald-400 drop-shadow-lg"
+          animate={{ rotate: [0, 10, -10, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ∆
+        </motion.div>
+        
+        <motion.div 
+          className="absolute bottom-20 right-32 text-4xl font-bold text-red-400 drop-shadow-lg"
+          animate={{ x: [0, 15, -15, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        >
+          H₂O
+        </motion.div>
+        <motion.div 
+          className="absolute top-80 right-1/4 text-3xl font-bold text-orange-400 drop-shadow-lg"
+          animate={{ y: [0, 8, -8, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ⚛
+        </motion.div>
+        
+        <motion.div 
+          className="absolute bottom-60 left-1/3 text-4xl font-bold text-violet-400 drop-shadow-lg"
+          animate={{ rotate: [0, -8, 8, 0] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+        >
+          σ
+        </motion.div>
+        <motion.div 
+          className="absolute top-32 left-1/2 text-3xl font-bold text-cyan-400 drop-shadow-lg"
+          animate={{ scale: [1, 0.8, 1.2, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        >
+          Σ
+        </motion.div>
+      </div>
+      
+      {/* Geometric Patterns */}
+      <div className="absolute inset-0 opacity-20">
+        <motion.div 
+          className="absolute top-16 right-16 w-32 h-32 border-4 border-cyan-300 rounded-full shadow-lg"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        ></motion.div>
+        <motion.div 
+          className="absolute bottom-24 left-20 w-24 h-24 border-4 border-magenta-400 transform rotate-45 shadow-lg"
+          animate={{ rotate: [45, 90, 135, 45] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        ></motion.div>
+        <motion.div 
+          className="absolute top-1/2 left-12 w-16 h-16 border-4 border-lime-400 shadow-lg"
+          animate={{ rotate: [0, 180, 360] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        ></motion.div>
+        <motion.div 
+          className="absolute bottom-40 right-24 w-20 h-20 border-4 border-orange-400 rounded-full shadow-lg"
+          animate={{ scale: [1, 1.2, 0.8, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        ></motion.div>
+      </div>
+      
+      {/* Floating Particles */}
+      <div className="absolute inset-0 opacity-60">
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute w-3 h-3 bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 rounded-full shadow-lg"
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+            }}
+            animate={{
+              y: [0, -40, 0],
+              x: [0, particle.xMovement, 0],
+              opacity: [0.4, 1, 0.4],
+              scale: [1, 1.5, 1],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: particle.delay,
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* Grid Pattern */}
+      <div className="absolute inset-0 opacity-15">
+        <div 
+          className="w-full h-full"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(168, 85, 247, 0.3) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        ></div>
+      </div>
+    </div>
+  );
+});
+
+AcademicBackground.displayName = 'AcademicBackground';
+
 interface AudioRecorderProps {
   onStart?: () => void;
   onStop?: () => void;
@@ -57,21 +211,21 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration }: Aud
           variant="ghost"
           size="icon"
           onClick={onStart}
-          className="rounded-full hover:bg-gray-100"
+          className="rounded-full hover:bg-white/10 text-white/70 hover:text-white"
         >
           <Mic className="w-5 h-5" />
         </Button>
       ) : (
-        <div className="flex items-center gap-2 bg-red-50 rounded-full px-3 py-1">
+        <div className="flex items-center gap-2 bg-red-500/20 rounded-full px-3 py-1 backdrop-blur-sm border border-red-500/30">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            <span className="text-sm font-mono text-red-600">{formatTime(duration)}</span>
+            <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+            <span className="text-sm font-mono text-red-300">{formatTime(duration)}</span>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onStop}
-            className="w-8 h-8 rounded-full hover:bg-red-100"
+            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-red-300 hover:text-red-200"
           >
             <Square className="w-4 h-4 fill-current" />
           </Button>
@@ -79,7 +233,7 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration }: Aud
             variant="ghost"
             size="icon"
             onClick={onCancel}
-            className="w-8 h-8 rounded-full hover:bg-red-100"
+            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-red-300 hover:text-red-200"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -139,16 +293,16 @@ function AudioPlayer({ audioBase64, audioFormat = 'mp3', className, messageId, i
   };
 
   return (
-    <div className={cn("flex items-center gap-2 bg-gray-50 rounded-lg p-2", className)}>
+    <div className={cn("flex items-center gap-2 bg-white/5 backdrop-blur-sm rounded-lg p-2 border border-white/10", className)}>
       <Button
         variant="ghost"
         size="icon"
         onClick={togglePlay}
-        className="w-8 h-8 rounded-full"
+        className="w-8 h-8 rounded-full hover:bg-white/10 text-white/70 hover:text-white"
       >
         {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
       </Button>
-      <div className="flex-1 text-xs text-gray-600">
+      <div className="flex-1 text-xs text-white/60">
         {formatTime(currentTime)} / {formatTime(duration)}
       </div>
       <audio
@@ -179,8 +333,13 @@ function ChatBubble({ message, isUser, playingMessageId, onToggleAudio }: ChatBu
   // Para usuário: mantém o balão sem avatar, alinhado à direita
   if (isUser) {
     return (
-      <div className="flex justify-end">
-        <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-blue-500 text-white">
+      <motion.div 
+        className="flex justify-end"
+        initial={false}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
+      >
+        <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-gradient-to-r from-cyan-500/80 to-teal-400/80 backdrop-blur-sm border border-cyan-400/30 text-white shadow-lg" style={{ willChange: 'auto' }}>
           <div className="text-base leading-relaxed">
             <ReactMarkdown
               components={{
@@ -193,75 +352,82 @@ function ChatBubble({ message, isUser, playingMessageId, onToggleAudio }: ChatBu
             </ReactMarkdown>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   // Para IA: apenas o texto simples
   return (
-    <div className="max-w-[80%] mr-auto">
-      {message.attachments && message.attachments.length > 0 && (
-        <div className="mb-3 space-y-2">
-          {message.attachments.map((attachment, index) => (
-            <div key={index} className="rounded-lg overflow-hidden">
-              {attachment.contentType.startsWith('image/') ? (
-                <img 
-                  src={attachment.url} 
-                  alt={attachment.name}
-                  className="max-w-full h-auto rounded-lg"
-                />
-              ) : attachment.name.toLowerCase().includes('qr') ? (
-                <div className="bg-white p-4 rounded-lg flex items-center gap-2">
-                  <QrCode className="w-5 h-5" />
-                  <span className="text-sm text-gray-700">QR Code: {attachment.name}</span>
-                </div>
-              ) : (
-                <div className="bg-gray-100 p-3 rounded-lg flex items-center gap-2">
-                  <span className="text-sm">{attachment.name}</span>
-                </div>
-              )}
-            </div>
-          ))}
+    <motion.div 
+      className="flex max-w-[80%]"
+      initial={false}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
+    >
+      <div className="bg-white/5 backdrop-blur-sm rounded-2xl px-4 py-3 border border-white/10" style={{ willChange: 'auto' }}>
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="mb-3 space-y-2">
+            {message.attachments.map((attachment, index) => (
+              <div key={index} className="rounded-lg overflow-hidden">
+                {attachment.contentType.startsWith('image/') ? (
+                  <img 
+                    src={attachment.url} 
+                    alt={attachment.name}
+                    className="max-w-full h-auto rounded-lg"
+                  />
+                ) : attachment.name.toLowerCase().includes('qr') ? (
+                  <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg flex items-center gap-2 border border-white/20">
+                    <QrCode className="w-5 h-5 text-white/70" />
+                    <span className="text-sm text-white/80">QR Code: {attachment.name}</span>
+                  </div>
+                ) : (
+                  <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg flex items-center gap-2 border border-white/20">
+                    <span className="text-sm text-white/80">{attachment.name}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <div className="text-base leading-relaxed text-white mb-2">
+          <ReactMarkdown
+            components={{
+              p: ({ children }) => <span>{children}</span>,
+              strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+              em: ({ children }) => <em className="italic">{children}</em>,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
         </div>
-      )}
-      
-      <div className="text-base leading-relaxed text-gray-900 mb-2">
-        <ReactMarkdown
-          components={{
-            p: ({ children }) => <span>{children}</span>,
-            strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-            em: ({ children }) => <em className="italic">{children}</em>,
-          }}
-        >
-          {message.content}
-        </ReactMarkdown>
-      </div>
-      
-      {message.audioUrl && onToggleAudio && (
-        <div className="mt-3">
-          <div className="flex items-center gap-2 rounded-lg p-2 bg-gray-50 w-fit">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onToggleAudio(message.id, message.audioUrl!, message.audioFormat)}
-              className="w-8 h-8 rounded-full hover:bg-gray-200"
-            >
-              {playingMessageId === message.id ? (
-                <Pause className="w-4 h-4" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
-            </Button>
-            <div className="flex-1 text-sm opacity-70">
-              {playingMessageId === message.id ? "Reproduzindo..." : "Clique para ouvir"}
-            </div>
-            <div className="text-sm opacity-50">
-              🔊
+        
+        {message.audioUrl && onToggleAudio && (
+          <div className="mt-3">
+            <div className="flex items-center gap-2 rounded-lg p-2 bg-white/5 backdrop-blur-sm border border-white/10 w-fit">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onToggleAudio(message.id, message.audioUrl!, message.audioFormat)}
+                className="w-8 h-8 rounded-full hover:bg-white/10 text-white/70 hover:text-white"
+              >
+                {playingMessageId === message.id ? (
+                  <Pause className="w-4 h-4" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+              </Button>
+              <div className="flex-1 text-sm text-white/60">
+                {playingMessageId === message.id ? "Reproduzindo..." : "Clique para ouvir"}
+              </div>
+              <div className="text-sm text-white/50">
+                🔊
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </motion.div>
   );
 }
 
@@ -274,16 +440,22 @@ function SuggestedActions({ actions, onSelectAction }: SuggestedActionsProps) {
   return (
     <div className="flex flex-wrap gap-2 mb-4">
       {actions.map((action) => (
-        <Button
+        <motion.div
           key={action.id}
-          variant="outline"
-          size="sm"
-          onClick={() => onSelectAction(action)}
-          className="rounded-full text-sm h-8 px-3 bg-white hover:bg-gray-50 border-gray-200"
+          initial={false}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2, delay: parseInt(action.id) * 0.05 }}
         >
-          {action.icon && <span className="mr-1">{action.icon}</span>}
-          {action.text}
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onSelectAction(action)}
+            className="rounded-full text-sm h-8 px-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 border border-white/30 text-white/90 hover:text-white shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            {action.icon && <span className="mr-1 text-cyan-300">{action.icon}</span>}
+            {action.text}
+          </Button>
+        </motion.div>
       ))}
     </div>
   );
@@ -386,31 +558,32 @@ function ChatInput({
   };
 
   return (
-    <div className="border-t bg-white p-4">
+    <div className="border-t border-white/10 bg-black/20 backdrop-blur-xl p-4 relative z-10">
       <div className="flex items-center gap-2 mb-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Resposta com áudio</span>
+        <div className="flex items-center gap-3 text-sm bg-white/5 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/10 shadow-lg">
+          <span className="text-white/80 font-medium">Resposta com áudio</span>
           <Switch
             checked={audioOutputEnabled}
             onCheckedChange={onToggleAudioOutput}
+            className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-400 data-[state=unchecked]:bg-white/20 border-white/30 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 [&>span]:bg-white [&>span]:shadow-lg [&>span]:border [&>span]:border-white/20"
           />
           {audioOutputEnabled ? (
-            <Volume2 className="w-4 h-4 text-green-600" />
+            <Volume2 className="w-4 h-4 text-green-400 drop-shadow-sm" />
           ) : (
-            <VolumeX className="w-4 h-4 text-gray-400" />
+            <VolumeX className="w-4 h-4 text-white/50" />
           )}
         </div>
       </div>
 
       <div className="relative">
-        <div className="flex items-end gap-2 bg-gray-50 rounded-2xl p-3">
+        <div className="flex items-end gap-2 bg-white/5 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
           <Textarea
             ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Digite sua mensagem..."
-            className="flex-1 min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 py-2 px-1 text-base leading-6"
+            className="flex-1 min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 py-2 px-1 text-base leading-6 text-white placeholder:text-white/50"
             rows={1}
             disabled={disabled || isRecording}
           />
@@ -429,7 +602,7 @@ function ChatInput({
                 onClick={onSend}
                 disabled={!value.trim() || disabled}
                 size="icon"
-                className="rounded-full"
+                className="rounded-full bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-600 hover:to-teal-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <Send className="w-4 h-4" />
               </Button>
@@ -462,7 +635,7 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
   const lastResetTriggerRef = useRef<number>(0);
 
   const suggestedActions: SuggestedAction[] = [
-    { id: "1", text: "Trabalhos sobre matemática discreta"},
+    { id: "1", text: "Trabalhos sobre estatística"},
     { id: "2", text: "Fale sobre professores do departamento de matemática"},
     { id: "3", text: "Quais professores trabalham com física quântica?"},
     { id: "4", text: "Quero saber mais sobre o professor Pavão"}
@@ -739,19 +912,30 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
      }, [resetTrigger, onResetChat]); // resetTrigger e onResetChat como dependências
 
   return (
-    <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">
+    <div className="flex flex-col h-screen max-w-4xl mx-auto relative overflow-hidden">
+      {/* Academic Background Pattern */}
+      <AcademicBackground />
+
       {/* Header */}
-      <div className="border-b bg-white p-4">
+      <motion.div 
+        className="border-b border-white/10 bg-black/20 backdrop-blur-xl p-4 relative z-10"
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Assistente Virtual do CCEN</h1>
-            <p className="text-sm text-gray-500">Conheça os professores do CCEN</p>
+            <h1 className="text-xl font-semibold text-white flex items-center gap-2">
+              <GraduationCap className="w-6 h-6 text-cyan-400" />
+              Assistente Virtual do CCEN
+            </h1>
+            <p className="text-sm text-white/70">Conheça os professores do CCEN</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 relative z-10" style={{ willChange: 'transform' }}>
         {messages.map((message) => (
           <ChatBubble
             key={message.id}
@@ -763,26 +947,32 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
         ))}
         
         {isLoading && (
-          <div className="flex max-w-[80%]">
-            <div className="bg-gray-100 rounded-2xl px-4 py-3">
+          <motion.div 
+            className="flex max-w-[80%]"
+            initial={false}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
+          >
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl px-4 py-3 border border-white/10">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
 
       {/* Suggested Actions */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {showSuggestedActions && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="px-4"
+            initial={false}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="px-4 relative z-10"
           >
             <SuggestedActions
               actions={suggestedActions}
