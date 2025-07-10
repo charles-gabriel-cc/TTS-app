@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Users, MessageCircle, ArrowLeft } from 'lucide-react';
+import { GraduationCap, Users, MessageCircle } from 'lucide-react';
 
 interface IdleScreenProps {
   isVisible?: boolean;
@@ -8,7 +8,6 @@ interface IdleScreenProps {
   title?: string;
   description?: string;
   callToAction?: string;
-  demoGifUrl?: string;
 }
 
 const IdleScreen: React.FC<IdleScreenProps> = ({
@@ -16,16 +15,12 @@ const IdleScreen: React.FC<IdleScreenProps> = ({
   onDismiss = () => {},
   title = "Welcome Back!",
   description = "Ask information about teachers from college faculty. Get instant access to faculty details, office hours, and contact information to enhance your academic experience.",
-  callToAction = "Tap anywhere to continue",
-  demoGifUrl = "https://i.pinimg.com/originals/71/fb/91/71fb9176f16357776802391df14b4e40.gif"
+  callToAction = "Tap anywhere to continue"
 }) => {
   const [showPulse, setShowPulse] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
 
   useEffect(() => {
     if (isVisible) {
-      // Resetar para a primeira tela quando o IdleScreen reaparece
-      setShowDemo(false);
       setShowPulse(false);
       
       const timer = setTimeout(() => setShowPulse(true), 2000);
@@ -34,16 +29,7 @@ const IdleScreen: React.FC<IdleScreenProps> = ({
   }, [isVisible]);
 
   const handleClick = () => {
-    if (showDemo) {
-      onDismiss();
-    } else {
-      setShowDemo(true);
-    }
-  };
-
-  const handleBackClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowDemo(false);
+    onDismiss();
   };
 
   const containerVariants = {
@@ -110,40 +96,7 @@ const IdleScreen: React.FC<IdleScreenProps> = ({
     }
   };
 
-  const slideVariants = {
-    center: {
-      x: 0,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 30
-      }
-    },
-    left: {
-      x: "-100%",
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 30
-      }
-    }
-  };
 
-  const demoVariants = {
-    hidden: {
-      x: "100%",
-      opacity: 0
-    },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 30
-      }
-    }
-  };
 
   return (
     <AnimatePresence>
@@ -301,8 +254,6 @@ const IdleScreen: React.FC<IdleScreenProps> = ({
             {/* Welcome Content */}
             <motion.div 
               className="w-full flex items-center justify-center"
-              variants={slideVariants}
-              animate={showDemo ? "left" : "center"}
             >
               <motion.div 
                 className="relative max-w-md mx-auto px-8 py-12 text-center"
@@ -359,7 +310,7 @@ const IdleScreen: React.FC<IdleScreenProps> = ({
                 >
                                      <div className="inline-flex items-center justify-center px-6 py-3 border-2 border-dashed border-white/40 rounded-full bg-white/10">
                      <span className="text-sm font-medium text-white">
-                       {showDemo ? "Tap to continue" : callToAction}
+                       {callToAction}
                      </span>
                    </div>
                 </motion.div>
@@ -392,75 +343,6 @@ const IdleScreen: React.FC<IdleScreenProps> = ({
                  />
               </motion.div>
             </motion.div>
-
-            {/* Demo Content */}
-            <AnimatePresence>
-              {showDemo && (
-                <motion.div
-                  className="absolute inset-0 flex items-center justify-center"
-                  variants={demoVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                >
-                                     {/* Back Button */}
-                   <motion.button
-                     className="absolute top-8 left-8 p-3 bg-white/10 rounded-full hover:bg-white/20 transition-colors z-10"
-                     onClick={handleBackClick}
-                     whileHover={{ scale: 1.1 }}
-                     whileTap={{ scale: 0.9 }}
-                   >
-                     <ArrowLeft className="w-6 h-6 text-white" />
-                   </motion.button>
-
-                  {/* Demo Content */}
-                  <div className="max-w-2xl mx-auto px-8 text-center">
-                                         <motion.h2 
-                       className="text-3xl font-bold text-white mb-6"
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       transition={{ delay: 0.2 }}
-                     >
-                       See How It Works
-                     </motion.h2>
-
-                    <motion.div
-                      className="relative rounded-2xl overflow-hidden shadow-2xl bg-card border border-border"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-                    >
-                      <img
-                        src={demoGifUrl}
-                        alt="App Demo"
-                        className="w-full h-auto max-h-96 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-                    </motion.div>
-
-                                         <motion.p 
-                       className="text-gray-200 mt-6 text-lg"
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       transition={{ delay: 0.6 }}
-                     >
-                       Experience seamless faculty information access with our intuitive interface
-                     </motion.p>
-
-                                         <motion.div
-                       className="mt-8 inline-flex items-center justify-center px-6 py-3 border-2 border-dashed border-white/40 rounded-full bg-white/10"
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       transition={{ delay: 0.8 }}
-                     >
-                       <span className="text-sm font-medium text-white">
-                         Tap anywhere to start using the app
-                       </span>
-                     </motion.div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </motion.div>
       )}
