@@ -40,14 +40,17 @@ const RecorderButton = styled.button<{ variant?: 'stop' | 'cancel' }>`
 
 interface AudioRecorderProps {
   onRecordingComplete?: (audioBlob: Blob) => void;
+  disabled?: boolean;
 }
 
-const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete }) => {
+const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete, disabled = false }) => {
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
   const startRecording = async () => {
+    if (disabled) return; // Não permitir iniciar gravação se desabilitado
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mediaRecorder = new MediaRecorder(stream)
@@ -94,7 +97,14 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete }) =>
   return (
     <RecorderContainer>
       {!isRecording ? (
-        <RecorderButton onClick={startRecording}>
+        <RecorderButton 
+          onClick={startRecording}
+          disabled={disabled}
+          style={{ 
+            opacity: disabled ? 0.5 : 1, 
+            cursor: disabled ? 'not-allowed' : 'pointer' 
+          }}
+        >
           <FontAwesomeIcon icon={faMicrophone} />
         </RecorderButton>
       ) : (

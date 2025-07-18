@@ -314,7 +314,10 @@ const ChatInterface: React.FC = () => {
         ))}
       </MessagesContainer>
       <InputContainer>
-        <AudioRecorder onRecordingComplete={handleAudioRecording} />
+        <AudioRecorder 
+          onRecordingComplete={handleAudioRecording} 
+          disabled={isLoading}
+        />
         <Input
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
