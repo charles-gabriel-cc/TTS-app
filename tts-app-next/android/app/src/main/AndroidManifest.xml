@@ -23,7 +23,8 @@
             android:supportsPictureInPicture="false"
             android:excludeFromRecents="false"
             android:stateNotNeeded="true"
-            android:lockTaskMode="normal">
+            android:lockTaskMode="normal"
+            android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from 'uuid';
 import { api } from '@/services/api';
+import { Keyboard } from '@capacitor/keyboard';
 
 interface Attachment {
   url: string;
@@ -401,7 +402,7 @@ interface SuggestedActionsProps {
 
 function SuggestedActions({ actions, onSelectAction }: SuggestedActionsProps) {
   return (
-    <div className="flex flex-wrap gap-2 mb-4">
+    <div className="flex flex-wrap gap-1.5 mb-3">
       {actions.map((action) => (
         <motion.div
           key={action.id}
@@ -413,7 +414,7 @@ function SuggestedActions({ actions, onSelectAction }: SuggestedActionsProps) {
             variant="outline"
             size="sm"
             onClick={() => onSelectAction(action)}
-            className="rounded-full text-sm h-8 px-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 border border-white/30 text-white/90 hover:text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            className="rounded-full text-xs h-6 px-2.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 border border-white/30 text-white/90 hover:text-white shadow-lg hover:shadow-xl transition-all duration-200"
           >
             {action.icon && <span className="mr-1 text-cyan-300">{action.icon}</span>}
             {action.text}
@@ -436,6 +437,7 @@ interface ChatInputProps {
   audioOutputEnabled: boolean;
   onToggleAudioOutput: (enabled: boolean) => void;
   disabled?: boolean;
+  keyboardVisible?: boolean;
 }
 
 function ChatInput({
@@ -449,11 +451,42 @@ function ChatInput({
   onCancelRecording,
   audioOutputEnabled,
   onToggleAudioOutput,
-  disabled = false
+  disabled = false,
+  keyboardVisible = false
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  // Auto-scroll para manter textarea visível quando teclado aparece
+  useEffect(() => {
+    console.log('ChatInput: keyboardVisible changed to:', keyboardVisible);
+    
+    if (keyboardVisible && textareaRef.current) {
+      const textarea = textareaRef.current;
+      const scrollIntoView = () => {
+        console.log('Scrolling textarea into view');
+        textarea.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      };
+      
+      // Scroll imediato e também quando o usuário focar
+      setTimeout(scrollIntoView, 100); // Pequeno delay para garantir que o layout foi atualizado
+      
+      const handleFocus = () => {
+        console.log('Textarea focused, scrolling into view');
+        setTimeout(scrollIntoView, 100);
+      };
+      textarea.addEventListener('focus', handleFocus);
+      
+      return () => {
+        textarea.removeEventListener('focus', handleFocus);
+      };
+    }
+  }, [keyboardVisible]);
 
   const adjustHeight = () => {
     const textarea = textareaRef.current;
@@ -523,7 +556,14 @@ function ChatInput({
   };
 
   return (
-    <div className="border-t border-white/10 bg-black/20 backdrop-blur-xl p-4 relative z-10">
+    <div 
+      className={cn(
+        "border-t border-white/10 p-4 relative z-10",
+        keyboardVisible 
+          ? "bg-slate-900/90 backdrop-blur-md border-t border-cyan-500/50" 
+          : "bg-black/20 backdrop-blur-xl"
+      )}
+    >
       <div className="flex items-center gap-2 mb-3">
         <div className="flex items-center gap-3 text-sm bg-white/5 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/10 shadow-lg">
           <span className="text-white/80 font-medium">Resposta com áudio</span>
@@ -594,11 +634,14 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
   const [isLoading, setIsLoading] = useState(false);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
   const lastSentMessageRef = useRef<string>('');
   const lastSentTimeRef = useRef<number>(0);
   const lastResetTriggerRef = useRef<number>(0);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const suggestedActions: SuggestedAction[] = [
     { id: "1", text: "Trabalhos sobre estatística"},
@@ -606,6 +649,84 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
     { id: "3", text: "Quais professores trabalham com física quântica?"},
     { id: "4", text: "Quero saber mais sobre o professor Pavão"}
   ];
+
+  // Configurar listeners do teclado
+  useEffect(() => {
+    const setupKeyboardListeners = async () => {
+      try {
+        // Listener para quando o teclado aparecer
+        await Keyboard.addListener('keyboardWillShow', (info) => {
+          console.log('Keyboard will show with height:', info.keyboardHeight);
+          console.log('Setting keyboard visible to true');
+          setKeyboardVisible(true);
+          setKeyboardHeight(info.keyboardHeight || 280); // Fallback height
+          
+          // Garantir que o input fique visível
+          setTimeout(() => {
+            console.log('Input should now be positioned at bottom:', info.keyboardHeight);
+            if (chatContainerRef.current) {
+              const container = chatContainerRef.current;
+              const messagesArea = container.querySelector('.overflow-y-auto');
+              if (messagesArea) {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+              }
+            }
+          }, 350); // Aguardar a transição completar
+        });
+
+        // Listener para quando o teclado desaparecer
+        await Keyboard.addListener('keyboardWillHide', () => {
+          console.log('Keyboard will hide');
+          setKeyboardVisible(false);
+          setKeyboardHeight(0);
+        });
+      } catch (error) {
+        console.log('Capacitor Keyboard not available, using fallback detection:', error);
+        
+        // Fallback: detectar mudanças no viewport para dispositivos móveis
+        const initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+        
+                 const handleViewportChange = () => {
+           const currentHeight = window.visualViewport?.height || window.innerHeight;
+           const heightDifference = initialViewportHeight - currentHeight;
+           
+           if (heightDifference > 150) { // Teclado provavelmente apareceu
+             console.log('Keyboard detected via viewport change, height difference:', heightDifference);
+             console.log('Setting keyboard visible to true via fallback');
+             setKeyboardVisible(true);
+             // Usar altura detectada ou mínimo de 280px
+             setKeyboardHeight(Math.max(heightDifference, 280));
+           } else {
+             console.log('Keyboard hidden via viewport change');
+             setKeyboardVisible(false);
+             setKeyboardHeight(0);
+           }
+         };
+
+        // Usar visualViewport se disponível, senão window resize
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', handleViewportChange);
+        } else {
+          window.addEventListener('resize', handleViewportChange);
+        }
+
+        return () => {
+          if (window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', handleViewportChange);
+          } else {
+            window.removeEventListener('resize', handleViewportChange);
+          }
+        };
+      }
+    };
+
+    setupKeyboardListeners();
+
+    return () => {
+      // Cleanup listeners
+      Keyboard.removeAllListeners();
+    };
+  }, []);
 
   // Função para reproduzir áudio a partir de Base64
   const playAudio = (audioBase64: string, format: string = 'mp3', messageId?: string) => {
@@ -878,7 +999,20 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
      }, [resetTrigger, onResetChat]); // resetTrigger e onResetChat como dependências
 
   return (
-    <div className="flex flex-col h-screen max-w-4xl mx-auto relative overflow-hidden">
+    <div 
+      ref={chatContainerRef}
+      className={cn(
+        "flex flex-col max-w-4xl mx-auto relative overflow-hidden",
+        "mobile-vh keyboard-transition mobile-optimized",
+        keyboardVisible && "compact-layout"
+      )}
+      style={{
+        height: keyboardVisible 
+          ? `calc(100vh - ${keyboardHeight}px)` 
+          : '100vh',
+        transition: 'height 0.3s ease-in-out'
+      }}
+    >
       {/* Academic Background Pattern */}
       <AcademicBackground />
 
@@ -901,7 +1035,18 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
       </motion.div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 relative z-10" style={{ willChange: 'transform' }}>
+      <div 
+        className={cn(
+          "flex-1 overflow-y-auto p-4 space-y-6 relative z-10 mobile-optimized",
+          keyboardVisible && "pb-2"
+        )} 
+        style={{ 
+          willChange: 'transform',
+          maxHeight: keyboardVisible 
+            ? `calc(100vh - ${keyboardHeight + 160}px)` 
+            : 'calc(100vh - 160px)'
+        }}
+      >
         {messages.map((message) => (
           <ChatBubble
             key={message.id}
@@ -949,19 +1094,30 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
       </AnimatePresence>
 
       {/* Input */}
-      <ChatInput
-        value={inputValue}
-        onChange={setInputValue}
-        onSend={handleSend}
-        isRecording={isRecording}
-        recordingDuration={recordingDuration}
-        onStartRecording={handleStartRecording}
-        onStopRecording={handleStopRecording}
-        onCancelRecording={handleCancelRecording}
-        audioOutputEnabled={audioOutputEnabled}
-        onToggleAudioOutput={setAudioOutputEnabled}
-        disabled={isLoading}
-      />
+      <div 
+        className={cn(
+          "relative",
+          keyboardVisible ? "fixed left-0 right-0 z-[9999]" : "z-50"
+        )}
+        style={{
+          bottom: keyboardVisible ? `${keyboardHeight}px` : undefined
+        }}
+      >
+        <ChatInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSend={handleSend}
+          isRecording={isRecording}
+          recordingDuration={recordingDuration}
+          onStartRecording={handleStartRecording}
+          onStopRecording={handleStopRecording}
+          onCancelRecording={handleCancelRecording}
+          audioOutputEnabled={audioOutputEnabled}
+          onToggleAudioOutput={setAudioOutputEnabled}
+          disabled={isLoading}
+          keyboardVisible={keyboardVisible}
+        />
+      </div>
     </div>
   );
 } 
