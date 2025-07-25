@@ -9,7 +9,7 @@ SERVER_HOST = os.getenv("SERVER_HOST")
 SERVER_PORT = os.getenv("SERVER_PORT")
 
 # Configurações do Whisper
-WHISPER_MODEL = "base"  # ou "tiny", "small", "medium", "large"
+WHISPER_MODEL = "medium"  # ou "tiny", "small", "medium", "large"
 
 # Configurações do Chat
 USE_LOCAL_MODEL = True  # Alternar entre modelo local e OpenAI
