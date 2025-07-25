@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, Square, X, Play, Pause, Volume2, VolumeX, Send, Globe, QrCode, Image as ImageIcon, GraduationCap, Users, MessageCircle } from "lucide-react";
+import { Mic, Square, Trash2, Play, Pause, Volume2, VolumeX, Send, Globe, QrCode, Image as ImageIcon, GraduationCap, Users, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -63,13 +63,13 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration }: Aud
         <div className="flex items-center gap-2 bg-red-500/20 rounded-full px-3 py-1 backdrop-blur-sm border border-red-500/30">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-            <span className="text-sm font-mono text-red-300">{formatTime(duration)}</span>
+            <span className="text-sm font-mono text-white">{formatTime(duration)}</span>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onStop}
-            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-red-300 hover:text-red-200"
+            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
           >
             <Square className="w-4 h-4 fill-current" />
           </Button>
@@ -77,9 +77,9 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration }: Aud
             variant="ghost"
             size="icon"
             onClick={onCancel}
-            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-red-300 hover:text-red-200"
+            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
           >
-            <X className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -605,7 +605,20 @@ function ModernChatInterface({ onResetChat, resetTrigger }: ModernChatInterfaceP
     setIsRecording(true);
     setRecordingDuration(0);
     recordingIntervalRef.current = setInterval(() => {
-      setRecordingDuration(prev => prev + 1);
+      setRecordingDuration(prev => {
+        const newDuration = prev + 1;
+        // Limite de 30 segundos - cancelar gravação automaticamente
+        if (newDuration >= 30) {
+          // Parar gravação
+          setIsRecording(false);
+          if (recordingIntervalRef.current) {
+            clearInterval(recordingIntervalRef.current);
+          }
+          setRecordingDuration(0);
+          return 0;
+        }
+        return newDuration;
+      });
     }, 1000);
   }, []);
 
