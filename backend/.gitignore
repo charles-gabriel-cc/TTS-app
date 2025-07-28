@@ -6,3 +6,5 @@
 /ccen-docentes
 /.gradio
 .env
+/articles
+/whisper_cache

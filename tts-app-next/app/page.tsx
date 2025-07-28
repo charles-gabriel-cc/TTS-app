@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import IdleScreen from '@/components/ui/idle-screen'
+import { api } from '@/services/api'
 
 const ModernChatInterface = dynamic(() => import('@/components/ModernChatInterface'), {
   ssr: false
@@ -11,6 +12,7 @@ const ModernChatInterface = dynamic(() => import('@/components/ModernChatInterfa
 export default function Home() {
   const [showIdleScreen, setShowIdleScreen] = useState(true)
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
+  const [chatResetTrigger, setChatResetTrigger] = useState(0)
 
   // Auto-show idle screen after period of inactivity
   useEffect(() => {
@@ -19,10 +21,10 @@ export default function Home() {
     const startInactivityTimer = () => {
       clearTimeout(inactivityTimer)
       if (hasUserInteracted && !showIdleScreen) {
-        // Show idle screen after 2 minutes of inactivity
+        // Show idle screen after 30 seconds of inactivity
         inactivityTimer = setTimeout(() => {
           setShowIdleScreen(true)
-        }, 2 * 60 * 1000) // 2 minutes
+        }, 90 * 1000) // 30 seconds
       }
     }
 
@@ -57,16 +59,27 @@ export default function Home() {
     if (!hasUserInteracted) {
       setHasUserInteracted(true)
     }
+    // Reset session ID when user exits idle screen
+    api.resetSession()
+    // Reset chat interface visually
+    setChatResetTrigger(prev => prev + 1)
+  }
+
+  const handleChatReset = () => {
+    console.log('Chat foi resetado visualmente')
   }
 
   return (
     <div className="h-screen bg-gray-50">
-      <ModernChatInterface />
+      <ModernChatInterface 
+        resetTrigger={chatResetTrigger}
+        onResetChat={handleChatReset}
+      />
       <IdleScreen
         isVisible={showIdleScreen}
         onDismiss={handleIdleScreenDismiss}
-        title="Assistente Virtual da Faculdade"
-        description="Faça perguntas sobre professores da faculdade. Obtenha acesso instantâneo a detalhes do corpo docente, horários de atendimento e informações de contato para melhorar sua experiência acadêmica."
+        title="Assistente Virtual do CCEN"
+        description="Conheça os professores do CCEN. Obtenha informações sobre os professores, suas áreas de atuação, acesso aos seus currículos lattes e outras informações."
         callToAction="Toque em qualquer lugar para começar"
       />
     </div>

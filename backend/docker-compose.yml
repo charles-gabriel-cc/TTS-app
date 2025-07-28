@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # Serviço Ollama para modelos locais
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tts-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+    restart: unless-stopped
+    networks:
+      - tts-network
+    # Suporte para GPU (requer NVIDIA Docker runtime)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Serviço Qdrant standalone (opcional - pode usar o integrado)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: tts-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    restart: unless-stopped
+    networks:
+      - tts-network
+
+  # Aplicação TTS principal
+  tts-app:
+    image: charlescc/backend-tts-app:latest
+    container_name: tts-app-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # CÓDIGO MONTADO COMO VOLUME (mudanças em tempo real)
+      - .:/app
+      # Excluir diretórios que não devem ser montados
+      - /app/tts-env
+      - /app/__pycache__
+      - /app/.gradio
+      # Volumes para dados
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+      - ./ccen-docentes:/app/ccen-docentes
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+      - QDRANT_URL=http://qdrant:6333
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - USE_LOCAL_COLLECTION=true
+      - COLLECTION_NAME=ccen-docentes
+      - USE_LOCAL_MODEL=true
+      # Configurações CUDA
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+      #Configurações Langsmith
+      - LANGSMITH_TRACING=true
+      - LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+      - LANGSMITH_PROJECT=backend
+    depends_on:
+      - qdrant
+      - ollama
+    restart: on-failure
+    command: >
+      bash -c "
+      echo '=== TTS-APP com CUDA 11.8 e Python $$(python --version) ===';
+      echo '🔧 Verificando CUDA...';
+      nvidia-smi;
+      echo '⏳ Aguardando Qdrant ficar disponível...';
+      while ! curl -s http://qdrant:6333/health > /dev/null 2>&1; do
+        echo '   Qdrant ainda não disponível, aguardando...';
+        sleep 2;
+      done;
+      echo '✅ Qdrant está disponível!';
+      echo '⏳ Aguardando Ollama ficar disponível...';
+      while ! curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
+        echo '   Ollama ainda não disponível, aguardando...';
+        sleep 3;
+      done;
+      echo '✅ Ollama está disponível!';
+      echo '🔥 Aquecendo Ollama...';
+      echo \"   Enviando mensagem inicial para carregar modelo: $${MODEL_NAME}...\";
+      response=$$(curl -s -X POST http://ollama:11434/api/generate -H 'Content-Type: application/json' -d '{\"model\":\"$${MODEL_NAME}\",\"prompt\":\"Hello\",\"stream\":false}' | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data.get(\"response\",\"Erro no parsing\").strip())' 2>/dev/null || echo 'Erro na conexão');
+      echo '🚀 Ollama respondeu:' \"$$response\";
+      echo '';
+      echo '🎯 AMBIENTE PRONTO!';
+      echo '📝 Para iniciar o servidor Python, execute:';
+      echo '   python server.py';
+      echo '';
+      echo '💡 Ou use o container interativamente:';
+      echo '   docker exec -it tts-app-backend bash';
+      echo '';
+      echo '🔄 Mantendo container rodando...';
+      tail -f /dev/null
+      "
+    networks:
+      - tts-network
+    # Suporte para GPU (requer NVIDIA Docker runtime)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  qdrant_data:
+    driver: local
+  ollama_data:
+    driver: local
+
+networks:
+  tts-network:
+    driver: bridge 

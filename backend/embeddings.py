@@ -8,7 +8,8 @@ import uuid
 from config import (
     QDRANT_URL,
     QDRANT_API_KEY,
-    COLLECTION_NAME
+    COLLECTION_NAME,
+    EMBED_MODEL
 )
 
 # 1. Configurações
@@ -16,7 +17,9 @@ diretorio = 'ccen-docentes'
 collection_name = COLLECTION_NAME
 
 # 2. Inicializa componentes
-embed_model = OllamaEmbedding(model_name="all-minilm:l6-v2")
+import os
+ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+embed_model = OllamaEmbedding(model_name=EMBED_MODEL, base_url=ollama_base_url)
 parser = SemanticSplitterNodeParser.from_defaults(embed_model=embed_model)
 
 qdrant_client = QdrantClient(
