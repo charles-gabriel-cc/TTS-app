@@ -72,6 +72,7 @@ python --version  # 3.10.11
 # Docker
 docker --version         # 20.0.0+
 docker-compose --version # 2.0.0+
+```
 
 ### 🔧 Dependências Específicas
 
