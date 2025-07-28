@@ -1,4 +1,4 @@
-# 🤖 Assistente Virtual CCEN - TTS App
+# Assistente Virtual CCEN - TTS App
 
 <div align="center">
 
@@ -69,9 +69,7 @@ npm --version   # v8.0.0+
 # Python
 python --version  # 3.10.11
 
-# Docker
-docker --version         # 20.0.0+
-docker-compose --version # 2.0.0+
+# Docker Desktop
 ```
 
 ### 🔧 Dependências Específicas
@@ -117,6 +115,11 @@ LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
 LANGSMITH_PROJECT="backend"
 LANGSMITH_API_KEY="sua-chave-langsmith"
 ```
+
+### Processamento de documentos
+
+- Criar pasta com nome da variavel COLLECTION_NAME contendo os arquivos a serem processados
+- Ver backend/services/embeddings.py
 
 ### 🐋 Inicialização do servidor
 
