@@ -11,6 +11,7 @@ from config import (
     MODEL_NAME,
     USE_LOCAL_COLLECTION,
     COLLECTION_NAME,
+    ARTICLES_COLLECTION_NAME,
     QDRANT_URL,
     QDRANT_API_KEY,
     DOCS
@@ -85,7 +86,11 @@ def cleanup_expired_cache():
         del response_cache[session_id]
 
 # Criar aplicação FastAPI
-app = FastAPI()
+app = FastAPI(
+    title="TTS App Backend",
+    description="Backend para aplicativo de chat com TTS e galeria de artigos científicos",
+    version="1.0.0"
+)
 
 # Configurar CORS
 app.add_middleware(
@@ -95,6 +100,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Incluir routers da API
+try:
+    from api.articles import router as articles_router
+    app.include_router(articles_router)
+    logger.info("✅ Router de artigos incluído com sucesso")
+except ImportError as e:
+    logger.warning(f"⚠️ Não foi possível importar router de artigos: {e}")
+except Exception as e:
+    logger.error(f"❌ Erro ao incluir router de artigos: {e}")
 
 # Inicializar serviços
 transcription_service = TranscriptionService(model_name=WHISPER_MODEL)

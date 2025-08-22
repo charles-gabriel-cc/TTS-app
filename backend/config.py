@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configurações do servidor
-SERVER_HOST = os.getenv("SERVER_HOST")
-SERVER_PORT = os.getenv("SERVER_PORT")
+SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")
+SERVER_PORT = os.getenv("SERVER_PORT", "8000")
 
 # Configurações do Whisper
 WHISPER_MODEL = "medium"  # ou "tiny", "small", "medium", "large"
@@ -17,7 +17,10 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 EMBED_MODEL = "all-minilm:l6-v2"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 USE_LOCAL_COLLECTION = True
-COLLECTION_NAME = "ccen-docentes"
+
+# Configurações das Coleções Qdrant
+COLLECTION_NAME = "ccen-docentes"  # Coleção para currículos dos professores
+ARTICLES_COLLECTION_NAME = "ccen-artigos"  # Coleção para artigos científicos
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 DOCS = "ccen-docentes"

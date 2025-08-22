@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, Square, Trash2, Play, Pause, Volume2, VolumeX, Send, Globe, QrCode, Image as ImageIcon, GraduationCap, Users, MessageCircle } from "lucide-react";
+import { Play, Pause, Globe, QrCode, Image as ImageIcon, GraduationCap, Users, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import ReactMarkdown from 'react-markdown';
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from 'uuid';
 import { api } from '@/services/api';
 import { Keyboard } from '@capacitor/keyboard';
+import { ChatInput } from "@/components/ChatInput";
+import { useChatContext } from '@/contexts/ChatContext';
 
 interface Attachment {
   url: string;
@@ -150,62 +150,6 @@ const AcademicBackground = React.memo(() => {
 });
 
 AcademicBackground.displayName = 'AcademicBackground';
-
-interface AudioRecorderProps {
-  onStart?: () => void;
-  onStop?: () => void;
-  onCancel?: () => void;
-  isRecording: boolean;
-  duration: number;
-  disabled?: boolean;
-}
-
-function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration, disabled = false }: AudioRecorderProps) {
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      {!isRecording ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onStart}
-          disabled={disabled}
-          className="rounded-full hover:bg-white/10 text-white/70 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-        >
-          <Mic className="w-5 h-5" />
-        </Button>
-      ) : (
-        <div className="flex items-center gap-2 bg-red-500/20 rounded-full px-3 py-1 backdrop-blur-sm border border-red-500/30">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-            <span className="text-sm font-mono text-white">{formatTime(duration)}</span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onStop}
-            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
-          >
-            <Square className="w-4 h-4 fill-current" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onCancel}
-            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 interface AudioPlayerProps {
   audioBase64: string;
@@ -425,201 +369,6 @@ function SuggestedActions({ actions, onSelectAction }: SuggestedActionsProps) {
   );
 }
 
-interface ChatInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  onSend: () => void;
-  isRecording: boolean;
-  recordingDuration: number;
-  onStartRecording: () => void;
-  onStopRecording: (audioBlob: Blob) => void;
-  onCancelRecording: () => void;
-  audioOutputEnabled: boolean;
-  onToggleAudioOutput: (enabled: boolean) => void;
-  disabled?: boolean;
-  keyboardVisible?: boolean;
-}
-
-function ChatInput({
-  value,
-  onChange,
-  onSend,
-  isRecording,
-  recordingDuration,
-  onStartRecording,
-  onStopRecording,
-  onCancelRecording,
-  audioOutputEnabled,
-  onToggleAudioOutput,
-  disabled = false,
-  keyboardVisible = false
-}: ChatInputProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-
-  // Auto-scroll para manter textarea visível quando teclado aparece
-  useEffect(() => {
-    console.log('ChatInput: keyboardVisible changed to:', keyboardVisible);
-    
-    if (keyboardVisible && textareaRef.current) {
-      const textarea = textareaRef.current;
-      const scrollIntoView = () => {
-        console.log('Scrolling textarea into view');
-        textarea.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center',
-          inline: 'nearest'
-        });
-      };
-      
-      // Scroll imediato e também quando o usuário focar
-      setTimeout(scrollIntoView, 100); // Pequeno delay para garantir que o layout foi atualizado
-      
-      const handleFocus = () => {
-        console.log('Textarea focused, scrolling into view');
-        setTimeout(scrollIntoView, 100);
-      };
-      textarea.addEventListener('focus', handleFocus);
-      
-      return () => {
-        textarea.removeEventListener('focus', handleFocus);
-      };
-    }
-  }, [keyboardVisible]);
-
-  const adjustHeight = () => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
-    }
-  };
-
-  useEffect(() => {
-    adjustHeight();
-  }, [value]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (value.trim() && !disabled) {
-        onSend();
-      }
-    }
-  };
-
-  const startRecording = async () => {
-    if (disabled) return; // Não permitir iniciar gravação se desabilitado
-    
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
-        onStopRecording(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      onStartRecording();
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-    }
-  };
-
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.onstop = null;
-      const stream = mediaRecorderRef.current.stream;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      chunksRef.current = [];
-      onCancelRecording();
-    }
-  };
-
-  return (
-    <div 
-      className={cn(
-        "border-t border-white/10 p-4 relative z-10",
-        keyboardVisible 
-          ? "bg-slate-900/90 backdrop-blur-md border-t border-cyan-500/50" 
-          : "bg-black/20 backdrop-blur-xl"
-      )}
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex items-center gap-3 text-sm bg-white/5 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/10 shadow-lg">
-          <span className="text-white/80 font-medium">Resposta com áudio</span>
-          <Switch
-            checked={audioOutputEnabled}
-            onCheckedChange={onToggleAudioOutput}
-            className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-400 data-[state=unchecked]:bg-white/20 border-white/30 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 [&>span]:bg-white [&>span]:shadow-lg [&>span]:border [&>span]:border-white/20"
-          />
-          {audioOutputEnabled ? (
-            <Volume2 className="w-4 h-4 text-green-400 drop-shadow-sm" />
-          ) : (
-            <VolumeX className="w-4 h-4 text-white/50" />
-          )}
-        </div>
-      </div>
-
-      <div className="relative">
-        <div className="flex items-end gap-2 bg-white/5 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-          <Textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Digite sua mensagem..."
-            className="flex-1 min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 py-2 px-1 text-base leading-6 text-white placeholder:text-white/50"
-            rows={1}
-            disabled={disabled || isRecording}
-          />
-
-          <div className="flex items-center gap-2 shrink-0">
-            <AudioRecorder
-              isRecording={isRecording}
-              duration={recordingDuration}
-              onStart={startRecording}
-              onStop={stopRecording}
-              onCancel={cancelRecording}
-              disabled={disabled}
-            />
-            
-            {!isRecording && (
-              <Button
-                onClick={onSend}
-                disabled={!value.trim() || disabled}
-                size="icon"
-                className="rounded-full bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-600 hover:to-teal-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface ModernChatInterfaceProps {
   onResetChat?: () => void; // Callback para notificar quando chat é resetado
   resetTrigger?: number; // Trigger para resetar o chat externamente
@@ -628,20 +377,113 @@ interface ModernChatInterfaceProps {
 export default function ModernChatInterface({ onResetChat, resetTrigger }: ModernChatInterfaceProps = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const [audioOutputEnabled, setAudioOutputEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  // Contexto para mensagem pendente e estados compartilhados
+  const { 
+    pendingMessage, 
+    clearPendingMessage,
+    audioOutputEnabled,
+    setAudioOutputEnabled,
+  isRecording,
+    setIsRecording,
+  recordingDuration,
+    setRecordingDuration
+  } = useChatContext();
+
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
   const lastSentMessageRef = useRef<string>('');
   const lastSentTimeRef = useRef<number>(0);
   const lastResetTriggerRef = useRef<number>(0);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Processar mensagem pendente quando o componente montar
+  useEffect(() => {
+    if (pendingMessage) {
+      console.log("Processando mensagem pendente:", pendingMessage);
+      // Simular o envio da mensagem automaticamente
+      setTimeout(() => {
+        handleSendMessage(pendingMessage);
+        clearPendingMessage();
+      }, 500); // Pequeno delay para a transição visual
+    }
+  }, [pendingMessage, clearPendingMessage]);
+
+  // Função para enviar mensagem com texto específico
+  const handleSendMessage = useCallback(async (messageText: string) => {
+    if (!messageText.trim()) return;
+    
+    // Proteção contra envio duplicado
+    const currentTime = Date.now();
+    const messageContent = messageText.trim();
+    
+    // Evitar envio da mesma mensagem em menos de 2 segundos
+    if (lastSentMessageRef.current === messageContent && 
+        currentTime - lastSentTimeRef.current < 2000) {
+      console.log('Envio duplicado bloqueado');
+      return;
+    }
+    
+    // Não enviar se já está processando
+    if (isLoading) {
+      console.log('Envio bloqueado - já processando');
+      return;
+    }
+    
+    // Atualizar referências de controle
+    lastSentMessageRef.current = messageContent;
+    lastSentTimeRef.current = currentTime;
+
+    const userMessage: ChatMessage = {
+      id: uuidv4(),
+      content: messageContent,
+      role: "user",
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      // Enviar mensagem para o backend usando o endpoint apropriado
+      const response = await api.sendChatMessage(messageContent, audioOutputEnabled);
+      
+      // Adicionar resposta do assistente
+      const assistantMessage: ChatMessage = {
+        id: uuidv4(),
+        content: response.text,
+        role: "assistant",
+        timestamp: new Date(),
+        audioUrl: response.audio,
+        audioFormat: response.audioFormat
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      
+      // Se há áudio e TTS está habilitado, reproduzir automaticamente
+      if (response.audio && audioOutputEnabled) {
+        playAudio(response.audio, response.audioFormat, assistantMessage.id);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      
+      const errorContent = `Desculpe, ocorreu um erro ao processar sua mensagem`;
+      
+      const errorMessage: ChatMessage = {
+        id: uuidv4(),
+        content: errorContent,
+        role: "assistant",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [audioOutputEnabled, isLoading]);
 
   const suggestedActions: SuggestedAction[] = [
     { id: "1", text: "Trabalhos sobre estatística"},
@@ -788,96 +630,29 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
   const handleSend = useCallback(async () => {
     if (!inputValue.trim()) return;
     
-    // Proteção contra envio duplicado
-    const currentTime = Date.now();
     const messageContent = inputValue.trim();
+    setInputValue(""); // Limpar input imediatamente
     
-    // Evitar envio da mesma mensagem em menos de 2 segundos
-    if (lastSentMessageRef.current === messageContent && 
-        currentTime - lastSentTimeRef.current < 2000) {
-      console.log('Envio duplicado bloqueado');
-      return;
-    }
-    
-    // Não enviar se já está processando
-    if (isLoading) {
-      console.log('Envio bloqueado - já processando');
-      return;
-    }
-    
-    // Atualizar referências de controle
-    lastSentMessageRef.current = messageContent;
-    lastSentTimeRef.current = currentTime;
-
-    const userMessage: ChatMessage = {
-      id: uuidv4(),
-      content: messageContent,
-      role: "user",
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue("");
-    setIsLoading(true);
-
-    try {
-      // Enviar mensagem para o backend usando o endpoint apropriado
-      const response = await api.sendChatMessage(messageContent, audioOutputEnabled);
-      
-      // Adicionar resposta do assistente
-      const assistantMessage: ChatMessage = {
-        id: uuidv4(),
-        content: response.text,
-        role: "assistant",
-        timestamp: new Date(),
-        audioUrl: response.audio,
-        audioFormat: response.audioFormat
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      // Se há áudio e TTS está habilitado, reproduzir automaticamente
-      if (response.audio && audioOutputEnabled) {
-        playAudio(response.audio, response.audioFormat, assistantMessage.id);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      
-      const errorContent = `Desculpe, ocorreu um erro ao processar sua mensagem`;
-      //: ${error instanceof Error ? error.message : 'Erro desconhecido'}
-      
-      const errorMessage: ChatMessage = {
-        id: uuidv4(),
-        content: errorContent,
-        role: "assistant",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [inputValue, audioOutputEnabled, isLoading]);
+    // Usar a função handleSendMessage para processar a mensagem
+    await handleSendMessage(messageContent);
+  }, [inputValue, handleSendMessage]);
 
   const handleStartRecording = useCallback(() => {
     setIsRecording(true);
     setRecordingDuration(0);
     recordingIntervalRef.current = setInterval(() => {
-      setRecordingDuration(prev => {
-        const newDuration = prev + 1;
+      setRecordingDuration(recordingDuration + 1);
         // Limite de 30 segundos - cancelar gravação automaticamente
-        if (newDuration >= 30) {
+      if (recordingDuration >= 29) {
           // Parar gravação
           setIsRecording(false);
           if (recordingIntervalRef.current) {
             clearInterval(recordingIntervalRef.current);
           }
           setRecordingDuration(0);
-          return 0;
         }
-        return newDuration;
-      });
     }, 1000);
-  }, []);
+  }, [setIsRecording, setRecordingDuration, recordingDuration]);
 
   const handleStopRecording = useCallback(async (audioBlob: Blob) => {
     setIsRecording(false);
@@ -928,7 +703,6 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
         console.error('Error processing audio:', error);
         
         const errorContent = `Desculpe, não consegui processar o áudio`;
-        //${error instanceof Error ? error.message : 'Erro desconhecido'}
         
         const errorMessage: ChatMessage = {
           id: uuidv4(),
@@ -940,7 +714,7 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
       } finally {
         setIsLoading(false);
       }
-  }, [isLoading, audioOutputEnabled]);
+  }, [isLoading, audioOutputEnabled, setIsRecording, setRecordingDuration]);
 
   const handleCancelRecording = useCallback(() => {
     setIsRecording(false);
@@ -948,7 +722,7 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
       clearInterval(recordingIntervalRef.current);
     }
     setRecordingDuration(0);
-  }, []);
+  }, [setIsRecording, setRecordingDuration]);
 
   const handleSelectAction = useCallback((action: SuggestedAction) => {
     setInputValue(action.text);
@@ -971,8 +745,6 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
   }, [currentAudio]);
 
   const showSuggestedActions = messages.length === 0 && !inputValue && !isRecording;
-
-
 
   // Effect para escutar mudanças no resetTrigger - versão estável
   useEffect(() => {
@@ -1129,6 +901,7 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
           onToggleAudioOutput={setAudioOutputEnabled}
           disabled={isLoading}
           keyboardVisible={keyboardVisible}
+          showAudioToggle={true}
         />
       </div>
     </div>

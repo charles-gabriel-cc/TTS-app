@@ -34,6 +34,15 @@ interface ChatMessage {
   audioFormat?: string // 'mp3' | 'wav'
 }
 
+interface PDFArticle {
+  id: string
+  filename: string
+  title: string
+  author: string
+  size: number
+  url: string
+}
+
 // Função para gerar um session_id único
 const generateSessionId = () => {
   return uuidv4()
@@ -225,6 +234,52 @@ export const api = {
         }
       },
       5 // maxRetries
+    )
+  },
+
+  // Função para buscar PDFs de artigos
+  async getPDFArticles(): Promise<PDFArticle[]> {
+    const cacheKey = `pdfs_${sessionId}`
+    
+    return executeWithCache(
+      cacheKey,
+      async () => {
+        const response = await fetch(`${API_ENDPOINTS.backend}/articles/pdfs`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to fetch PDF articles`)
+        }
+
+        const data = await response.json()
+        return data
+      },
+      3 // maxRetries
+    )
+  },
+
+  // Função para baixar um PDF específico
+  async downloadPDF(articleId: string): Promise<Blob> {
+    const cacheKey = `pdf_download_${articleId}_${sessionId}`
+    
+    return executeWithCache(
+      cacheKey,
+      async () => {
+        const response = await fetch(`${API_ENDPOINTS.backend}/articles/pdfs/${articleId}/download`, {
+          method: 'GET',
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to download PDF`)
+        }
+
+        return await response.blob()
+      },
+      2 // maxRetries
     )
   }
 } 
