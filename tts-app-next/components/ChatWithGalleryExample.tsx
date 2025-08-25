@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChatWithGallery } from "./ChatWithGallery";
+import ChatWithGallery from "./ChatWithGallery";
 import ModernChatInterface from "./ModernChatInterface";
 import { ChatProvider, useChatContext } from "@/contexts/ChatContext";
 import { motion, AnimatePresence } from "framer-motion";

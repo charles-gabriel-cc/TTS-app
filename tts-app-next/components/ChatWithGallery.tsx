@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatContext } from '@/contexts/ChatContext';
-import PDFViewer, { PDFPreview } from "@/components/PDFViewer";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
 import { 
@@ -53,8 +53,7 @@ const fallbackGalleryItems = [
 ];
 
 export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryProps) {
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [showPDFViewer, setShowPDFViewer] = useState(false);
+
   const [pdfArticles, setPdfArticles] = useState<PDFArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,13 +162,10 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
   }, [audioOutputEnabled, setAudioOutputEnabled]);
 
   const handleItemClick = useCallback((article: PDFArticle) => {
-    setSelectedItem(article);
-    setShowPDFViewer(true);
-  }, []);
-
-  const handleCloseViewer = useCallback(() => {
-    setShowPDFViewer(false);
-    setSelectedItem(null);
+    // TODO: Implementar nova funcionalidade de visualização
+    console.log('Item clicado:', article);
+    // Por enquanto, apenas abre o PDF em uma nova aba
+    window.open(article.url, '_blank');
   }, []);
 
 
@@ -254,11 +250,29 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.random() * 0.2 }}
             >
-              <PDFPreview
-                url={article.url}
-                title={article.title}
+              <motion.div
+                className="relative bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden cursor-pointer group hover:bg-white/10 hover:border-white/20 transition-all duration-200"
                 onClick={() => handleItemClick(article)}
-              />
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="aspect-[3/4] flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10">
+                  <div className="flex flex-col items-center gap-3 text-center p-4">
+                    <FileText className="w-12 h-12 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+                    <div>
+                      <h3 className="text-sm font-medium text-white truncate max-w-32">
+                        {article.title}
+                      </h3>
+                      <p className="text-xs text-white/60 mt-1">
+                        Clique para visualizar
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Overlay de hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </motion.div>
             </motion.div>
           ))
         ) : (
@@ -272,32 +286,7 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
         </div>
       </div>
 
-      {/* PDF Viewer Modal */}
-      <AnimatePresence>
-        {showPDFViewer && selectedItem && (
-          <motion.div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="w-full max-w-4xl max-h-[90vh] overflow-hidden"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            >
-              <PDFViewer
-                url={selectedItem.url}
-                title={selectedItem.title}
-                onClose={handleCloseViewer}
-                showControls={true}
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </div>
   );
 }

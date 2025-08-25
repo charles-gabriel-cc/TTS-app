@@ -11,5 +11,5 @@ export { default as ChatInterface } from './ChatInterface';
 export { default as AudioRecorder } from './AudioRecorder';
 
 // Novos componentes
-export { ChatWithGallery } from './ChatWithGallery';
+export { default as ChatWithGallery } from './ChatWithGallery';
 export { ChatWithGalleryExample, SimpleChatWithGalleryExample } from './ChatWithGalleryExample';
