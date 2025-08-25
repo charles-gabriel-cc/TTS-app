@@ -288,7 +288,7 @@ function PDFViewerContent({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="w-8 h-8 hover:bg-white/10"
+              className="w-8 h-8 hover:bg-white/10 text-white"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -306,7 +306,7 @@ function PDFViewerContent({
               size="icon"
               onClick={goToPreviousPage}
               disabled={state.pageNumber <= 1}
-              className="w-8 h-8 hover:bg-white/10 disabled:opacity-50"
+              className="w-8 h-8 hover:bg-white/10 disabled:opacity-50 text-white"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -320,7 +320,7 @@ function PDFViewerContent({
               size="icon"
               onClick={goToNextPage}
               disabled={state.pageNumber >= state.numPages}
-              className="w-8 h-8 hover:bg-white/10 disabled:opacity-50"
+              className="w-8 h-8 hover:bg-white/10 disabled:opacity-50 text-white"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -333,7 +333,7 @@ function PDFViewerContent({
               size="icon"
               onClick={zoomOut}
               disabled={state.scale <= 0.5}
-              className="w-8 h-8 hover:bg-white/10 disabled:opacity-50"
+              className="w-8 h-8 hover:bg-white/10 disabled:opacity-50 text-white"
             >
               <ZoomOut className="w-4 h-4" />
             </Button>
@@ -347,7 +347,7 @@ function PDFViewerContent({
               size="icon"
               onClick={zoomIn}
               disabled={state.scale >= 3.0}
-              className="w-8 h-8 hover:bg-white/10 disabled:opacity-50"
+              className="w-8 h-8 hover:bg-white/10 disabled:opacity-50 text-white"
             >
               <ZoomIn className="w-4 h-4" />
             </Button>
@@ -357,7 +357,7 @@ function PDFViewerContent({
               variant="ghost"
               size="icon"
               onClick={rotate}
-              className="w-8 h-8 hover:bg-white/10"
+              className="w-8 h-8 hover:bg-white/10 text-white"
             >
               <RotateCw className="w-4 h-4" />
             </Button>
@@ -367,7 +367,7 @@ function PDFViewerContent({
               variant="ghost"
               size="icon"
               onClick={downloadPDF}
-              className="w-8 h-8 hover:bg-white/10"
+              className="w-8 h-8 hover:bg-white/10 text-white"
             >
               <Download className="w-4 h-4" />
             </Button>

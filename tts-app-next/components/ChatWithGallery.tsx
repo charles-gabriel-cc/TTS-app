@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatContext } from '@/contexts/ChatContext';
@@ -58,6 +58,9 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
   const [pdfArticles, setPdfArticles] = useState<PDFArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [messageValue, setMessageValue] = useState("");
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [localRecordingDuration, setLocalRecordingDuration] = useState(0);
 
   // Contexto para estados compartilhados
   const { 
@@ -89,29 +92,70 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
   }, []);
 
   const handleSend = useCallback(() => {
-    // Esta função será chamada pelo ChatInput quando uma mensagem for enviada
-    // O ChatInput já gerencia o valor da mensagem internamente
-  }, []);
+    // Enviar mensagem e navegar para o chat
+    if (messageValue.trim() && onNavigateToChat) {
+      onNavigateToChat(messageValue.trim());
+      setMessageValue(""); // Limpar o input após enviar
+    }
+  }, [messageValue, onNavigateToChat]);
 
   const handleStartRecording = useCallback(() => {
     setIsRecording(true);
     setRecordingDuration(0);
-  }, [setIsRecording, setRecordingDuration]);
+    setLocalRecordingDuration(0);
+    
+    // Iniciar timer para duração da gravação
+    recordingIntervalRef.current = setInterval(() => {
+      setLocalRecordingDuration((prev) => {
+        const newDuration = prev + 1;
+        
+        // Limite de 30 segundos - cancelar gravação automaticamente
+        if (newDuration >= 30) {
+          setIsRecording(false);
+          if (recordingIntervalRef.current) {
+            clearInterval(recordingIntervalRef.current);
+          }
+          return 0;
+        }
+        return newDuration;
+      });
+      setRecordingDuration(localRecordingDuration + 1);
+    }, 1000);
+  }, [setIsRecording, setRecordingDuration, localRecordingDuration]);
 
   const handleStopRecording = useCallback(async (audioBlob: Blob) => {
     setIsRecording(false);
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
     setRecordingDuration(0);
+    setLocalRecordingDuration(0);
     
-    // Aqui você pode processar o áudio se necessário
-    // Por enquanto, vamos apenas navegar com uma mensagem de áudio
-    if (onNavigateToChat) {
-      onNavigateToChat("[Mensagem de áudio]");
+    try {
+      // Converter áudio em texto usando a API
+      const text = await api.speechToText(audioBlob);
+      
+      // Navegar para o chat com o texto transcrito
+      if (onNavigateToChat) {
+        onNavigateToChat(text);
+      }
+    } catch (error) {
+      console.error('Erro ao processar áudio:', error);
+      
+      // Em caso de erro, navegar com mensagem de erro
+      if (onNavigateToChat) {
+        onNavigateToChat("Erro ao processar áudio. Tente novamente.");
+      }
     }
   }, [setIsRecording, setRecordingDuration, onNavigateToChat]);
 
   const handleCancelRecording = useCallback(() => {
     setIsRecording(false);
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
     setRecordingDuration(0);
+    setLocalRecordingDuration(0);
   }, [setIsRecording, setRecordingDuration]);
 
   const handleToggleAudioOutput = useCallback(() => {
@@ -161,11 +205,11 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
       {/* Chat Input */}
       <div className="p-4 border-b border-white/10 bg-black/10">
         <ChatInput
-          value=""
-          onChange={() => {}}
+          value={messageValue}
+          onChange={setMessageValue}
           onSend={handleSend}
           isRecording={isRecording}
-          recordingDuration={recordingDuration}
+          recordingDuration={localRecordingDuration}
           onStartRecording={handleStartRecording}
           onStopRecording={handleStopRecording}
           onCancelRecording={handleCancelRecording}

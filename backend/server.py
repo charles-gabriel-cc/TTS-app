@@ -101,7 +101,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Incluir routers da API
+# Inicializar serviços
+transcription_service = TranscriptionService(model_name=WHISPER_MODEL)
+
+# Configurar gTTS (Google Text-to-Speech)
+logger.info("Configurando Google Text-to-Speech (gTTS) - Suporte nativo ao pt-br")
+
+# Incluir routers
 try:
     from api.articles import router as articles_router
     app.include_router(articles_router)
@@ -110,12 +116,6 @@ except ImportError as e:
     logger.warning(f"⚠️ Não foi possível importar router de artigos: {e}")
 except Exception as e:
     logger.error(f"❌ Erro ao incluir router de artigos: {e}")
-
-# Inicializar serviços
-transcription_service = TranscriptionService(model_name=WHISPER_MODEL)
-
-# Configurar gTTS (Google Text-to-Speech)
-logger.info("Configurando Google Text-to-Speech (gTTS) - Suporte nativo ao pt-br")
 
 # Inicializar o serviço de chat
 if USE_LOCAL_MODEL:

@@ -29,3 +29,4 @@ umap-learn
 matplotlib
 trainer
 coqpit 
+PyMuPDF==1.16.14
