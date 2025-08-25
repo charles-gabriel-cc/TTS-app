@@ -13,3 +13,5 @@ export { default as AudioRecorder } from './AudioRecorder';
 // Novos componentes
 export { default as ChatWithGallery } from './ChatWithGallery';
 export { ChatWithGalleryExample, SimpleChatWithGalleryExample } from './ChatWithGalleryExample';
+export { default as PdfViewer } from './PDFViewer';
+export { default as PdfViewerMobile } from './PDFViewerMobile';

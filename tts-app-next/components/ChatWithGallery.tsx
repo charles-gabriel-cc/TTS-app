@@ -4,6 +4,25 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatContext } from '@/contexts/ChatContext';
+import { useGalleryContext } from '@/contexts/GalleryContext';
+import PdfViewer from "@/components/PDFViewer";
+import { useIsMobile } from '@/hooks/useIsMobile';
+import dynamic from 'next/dynamic';
+
+// Importação dinâmica do PDFViewerMobile para otimização
+const PdfViewerMobile = dynamic(() => import('@/components/PDFViewerMobile'), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div className="bg-white rounded-lg p-6 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <p className="text-sm text-gray-600">Carregando visualizador...</p>
+        </div>
+      </div>
+    </div>
+  ),
+});
 
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/services/api";
@@ -54,12 +73,12 @@ const fallbackGalleryItems = [
 
 export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryProps) {
 
-  const [pdfArticles, setPdfArticles] = useState<PDFArticle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [messageValue, setMessageValue] = useState("");
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [localRecordingDuration, setLocalRecordingDuration] = useState(0);
+  
+  // Estado para controlar o visualizador de PDF
+  const [selectedPdf, setSelectedPdf] = useState<PDFArticle | null>(null);
 
   // Contexto para estados compartilhados
   const { 
@@ -71,24 +90,17 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
     setRecordingDuration
   } = useChatContext();
 
-  // Buscar PDFs da API quando o componente montar
-  useEffect(() => {
-    const fetchPDFs = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const articles = await api.getPDFArticles();
-        setPdfArticles(articles);
-      } catch (err) {
-        console.error('Erro ao buscar PDFs:', err);
-        setError('Erro ao carregar artigos');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Contexto da galeria com cache
+  const {
+    pdfArticles,
+    loading,
+    error
+  } = useGalleryContext();
 
-    fetchPDFs();
-  }, []);
+  // Detectar se é dispositivo mobile
+  const isMobile = useIsMobile();
+
+  // O contexto da galeria já cuida do carregamento automático
 
   const handleSend = useCallback(() => {
     // Enviar mensagem e navegar para o chat
@@ -162,10 +174,12 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
   }, [audioOutputEnabled, setAudioOutputEnabled]);
 
   const handleItemClick = useCallback((article: PDFArticle) => {
-    // TODO: Implementar nova funcionalidade de visualização
-    console.log('Item clicado:', article);
-    // Por enquanto, apenas abre o PDF em uma nova aba
-    window.open(article.url, '_blank');
+    // Abrir o PDF no visualizador interno
+    setSelectedPdf(article);
+  }, []);
+
+  const handleClosePdfViewer = useCallback(() => {
+    setSelectedPdf(null);
   }, []);
 
 
@@ -286,6 +300,22 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
         </div>
       </div>
 
+      {/* PdfViewer Modal */}
+      {selectedPdf && (
+        isMobile ? (
+          <PdfViewerMobile
+            articleId={selectedPdf.id}
+            articleTitle={selectedPdf.title}
+            onClose={handleClosePdfViewer}
+          />
+        ) : (
+          <PdfViewer
+            articleId={selectedPdf.id}
+            articleTitle={selectedPdf.title}
+            onClose={handleClosePdfViewer}
+          />
+        )
+      )}
 
     </div>
   );

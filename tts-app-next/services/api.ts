@@ -281,5 +281,11 @@ export const api = {
       },
       2 // maxRetries
     )
+  },
+
+  // Função para obter URL de visualização de PDF
+  getPDFViewUrl(articleId: string): string {
+    const encodedArticleId = encodeURIComponent(articleId);
+    return `${API_ENDPOINTS.backend}/articles/pdfs/${encodedArticleId}/view`;
   }
 } 
