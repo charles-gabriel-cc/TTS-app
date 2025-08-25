@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import IdleScreen from '@/components/ui/idle-screen'
 import { api } from '@/services/api'
 import { ChatProvider, useChatContext } from '@/contexts/ChatContext'
+import { GalleryProvider } from '@/contexts/GalleryContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const ModernChatInterface = dynamic(() => import('@/components/ModernChatInterface'), {
@@ -172,7 +173,9 @@ function HomeContent() {
 export default function Home() {
   return (
     <ChatProvider>
-      <HomeContent />
+      <GalleryProvider>
+        <HomeContent />
+      </GalleryProvider>
     </ChatProvider>
   )
 } 
