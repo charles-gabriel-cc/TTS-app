@@ -266,18 +266,45 @@ export const api = {
   async downloadPDF(articleId: string): Promise<Blob> {
     const cacheKey = `pdf_download_${articleId}_${sessionId}`
     
+    console.log('[API] Iniciando download do PDF:', {
+      articleId,
+      cacheKey,
+      url: `${API_ENDPOINTS.backend}/articles/pdfs/${articleId}/download`
+    });
+    
     return executeWithCache(
       cacheKey,
       async () => {
+        console.log('[API] Fazendo requisição para download do PDF:', articleId);
+        
         const response = await fetch(`${API_ENDPOINTS.backend}/articles/pdfs/${articleId}/download`, {
           method: 'GET',
         })
 
+        console.log('[API] Resposta recebida:', {
+          status: response.status,
+          ok: response.ok,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Failed to download PDF`)
+          const errorText = await response.text();
+          console.error('[API] Erro na resposta:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText
+          });
+          throw new Error(`HTTP ${response.status}: Failed to download PDF - ${errorText}`)
         }
 
-        return await response.blob()
+        const blob = await response.blob();
+        console.log('[API] Blob criado com sucesso:', {
+          size: blob.size,
+          type: blob.type,
+          articleId
+        });
+
+        return blob;
       },
       2 // maxRetries
     )

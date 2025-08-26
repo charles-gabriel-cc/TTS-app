@@ -99,6 +99,12 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
 
   // Detectar se é dispositivo mobile
   const isMobile = useIsMobile();
+  
+  console.log('[ChatWithGallery] Estado do componente:', {
+    isMobile,
+    selectedPdf: selectedPdf ? { id: selectedPdf.id, title: selectedPdf.title } : null,
+    pdfArticlesCount: pdfArticles.length
+  });
 
   // O contexto da galeria já cuida do carregamento automático
 

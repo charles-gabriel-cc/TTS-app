@@ -10,7 +10,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 
 // Configuração do worker do PDF.js
 if (typeof window !== 'undefined') {
-  pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+  pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 }
 
 interface PdfViewerMobileProps {
@@ -28,21 +28,40 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Log inicial do componente
+  console.log('[PDFViewerMobile] Componente inicializado:', { articleId, articleTitle });
+
   useEffect(() => {
     const loadPdf = async () => {
+      console.log('[PDFViewerMobile] Iniciando carregamento do PDF:', articleId);
+      
       try {
         setLoading(true);
         setError(null);
         
+        console.log('[PDFViewerMobile] Chamando api.downloadPDF...');
         // Buscar o PDF como blob
         const blob = await api.downloadPDF(articleId);
+        
+        console.log('[PDFViewerMobile] PDF baixado com sucesso:', {
+          blobSize: blob.size,
+          blobType: blob.type,
+          articleId
+        });
+        
         setPdfFile(blob);
+        console.log('[PDFViewerMobile] PDF definido no estado');
         
       } catch (err) {
-        console.error('Erro ao carregar PDF:', err);
+        console.error('[PDFViewerMobile] Erro ao carregar PDF:', {
+          error: err,
+          message: err instanceof Error ? err.message : 'Erro desconhecido',
+          articleId
+        });
         setError('Erro ao carregar o PDF. Tente novamente.');
       } finally {
         setLoading(false);
+        console.log('[PDFViewerMobile] Carregamento finalizado');
       }
     };
 
@@ -50,6 +69,11 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   }, [articleId]);
 
   const handleDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    console.log('[PDFViewerMobile] Documento carregado com sucesso:', {
+      numPages,
+      articleId,
+      articleTitle
+    });
     setNumPages(numPages);
     setPageNumber(1);
   };
@@ -75,8 +99,15 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   };
 
   const handleDownload = async () => {
+    console.log('[PDFViewerMobile] Iniciando download do PDF:', articleId);
+    
     try {
       const blob = await api.downloadPDF(articleId);
+      console.log('[PDFViewerMobile] PDF baixado para download:', {
+        blobSize: blob.size,
+        blobType: blob.type
+      });
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -85,8 +116,13 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      console.log('[PDFViewerMobile] Download iniciado com sucesso');
     } catch (err) {
-      console.error('Erro ao baixar PDF:', err);
+      console.error('[PDFViewerMobile] Erro ao baixar PDF:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Erro desconhecido'
+      });
       setError('Erro ao baixar o PDF.');
     }
   };
@@ -214,33 +250,57 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
           </div>
         )}
 
-        {pdfFile && !loading && (
-          <div className="flex justify-center p-4">
-            <Document
-              file={pdfFile}
-              onLoadSuccess={handleDocumentLoadSuccess}
-              loading={
-                <div className="flex items-center justify-center p-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                </div>
-              }
-              error={
-                <div className="text-center p-8">
-                  <p className="text-red-600">Erro ao carregar o PDF</p>
-                </div>
-              }
-            >
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                rotate={rotation}
-                className="shadow-lg"
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-              />
-            </Document>
-          </div>
-        )}
+                 {pdfFile && !loading && (
+           <div className="flex justify-center p-4">
+             <Document
+               file={pdfFile}
+               onLoadSuccess={handleDocumentLoadSuccess}
+               onLoadError={(error) => {
+                 console.error('[PDFViewerMobile] Erro ao carregar documento:', {
+                   error,
+                   articleId,
+                   blobSize: pdfFile.size,
+                   blobType: pdfFile.type
+                 });
+               }}
+               loading={
+                 <div className="flex items-center justify-center p-8">
+                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                 </div>
+               }
+               error={
+                 <div className="text-center p-8">
+                   <p className="text-red-600">Erro ao carregar o PDF</p>
+                   <p className="text-sm text-gray-500 mt-2">Verifique o console para mais detalhes</p>
+                 </div>
+               }
+             >
+               <Page
+                 pageNumber={pageNumber}
+                 scale={scale}
+                 rotate={rotation}
+                 className="shadow-lg"
+                 renderTextLayer={true}
+                 renderAnnotationLayer={true}
+                 onLoadError={(error) => {
+                   console.error('[PDFViewerMobile] Erro ao carregar página:', {
+                     error,
+                     pageNumber,
+                     articleId
+                   });
+                 }}
+                 onRenderSuccess={() => {
+                   console.log('[PDFViewerMobile] Página renderizada com sucesso:', {
+                     pageNumber,
+                     scale,
+                     rotation,
+                     articleId
+                   });
+                 }}
+               />
+             </Document>
+           </div>
+         )}
       </div>
     </div>
   );
