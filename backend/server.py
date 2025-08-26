@@ -193,16 +193,8 @@ async def chat(request: ChatRequest):
         logger.info(f"Mensagem original: {request.message}")
         logger.info(f"Mensagem limpa: {cleaned_message}")
         
-        # Gerar hash da mensagem para cache
-        message_hash = generate_message_hash(cleaned_message, False)
-        
-        # Verificar se já existe resposta cacheada
-        cached_response = get_cached_response(request.session_id, message_hash)
-        if cached_response:
-            logger.info(f"Retornando resposta cacheada para: {cleaned_message[:50]}...")
-            return cached_response
-        
-        # Processar nova mensagem
+        # Processar nova mensagem SEM cache - sempre gerar nova resposta
+        logger.info(f"Gerando nova resposta para: {cleaned_message[:50]}...")
         response = await chat_service.get_response(cleaned_message, request.session_id)
         
         # Limpar tags <think> da resposta antes de retornar ao frontend
@@ -210,9 +202,6 @@ async def chat(request: ChatRequest):
         logger.info(f"Resposta limpa para frontend: {cleaned_response[:100]}...")
         
         response_data = {"response": cleaned_response}
-        
-        # Cachear resposta para possível recuperação
-        cache_response(request.session_id, message_hash, response_data)
         
         # Limpar cache expirado periodicamente
         cleanup_expired_cache()
@@ -230,14 +219,8 @@ async def chat_with_tts(request: ChatRequest):
         logger.info(f"Mensagem original: {request.message}")
         logger.info(f"Mensagem limpa: {cleaned_message}")
         
-        # Gerar hash da mensagem para cache (incluindo TTS)
-        message_hash = generate_message_hash(cleaned_message, True)
-        
-        # Verificar se já existe resposta cacheada
-        cached_response = get_cached_response(request.session_id, message_hash)
-        if cached_response:
-            logger.info(f"Retornando resposta TTS cacheada para: {cleaned_message[:50]}...")
-            return cached_response
+        # Gerar nova resposta SEM cache - sempre gerar nova resposta
+        logger.info(f"Gerando nova resposta TTS para: {cleaned_message[:50]}...")
         
         # 2. Obter a resposta de texto do chat service
         text_response = await chat_service.get_response(cleaned_message, request.session_id)
@@ -287,9 +270,6 @@ async def chat_with_tts(request: ChatRequest):
             "audio_format": "mp3"
         }
         
-        # Cachear resposta para possível recuperação
-        cache_response(request.session_id, message_hash, response_data)
-        
         # Limpar cache expirado periodicamente
         cleanup_expired_cache()
         
@@ -316,6 +296,26 @@ async def health_check():
             "tts": "ok"
         }
     }
+
+# Endpoint para limpar cache manualmente
+@app.post("/clear_cache")
+async def clear_cache():
+    """
+    Endpoint para limpar o cache de respostas manualmente.
+    Útil para debug ou situações específicas.
+    """
+    try:
+        global response_cache
+        response_cache.clear()
+        logger.info("Cache limpo manualmente via endpoint")
+        return {
+            "status": "success",
+            "message": "Cache limpo com sucesso",
+            "cache_size": 0
+        }
+    except Exception as e:
+        logger.error(f"Erro ao limpar cache: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Rota para recuperar respostas pendentes
 @app.get("/pending_responses/{session_id}")

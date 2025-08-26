@@ -99,8 +99,41 @@ const executeWithCache = async <T>(
 
 export const api = {
   // Função para resetar o session_id se necessário
-  resetSession: () => {
+  resetSession: async () => {
+    const oldSessionId = sessionId
     sessionId = generateSessionId()
+    console.log(`[API] Session ID resetado: ${oldSessionId.substring(0, 8)}... → ${sessionId.substring(0, 8)}...`)
+    // Limpar cache quando session_id é resetado
+    requestCache.clear()
+    console.log('[API] Cache limpo após reset do session_id')
+    // Limpar cache do backend também
+    await api.clearBackendCache()
+  },
+
+  // Função para obter o session_id atual (útil para debug)
+  getCurrentSessionId: () => sessionId,
+
+  // Função para limpar o cache manualmente
+  clearCache: () => {
+    requestCache.clear()
+    console.log('[API] Cache limpo manualmente')
+  },
+
+  // Função para limpar o cache do backend
+  async clearBackendCache(): Promise<void> {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.backend}/clear_cache`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to clear backend cache`)
+      }
+      
+      console.log('[API] Cache do backend limpo com sucesso')
+    } catch (error) {
+      console.warn('[API] Erro ao limpar cache do backend:', error)
+    }
   },
 
   // Função para verificar respostas pendentes no servidor
@@ -150,70 +183,22 @@ export const api = {
   },
 
   async sendChatMessage(message: string, useTTS: boolean = false): Promise<ChatMessage> {
-    // Gerar chave de cache baseada na mensagem, session e configuração TTS
-    const cacheKey = `chat_${message}_${sessionId}_${useTTS}`
+    // Para mensagens de chat, NÃO usar cache - sempre gerar nova resposta
+    console.log(`[API] Enviando mensagem de chat (sem cache): "${message.substring(0, 50)}..."`)
     
-    return executeWithCache(
-      cacheKey,
-      async () => {
-        // PRIMEIRO: Verificar se existe resposta pendente para esta mensagem
-        try {
-          const messageHash = await generateMessageHash(message, useTTS)
-          const pendingResponses = await this.checkPendingResponses()
-          
-          // Procurar por resposta pendente que corresponda a esta mensagem
-          const pendingMatch = pendingResponses.find(pr => pr.message_hash === messageHash)
-          
-          if (pendingMatch) {
-            console.log(`[Pending] Resposta recuperada do servidor para: "${message.substring(0, 50)}..."`)
-            const data = pendingMatch.response
-            
-            // Formatear resposta igual ao processo normal
-            if (useTTS && data.text && data.audio) {
-              return {
-                id: sessionId,
-                text: data.text,
-                sender: 'assistant',
-                timestamp: new Date(),
-                audio: data.audio,
-                audioFormat: data.audio_format || 'mp3'
-              }
-            } else {
-              return {
-                id: sessionId,
-                text: data.response || data.text,
-                sender: 'assistant',
-                timestamp: new Date()
-              }
-            }
-          }
-        } catch (error) {
-          console.warn('[Pending] Erro ao verificar respostas pendentes, continuando com nova requisição:', error)
-        }
-
-        // SEGUNDO: Se não há resposta pendente, fazer nova requisição
-        const endpoint = useTTS ? API_ENDPOINTS.chatWithTTS : API_ENDPOINTS.chat
+    // PRIMEIRO: Verificar se existe resposta pendente para esta mensagem
+    try {
+      const messageHash = await generateMessageHash(message, useTTS)
+      const pendingResponses = await this.checkPendingResponses()
+      
+      // Procurar por resposta pendente que corresponda a esta mensagem
+      const pendingMatch = pendingResponses.find(pr => pr.message_hash === messageHash)
+      
+      if (pendingMatch) {
+        console.log(`[Pending] Resposta recuperada do servidor para: "${message.substring(0, 50)}..."`)
+        const data = pendingMatch.response
         
-        console.log(`[API] Executando nova requisição para: ${cacheKey}`)
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            message,
-            session_id: sessionId
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Failed to send chat message`)
-        }
-
-        const data = await response.json()
-        
-        // Se for TTS, a resposta tem formato diferente
+        // Formatear resposta igual ao processo normal
         if (useTTS && data.text && data.audio) {
           return {
             id: sessionId,
@@ -224,7 +209,6 @@ export const api = {
             audioFormat: data.audio_format || 'mp3'
           }
         } else {
-          // Resposta padrão sem TTS
           return {
             id: sessionId,
             text: data.response || data.text,
@@ -232,9 +216,52 @@ export const api = {
             timestamp: new Date()
           }
         }
+      }
+    } catch (error) {
+      console.warn('[Pending] Erro ao verificar respostas pendentes, continuando com nova requisição:', error)
+    }
+
+    // SEGUNDO: Se não há resposta pendente, fazer nova requisição
+    const endpoint = useTTS ? API_ENDPOINTS.chatWithTTS : API_ENDPOINTS.chat
+    
+    console.log(`[API] Executando nova requisição de chat`)
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      5 // maxRetries
-    )
+      body: JSON.stringify({ 
+        message,
+        session_id: sessionId
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: Failed to send chat message`)
+    }
+
+    const data = await response.json()
+    
+    // Se for TTS, a resposta tem formato diferente
+    if (useTTS && data.text && data.audio) {
+      return {
+        id: sessionId,
+        text: data.text,
+        sender: 'assistant',
+        timestamp: new Date(),
+        audio: data.audio,
+        audioFormat: data.audio_format || 'mp3'
+      }
+    } else {
+      // Resposta padrão sem TTS
+      return {
+        id: sessionId,
+        text: data.response || data.text,
+        sender: 'assistant',
+        timestamp: new Date()
+      }
+    }
   },
 
   // Função para buscar PDFs de artigos

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatContext } from '@/contexts/ChatContext';
 import { useGalleryContext } from '@/contexts/GalleryContext';
+import { useIdleContext } from '@/contexts/IdleContext';
 import PdfViewer from "@/components/PDFViewer";
 import { useIsMobile } from '@/hooks/useIsMobile';
 import dynamic from 'next/dynamic';
@@ -40,6 +41,7 @@ import {
 
 interface ChatWithGalleryProps {
   onNavigateToChat?: (message?: string) => void;
+  isFromIdle?: boolean; // Indica se voltou do modo idle
 }
 
 interface PDFArticle {
@@ -71,7 +73,7 @@ const fallbackGalleryItems = [
   }
 ];
 
-export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryProps) {
+export default function ChatWithGallery({ onNavigateToChat, isFromIdle }: ChatWithGalleryProps) {
 
   const [messageValue, setMessageValue] = useState("");
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -97,26 +99,44 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
     error
   } = useGalleryContext();
 
+  // Contexto para reset do timer de inatividade
+  const { resetIdleTimer } = useIdleContext();
+
   // Detectar se é dispositivo mobile
   const isMobile = useIsMobile();
+  
+  // Limpar PDF quando voltar do modo idle
+  useEffect(() => {
+    if (isFromIdle && selectedPdf) {
+      console.log('[ChatWithGallery] Limpando PDF após voltar do modo idle');
+      setSelectedPdf(null);
+    }
+  }, [isFromIdle, selectedPdf]);
   
   console.log('[ChatWithGallery] Estado do componente:', {
     isMobile,
     selectedPdf: selectedPdf ? { id: selectedPdf.id, title: selectedPdf.title } : null,
-    pdfArticlesCount: pdfArticles.length
+    pdfArticlesCount: pdfArticles.length,
+    isFromIdle
   });
 
   // O contexto da galeria já cuida do carregamento automático
 
   const handleSend = useCallback(() => {
+    // Reset do timer de inatividade
+    resetIdleTimer();
+    
     // Enviar mensagem e navegar para o chat
     if (messageValue.trim() && onNavigateToChat) {
       onNavigateToChat(messageValue.trim());
       setMessageValue(""); // Limpar o input após enviar
     }
-  }, [messageValue, onNavigateToChat]);
+  }, [messageValue, onNavigateToChat, resetIdleTimer]);
 
   const handleStartRecording = useCallback(() => {
+    // Reset do timer de inatividade
+    resetIdleTimer();
+    
     setIsRecording(true);
     setRecordingDuration(0);
     setLocalRecordingDuration(0);
@@ -138,9 +158,12 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
       });
       setRecordingDuration(localRecordingDuration + 1);
     }, 1000);
-  }, [setIsRecording, setRecordingDuration, localRecordingDuration]);
+  }, [setIsRecording, setRecordingDuration, localRecordingDuration, resetIdleTimer]);
 
   const handleStopRecording = useCallback(async (audioBlob: Blob) => {
+    // Reset do timer de inatividade
+    resetIdleTimer();
+    
     setIsRecording(false);
     if (recordingIntervalRef.current) {
       clearInterval(recordingIntervalRef.current);
@@ -164,29 +187,43 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
         onNavigateToChat("Erro ao processar áudio. Tente novamente.");
       }
     }
-  }, [setIsRecording, setRecordingDuration, onNavigateToChat]);
+  }, [setIsRecording, setRecordingDuration, onNavigateToChat, resetIdleTimer]);
 
   const handleCancelRecording = useCallback(() => {
+    // Reset do timer de inatividade
+    resetIdleTimer();
+    
     setIsRecording(false);
     if (recordingIntervalRef.current) {
       clearInterval(recordingIntervalRef.current);
     }
     setRecordingDuration(0);
     setLocalRecordingDuration(0);
-  }, [setIsRecording, setRecordingDuration]);
+  }, [setIsRecording, setRecordingDuration, resetIdleTimer]);
 
   const handleToggleAudioOutput = useCallback(() => {
+    // Reset do timer de inatividade
+    resetIdleTimer();
+    
     setAudioOutputEnabled(!audioOutputEnabled);
-  }, [audioOutputEnabled, setAudioOutputEnabled]);
+  }, [audioOutputEnabled, setAudioOutputEnabled, resetIdleTimer]);
 
   const handleItemClick = useCallback((article: PDFArticle) => {
+    // Reset do timer de inatividade
+    resetIdleTimer();
+    
     // Abrir o PDF no visualizador interno
     setSelectedPdf(article);
-  }, []);
+  }, [resetIdleTimer]);
 
   const handleClosePdfViewer = useCallback(() => {
+    // Reset do timer de inatividade
+    resetIdleTimer();
+    
     setSelectedPdf(null);
-  }, []);
+  }, [resetIdleTimer]);
+
+
 
 
 
@@ -209,7 +246,10 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
           </div>
           <Button
             variant="outline"
-            onClick={() => onNavigateToChat?.()}
+            onClick={() => {
+              resetIdleTimer();
+              onNavigateToChat?.();
+            }}
             className="bg-white/10 backdrop-blur-sm hover:bg-white/20 border-white/30 text-white"
           >
             <MessageCircle className="w-4 h-4 mr-2" />
@@ -219,7 +259,7 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
       </motion.div>
 
       {/* Chat Input */}
-      <div className="p-4 border-b border-white/10 bg-black/10">
+      <div className="p-4 border-b border-white/10 bg-black/10 relative z-10">
         <ChatInput
           value={messageValue}
           onChange={setMessageValue}
@@ -238,7 +278,7 @@ export default function ChatWithGallery({ onNavigateToChat }: ChatWithGalleryPro
       </div>
 
       {/* Gallery Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {loading ? (
           <div className="flex items-center justify-center col-span-full py-8">

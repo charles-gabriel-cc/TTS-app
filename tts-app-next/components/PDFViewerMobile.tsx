@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { X, Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
@@ -27,6 +27,15 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   const [rotation, setRotation] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Refs para detecção de swipe
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+  const touchEndY = useRef<number>(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+
 
   // Log inicial do componente
   console.log('[PDFViewerMobile] Componente inicializado:', { articleId, articleTitle });
@@ -98,6 +107,60 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
     setRotation(prev => (prev + 90) % 360);
   };
 
+  // Funções para detecção de swipe
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    // Só processar swipe se há páginas disponíveis
+    if (numPages === 0) {
+      console.log('[PDFViewerMobile] Swipe ignorado - nenhuma página disponível');
+      return;
+    }
+    
+    const minSwipeDistance = 50; // Distância mínima para considerar um swipe
+    const maxVerticalDistance = 100; // Distância máxima vertical para evitar conflito com scroll
+    
+    const deltaX = touchEndX.current - touchStartX.current;
+    const deltaY = Math.abs(touchEndY.current - touchStartY.current);
+    
+    console.log('[PDFViewerMobile] Swipe detectado:', {
+      deltaX,
+      deltaY,
+      minSwipeDistance,
+      maxVerticalDistance,
+      isValid: Math.abs(deltaX) > minSwipeDistance && deltaY < maxVerticalDistance
+    });
+    
+    // Verificar se é um swipe horizontal válido
+    if (Math.abs(deltaX) > minSwipeDistance && deltaY < maxVerticalDistance) {
+      if (deltaX > 0) {
+        // Swipe para direita - página anterior
+        console.log('[PDFViewerMobile] Swipe para direita detectado - página anterior');
+        setPageNumber(prev => {
+          const newPage = Math.max(prev - 1, 1);
+          console.log('[PDFViewerMobile] Mudando página:', { prev, newPage });
+          return newPage;
+        });
+      } else {
+        // Swipe para esquerda - próxima página
+        console.log('[PDFViewerMobile] Swipe para esquerda detectado - próxima página');
+        setPageNumber(prev => {
+          const newPage = Math.min(prev + 1, numPages);
+          console.log('[PDFViewerMobile] Mudando página:', { prev, newPage, numPages });
+          return newPage;
+        });
+      }
+    }
+  }, [numPages]);
+
   const handleDownload = async () => {
     console.log('[PDFViewerMobile] Iniciando download do PDF:', articleId);
     
@@ -127,6 +190,10 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
     }
   };
 
+  const handleClose = () => {
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
       {/* Header */}
@@ -149,7 +216,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
           <Button
             variant="outline"
             size="sm"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex items-center gap-2"
           >
             <X className="w-4 h-4" />
@@ -158,7 +225,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
         </div>
       </div>
 
-      {/* Controls */}
+            {/* Controls */}
       <div className="flex items-center justify-between p-3 bg-gray-100 border-b">
         <div className="flex items-center gap-2">
           <Button
@@ -224,8 +291,23 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
         </div>
       </div>
 
+      {/* Swipe Indicator */}
+      <div className="px-3 py-2 bg-blue-50 border-b border-blue-200">
+        <div className="flex items-center justify-center gap-2 text-xs text-blue-600">
+          <ChevronLeft className="w-3 h-3" />
+          <span>Deslize para navegar entre páginas</span>
+          <ChevronRight className="w-3 h-3" />
+        </div>
+      </div>
+
       {/* Content */}
-      <div className="flex-1 overflow-auto bg-gray-50">
+      <div 
+        ref={contentRef}
+        className="flex-1 overflow-auto bg-gray-50"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {loading && (
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-3">
@@ -276,7 +358,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
                }
              >
                <Page
-                 pageNumber={pageNumber}
+                 pageNumber={Math.max(1, Math.min(pageNumber, numPages))}
                  scale={scale}
                  rotate={rotation}
                  className="shadow-lg"
@@ -286,12 +368,14 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
                    console.error('[PDFViewerMobile] Erro ao carregar página:', {
                      error,
                      pageNumber,
+                     numPages,
                      articleId
                    });
                  }}
                  onRenderSuccess={() => {
                    console.log('[PDFViewerMobile] Página renderizada com sucesso:', {
                      pageNumber,
+                     numPages,
                      scale,
                      rotation,
                      articleId

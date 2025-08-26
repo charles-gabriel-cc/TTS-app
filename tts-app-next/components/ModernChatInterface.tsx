@@ -486,10 +486,10 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
   }, [audioOutputEnabled, isLoading]);
 
   const suggestedActions: SuggestedAction[] = [
-    { id: "1", text: "Trabalhos sobre estatística"},
-    { id: "2", text: "Fale sobre professores do departamento de matemática"},
-    { id: "3", text: "Quais professores trabalham com física quântica?"},
-    { id: "4", text: "Quero saber mais sobre o professor Pavão"}
+    { id: "1", text: "Conte-me sobre os professores do CCEN"},
+    { id: "2", text: "Quais são as áreas de pesquisa do departamento?"},
+    { id: "3", text: "Como posso acessar os currículos dos professores?"},
+    { id: "4", text: "Fale sobre as publicações científicas"}
   ];
 
   // Configurar listeners do teclado

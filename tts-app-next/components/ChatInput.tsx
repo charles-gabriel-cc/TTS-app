@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useIdleContext } from '@/contexts/IdleContext';
 
 interface AudioRecorderProps {
   onStart?: () => void;
@@ -22,6 +23,9 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration, disab
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
+
+  // Contexto para resetar timer de inatividade
+  const { resetIdleTimer } = useIdleContext();
 
   return (
     <div className="flex items-center gap-2">
@@ -43,26 +47,32 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration, disab
             <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
             <span className="text-sm font-mono text-white">{formatTime(duration)}</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onStop}
-            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
-          >
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-              <rect x="6" y="6" width="12" height="12" />
-            </svg>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onCancel}
-            className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </Button>
+                  <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            resetIdleTimer();
+            onStop();
+          }}
+          className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
+        >
+          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <rect x="6" y="6" width="12" height="12" />
+          </svg>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            resetIdleTimer();
+            onCancel();
+          }}
+          className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </Button>
         </div>
       )}
     </div>
@@ -108,6 +118,9 @@ export function ChatInput({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  // Contexto para resetar timer de inatividade
+  const { resetIdleTimer } = useIdleContext();
+
   // Auto-scroll para manter textarea visível quando teclado aparece
   useEffect(() => {
     console.log('ChatInput: keyboardVisible changed to:', keyboardVisible);
@@ -151,6 +164,9 @@ export function ChatInput({
   }, [value]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Resetar timer de inatividade quando usuário digita
+    resetIdleTimer();
+    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (value.trim() && !disabled) {
@@ -161,6 +177,9 @@ export function ChatInput({
 
   const startRecording = async () => {
     if (disabled) return; // Não permitir iniciar gravação se desabilitado
+    
+    // Resetar timer de inatividade quando iniciar gravação
+    resetIdleTimer();
     
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -221,7 +240,10 @@ export function ChatInput({
             <span className="text-white/80 font-medium">Resposta com áudio</span>
             <Switch
               checked={audioOutputEnabled}
-              onCheckedChange={onToggleAudioOutput}
+              onCheckedChange={(checked) => {
+                resetIdleTimer();
+                onToggleAudioOutput(checked);
+              }}
               className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-400 data-[state=unchecked]:bg-white/20 border-white/30 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 [&>span]:bg-white [&>span]:shadow-lg [&>span]:border [&>span]:border-white/20"
             />
             {audioOutputEnabled ? (
@@ -258,7 +280,10 @@ export function ChatInput({
             
             {!isRecording && (
               <Button
-                onClick={onSend}
+                onClick={() => {
+                  resetIdleTimer();
+                  onSend();
+                }}
                 disabled={!value.trim() || disabled}
                 size="icon"
                 className="rounded-full bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-600 hover:to-teal-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
