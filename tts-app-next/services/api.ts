@@ -136,6 +136,30 @@ export const api = {
     }
   },
 
+  // Função para limpar cache específico do backend
+  async clearSpecificBackendCache(sessionId: string, messageHash: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.backend}/clear_specific_cache`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message_hash: messageHash
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to clear specific backend cache`)
+      }
+      
+      console.log('[API] Cache específico do backend limpo com sucesso')
+    } catch (error) {
+      console.warn('[API] Erro ao limpar cache específico do backend:', error)
+    }
+  },
+
   // Função para verificar respostas pendentes no servidor
   async checkPendingResponses(): Promise<PendingResponse[]> {
     try {
@@ -239,6 +263,90 @@ export const api = {
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: Failed to send chat message`)
+    }
+
+    const data = await response.json()
+    
+    // Se for TTS, a resposta tem formato diferente
+    if (useTTS && data.text && data.audio) {
+      return {
+        id: sessionId,
+        text: data.text,
+        sender: 'assistant',
+        timestamp: new Date(),
+        audio: data.audio,
+        audioFormat: data.audio_format || 'mp3'
+      }
+    } else {
+      // Resposta padrão sem TTS
+      return {
+        id: sessionId,
+        text: data.response || data.text,
+        sender: 'assistant',
+        timestamp: new Date()
+      }
+    }
+  },
+
+  // Função para enviar mensagem de chat específico de artigos
+  async sendArticleChatMessage(message: string, professorName: string, useTTS: boolean = false): Promise<ChatMessage> {
+    // Para mensagens de chat de artigos, NÃO usar cache - sempre gerar nova resposta
+    console.log(`[API] Enviando mensagem de chat de artigo (sem cache): "${message.substring(0, 50)}..." para ${professorName}`)
+    
+    // PRIMEIRO: Verificar se existe resposta pendente para esta mensagem
+    try {
+      const messageHash = await generateMessageHash(message, useTTS)
+      const pendingResponses = await this.checkPendingResponses()
+      
+      // Procurar por resposta pendente que corresponda a esta mensagem
+      const pendingMatch = pendingResponses.find(pr => pr.message_hash === messageHash)
+      
+      if (pendingMatch) {
+        console.log(`[Pending] Resposta recuperada do servidor para artigo: "${message.substring(0, 50)}..."`)
+        const data = pendingMatch.response
+        
+        // Formatear resposta igual ao processo normal
+        if (useTTS && data.text && data.audio) {
+          return {
+            id: sessionId,
+            text: data.text,
+            sender: 'assistant',
+            timestamp: new Date(),
+            audio: data.audio,
+            audioFormat: data.audio_format || 'mp3'
+          }
+        } else {
+          return {
+            id: sessionId,
+            text: data.response || data.text,
+            sender: 'assistant',
+            timestamp: new Date()
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('[Pending] Erro ao verificar respostas pendentes para artigo, continuando com nova requisição:', error)
+    }
+
+    // SEGUNDO: Se não há resposta pendente, fazer nova requisição
+    const endpoint = useTTS ? API_ENDPOINTS.articleChatWithTTS : API_ENDPOINTS.articleChat
+    
+    console.log(`[API] Executando nova requisição de chat de artigo`)
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        message,
+        session_id: sessionId,
+        professor_name: professorName
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: Failed to send article chat message`)
     }
 
     const data = await response.json()
