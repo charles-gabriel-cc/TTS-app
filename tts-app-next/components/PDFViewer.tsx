@@ -27,6 +27,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ articleId, articleTitle, onClose 
   const [rotation, setRotation] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isClosing, setIsClosing] = useState<boolean>(false);
 
 
 
@@ -75,11 +76,20 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ articleId, articleTitle, onClose 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.2, 3.0));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
   const handleRotate = () => setRotation(prev => (prev + 90) % 360);
-  const handleClose = () => onClose();
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 300); // Tempo da animação de saída
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full h-full max-w-6xl max-h-[90vh] bg-white rounded-lg shadow-2xl overflow-hidden">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${
+      isClosing ? 'animate-fade-out' : 'animate-fade-in'
+    } bg-black/80 backdrop-blur-sm`}>
+      <div className={`relative w-full h-full max-w-6xl max-h-[90vh] bg-white rounded-lg shadow-2xl overflow-hidden transition-all duration-300 ${
+        isClosing ? 'animate-slide-down' : 'animate-slide-up'
+      }`}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 bg-gray-50 border-b">
           <div className="flex items-center gap-3">
@@ -101,7 +111,8 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ articleId, articleTitle, onClose 
               variant="outline"
               size="sm"
               onClick={handleClose}
-              className="flex items-center gap-2"
+              disabled={isLoading}
+              className="flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-4 h-4" />
               Fechar

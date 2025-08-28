@@ -387,6 +387,8 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
   const { 
     pendingMessage, 
     clearPendingMessage,
+    isGlobalLoading,
+    setIsGlobalLoading,
     audioOutputEnabled,
     setAudioOutputEnabled,
   isRecording,
@@ -640,19 +642,21 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
   const handleStartRecording = useCallback(() => {
     setIsRecording(true);
     setRecordingDuration(0);
+    let currentDuration = 0;
     recordingIntervalRef.current = setInterval(() => {
-      setRecordingDuration(recordingDuration + 1);
-        // Limite de 30 segundos - cancelar gravação automaticamente
-      if (recordingDuration >= 29) {
-          // Parar gravação
-          setIsRecording(false);
-          if (recordingIntervalRef.current) {
-            clearInterval(recordingIntervalRef.current);
-          }
-          setRecordingDuration(0);
+      currentDuration += 1;
+      setRecordingDuration(currentDuration);
+      // Limite de 30 segundos - cancelar gravação automaticamente
+      if (currentDuration >= 30) {
+        // Parar gravação
+        setIsRecording(false);
+        if (recordingIntervalRef.current) {
+          clearInterval(recordingIntervalRef.current);
         }
+        setRecordingDuration(0);
+      }
     }, 1000);
-  }, [setIsRecording, setRecordingDuration, recordingDuration]);
+  }, [setIsRecording, setRecordingDuration]);
 
   const handleStopRecording = useCallback(async (audioBlob: Blob) => {
     setIsRecording(false);
@@ -667,6 +671,8 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
       return;
     }
 
+    // Ativar loading global imediatamente para bloquear navegação
+    setIsGlobalLoading(true);
     setIsLoading(true);
       try {
         // Converter áudio em texto
@@ -713,8 +719,9 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
         setMessages(prev => [...prev, errorMessage]);
       } finally {
         setIsLoading(false);
+        setIsGlobalLoading(false);
       }
-  }, [isLoading, audioOutputEnabled, setIsRecording, setRecordingDuration]);
+  }, [isLoading, audioOutputEnabled, setIsRecording, setRecordingDuration, setIsGlobalLoading]);
 
   const handleCancelRecording = useCallback(() => {
     setIsRecording(false);

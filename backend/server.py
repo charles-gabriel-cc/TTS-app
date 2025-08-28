@@ -52,11 +52,18 @@ def cache_response(session_id: str, message_hash: str, response_data: dict):
     logger.info(f"Resposta cacheada para session {session_id}, hash {message_hash}")
 
 def get_cached_response(session_id: str, message_hash: str) -> dict:
-    """Recupera resposta do cache se ainda válida"""
+    """Recupera resposta do cache se ainda válida e a remove após uso"""
     if session_id in response_cache and message_hash in response_cache[session_id]:
         cached = response_cache[session_id][message_hash]
         if time.time() - cached['timestamp'] < CACHE_EXPIRY_SECONDS:
             logger.info(f"Resposta recuperada do cache para session {session_id}, hash {message_hash}")
+            
+            # Remover do cache após uso para evitar reutilização
+            del response_cache[session_id][message_hash]
+            if not response_cache[session_id]:
+                del response_cache[session_id]
+            
+            logger.info(f"Cache limpo após uso para session {session_id}, hash {message_hash}")
             return cached['data']
         else:
             # Remove entrada expirada
@@ -84,6 +91,14 @@ def cleanup_expired_cache():
     
     for session_id in sessions_to_remove:
         del response_cache[session_id]
+
+def clear_specific_cache(session_id: str, message_hash: str):
+    """Remove uma entrada específica do cache"""
+    if session_id in response_cache and message_hash in response_cache[session_id]:
+        del response_cache[session_id][message_hash]
+        if not response_cache[session_id]:
+            del response_cache[session_id]
+        logger.info(f"Cache específico limpo: session {session_id}, hash {message_hash}")
 
 # Criar aplicação FastAPI
 app = FastAPI(
@@ -132,6 +147,21 @@ else:
         api_key=OPENAI_API_KEY
     )
 
+# Inicializar o serviço de chat para artigos
+if USE_LOCAL_MODEL:
+    logger.info(f"Usando modelo local para artigos: {MODEL_NAME}")
+    article_chat_service = ChatService(
+        use_local_model=True,
+        model_name=MODEL_NAME,
+    )
+else:
+    logger.info(f"Usando modelo OpenAI para artigos: {MODEL_NAME}")
+    article_chat_service = ChatService(
+        use_local_model=False,
+        model_name=MODEL_NAME,
+        api_key=OPENAI_API_KEY
+    )
+
 # Configurar a coleção apenas se necessário
 if USE_LOCAL_COLLECTION:
     chat_service.set_collection(
@@ -141,10 +171,26 @@ if USE_LOCAL_COLLECTION:
         qdrant_url=QDRANT_URL,
         docs=DOCS
     )
+    # Configurar coleção de artigos para o serviço de chat de artigos
+    article_chat_service.set_collection(
+        use_local_collection=True,
+        collection_name=ARTICLES_COLLECTION_NAME,
+        embed_model=EMBED_MODEL,
+        qdrant_url=QDRANT_URL,
+        docs="ccen-artigos"
+    )
 else:
     chat_service.set_collection(
         use_local_collection=False,
         collection_name=COLLECTION_NAME,
+        embed_model=EMBED_MODEL,
+        qdrant_url=QDRANT_URL,
+        qdrant_api_key=QDRANT_API_KEY
+    )
+    # Configurar coleção de artigos para o serviço de chat de artigos
+    article_chat_service.set_collection(
+        use_local_collection=False,
+        collection_name=ARTICLES_COLLECTION_NAME,
         embed_model=EMBED_MODEL,
         qdrant_url=QDRANT_URL,
         qdrant_api_key=QDRANT_API_KEY
@@ -173,6 +219,12 @@ def clean_response_text(text: str) -> str:
 class ChatRequest(BaseModel):
     message: str
     session_id: str
+
+# Modelo para requisições de chat específico de artigos
+class ArticleChatRequest(BaseModel):
+    message: str
+    session_id: str
+    professor_name: str  # Nome do professor para filtrar artigos
 
 # Rota para transcrição de áudio
 @app.post("/transcribe/")
@@ -209,6 +261,106 @@ async def chat(request: ChatRequest):
         return response_data
     except Exception as e:
         logger.error(f"Erro na rota de chat: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Rota para chat específico de artigos
+@app.post("/article_chat/")
+async def article_chat(request: ArticleChatRequest):
+    try:
+        # Limpar comandos de controle da mensagem do usuário
+        cleaned_message = clean_user_message(request.message)
+        logger.info(f"Mensagem original (artigo): {request.message}")
+        logger.info(f"Mensagem limpa (artigo): {cleaned_message}")
+        logger.info(f"Professor filtrado: {request.professor_name}")
+        
+        # Processar nova mensagem SEM cache - sempre gerar nova resposta
+        logger.info(f"Gerando nova resposta para artigo: {cleaned_message[:50]}...")
+        
+        # Usar o serviço de chat de artigos com filtro de professor
+        response = await article_chat_service.get_article_response(cleaned_message, request.session_id, request.professor_name)
+        
+        # Limpar tags <think> da resposta antes de retornar ao frontend
+        cleaned_response = clean_response_text(response)
+        logger.info(f"Resposta limpa para frontend (artigo): {cleaned_response[:100]}...")
+        
+        response_data = {"response": cleaned_response}
+        
+        # Limpar cache expirado periodicamente
+        cleanup_expired_cache()
+        
+        return response_data
+    except Exception as e:
+        logger.error(f"Erro na rota de chat de artigos: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/article_chat_with_tts/")
+async def article_chat_with_tts(request: ArticleChatRequest):
+    try:
+        # 1. Limpar comandos de controle da mensagem do usuário
+        cleaned_message = clean_user_message(request.message)
+        logger.info(f"Mensagem original (artigo TTS): {request.message}")
+        logger.info(f"Mensagem limpa (artigo TTS): {cleaned_message}")
+        logger.info(f"Professor filtrado: {request.professor_name}")
+        
+        # Gerar nova resposta SEM cache - sempre gerar nova resposta
+        logger.info(f"Gerando nova resposta TTS para artigo: {cleaned_message[:50]}...")
+        
+        # 2. Obter a resposta de texto do chat service de artigos
+        text_response = await article_chat_service.get_article_response(cleaned_message, request.session_id, request.professor_name)
+        logger.info(f"Resposta de texto gerada (artigo): {text_response[:100]}...")
+        
+        # 3. Limpar texto de resposta para o frontend (remover tags <think>)
+        cleaned_response = clean_response_text(text_response)
+        logger.info(f"Resposta limpa para frontend (artigo): {cleaned_response[:100]}...")
+        
+        # 4. Limpar texto para TTS (remover tags <think> e asteriscos)
+        cleaned_text_for_tts = re.sub(r'<think>.*?</think>', '', text_response, flags=re.DOTALL | re.IGNORECASE)
+        # Remover asteriscos
+        cleaned_text_for_tts = re.sub(r'\*', '', cleaned_text_for_tts)
+        # Limpar espaços extras
+        cleaned_text_for_tts = re.sub(r'\s+', ' ', cleaned_text_for_tts).strip()
+        logger.info(f"Texto limpo para TTS (artigo): {cleaned_text_for_tts[:100]}...")
+        
+        # 5. Gerar áudio usando gTTS
+        logger.info("Gerando áudio com gTTS (pt-br) para artigo...")
+        
+        # Criar objeto gTTS para português brasileiro
+        tts_obj = gTTS(text=cleaned_text_for_tts, lang='pt-br', slow=False)
+        
+        # Usar um arquivo temporário para o áudio
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_audio_file:
+            temp_audio_path = temp_audio_file.name
+        
+        # Salvar o áudio no arquivo temporário
+        tts_obj.save(temp_audio_path)
+        
+        # 6. Ler os bytes do áudio do arquivo temporário
+        with open(temp_audio_path, "rb") as audio_file:
+            audio_bytes = audio_file.read()
+        
+        # Limpar o arquivo temporário
+        os.unlink(temp_audio_path)
+        
+        logger.info(f"Áudio gerado com sucesso para artigo. Tamanho: {len(audio_bytes)} bytes")
+        
+        # 7. Codificar o áudio em Base64
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        
+        # 8. Criar a resposta JSON com texto limpo
+        response_data = {
+            "text": cleaned_response,
+            "audio": audio_base64,
+            "audio_format": "mp3"
+        }
+        
+        # Limpar cache expirado periodicamente
+        cleanup_expired_cache()
+        
+        logger.info("Chat com TTS para artigo processado com sucesso")
+        return response_data
+        
+    except Exception as e:
+        logger.error(f"Erro na rota de chat com TTS para artigo: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/chat_with_tts/")
@@ -315,6 +467,32 @@ async def clear_cache():
         }
     except Exception as e:
         logger.error(f"Erro ao limpar cache: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint para limpar cache específico
+@app.post("/clear_specific_cache")
+async def clear_specific_cache_endpoint(request: dict):
+    """
+    Endpoint para limpar uma entrada específica do cache.
+    Útil para limpar cache após uso.
+    """
+    try:
+        session_id = request.get("session_id")
+        message_hash = request.get("message_hash")
+        
+        if not session_id or not message_hash:
+            raise HTTPException(status_code=400, detail="session_id e message_hash são obrigatórios")
+        
+        clear_specific_cache(session_id, message_hash)
+        
+        return {
+            "status": "success",
+            "message": "Cache específico limpo com sucesso",
+            "session_id": session_id,
+            "message_hash": message_hash
+        }
+    except Exception as e:
+        logger.error(f"Erro ao limpar cache específico: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Rota para recuperar respostas pendentes

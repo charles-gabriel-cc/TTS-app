@@ -173,15 +173,15 @@ export default function ChatSession({
 
   // Contexto para gerenciamento de sessões
   const { 
-    currentSessionId,
-    setCurrentSessionId,
-    createSession,
-    deleteSession,
+    getOrCreateMainChatSession,
     addMessage,
     getSessionMessages,
     getCurrentSession,
     pendingMessage, 
     clearPendingMessage,
+    isGlobalLoading,
+    setIsGlobalLoading,
+    setShouldApplyGlobalLoading,
     audioOutputEnabled,
     setAudioOutputEnabled,
     isRecording,
@@ -198,23 +198,25 @@ export default function ChatSession({
   // Contexto para resetar timer de inatividade
   const { resetIdleTimer } = useIdleContext();
 
-  // Determinar qual sessão usar
-  const effectiveSessionId = sessionId || currentSessionId;
-  const currentSession = effectiveSessionId ? getCurrentSession() : null;
-  const messages = effectiveSessionId ? getSessionMessages(effectiveSessionId) : [];
+  // Usar sessão fixa do chat principal
+  const effectiveSessionId = getOrCreateMainChatSession();
+  const messages = getSessionMessages(effectiveSessionId);
+  const currentSession = getCurrentSession();
 
-  // Criar sessão se necessário
+  // Notificar criação da sessão se necessário
   useEffect(() => {
-    if (!effectiveSessionId) {
-      const newSessionId = createSession(sessionName);
-      if (onSessionCreated) {
-        onSessionCreated(newSessionId);
-      }
-    } else if (sessionId && sessionId !== currentSessionId) {
-      // Se um sessionId específico foi fornecido, usar ele
-      setCurrentSessionId(sessionId);
+    if (onSessionCreated) {
+      onSessionCreated(effectiveSessionId);
     }
-  }, [sessionId, sessionName, effectiveSessionId, currentSessionId, createSession, setCurrentSessionId, onSessionCreated]);
+  }, [effectiveSessionId, onSessionCreated]);
+
+  // Desabilitar loading global para este chat (chat completo)
+  useEffect(() => {
+    setShouldApplyGlobalLoading(false);
+    return () => {
+      setShouldApplyGlobalLoading(true);
+    };
+  }, [setShouldApplyGlobalLoading]);
 
   // Processar mensagem pendente quando o componente montar
   useEffect(() => {
@@ -261,6 +263,7 @@ export default function ChatSession({
 
     addMessage(effectiveSessionId, userMessage);
     setIsLoading(true);
+    setIsGlobalLoading(true);
 
     try {
       const response = await api.sendChatMessage(messageContent, audioOutputEnabled);
@@ -291,6 +294,7 @@ export default function ChatSession({
       addMessage(effectiveSessionId, errorMessage);
     } finally {
       setIsLoading(false);
+      setIsGlobalLoading(false);
     }
   }, [effectiveSessionId, isLoading, audioOutputEnabled, addMessage]);
 
@@ -349,6 +353,9 @@ export default function ChatSession({
         clearInterval(recordingIntervalRef.current);
       }
 
+      // Ativar loading global imediatamente para bloquear navegação
+      setIsGlobalLoading(true);
+
       const transcribedText = await api.speechToText(audioBlob);
       if (transcribedText.trim()) {
         handleSendMessage(transcribedText);
@@ -357,8 +364,9 @@ export default function ChatSession({
       console.error('Erro ao processar áudio:', error);
       setIsRecording(false);
       setRecordingDuration(0);
+      setIsGlobalLoading(false); // Desativar loading em caso de erro
     }
-  }, [handleSendMessage]);
+  }, [handleSendMessage, setIsGlobalLoading]);
 
   const handleCancelRecording = useCallback(() => {
     setIsRecording(false);

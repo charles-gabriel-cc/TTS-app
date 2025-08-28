@@ -6,6 +6,8 @@ export const API_ENDPOINTS = {
   speechToText: `${API_BASE_URL}/transcribe/`,
   chat: `${API_BASE_URL}/chat/`,
   chatWithTTS: `${API_BASE_URL}/chat_with_tts/`,
+  articleChat: `${API_BASE_URL}/article_chat/`,
+  articleChatWithTTS: `${API_BASE_URL}/article_chat_with_tts/`,
   backend: API_BASE_URL
 }
 

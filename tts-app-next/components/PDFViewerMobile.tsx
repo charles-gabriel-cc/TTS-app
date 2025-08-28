@@ -27,6 +27,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   const [rotation, setRotation] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState<boolean>(false);
   
   // Refs para detecção de swipe
   const touchStartX = useRef<number>(0);
@@ -191,11 +192,16 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   };
 
   const handleClose = () => {
-    onClose();
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 300); // Tempo da animação de saída
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
+    <div className={`fixed inset-0 z-50 flex flex-col transition-all duration-300 ${
+      isClosing ? 'animate-slide-down' : 'animate-slide-up'
+    } bg-white`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-gray-50 border-b shadow-sm">
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -217,7 +223,8 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
             variant="outline"
             size="sm"
             onClick={handleClose}
-            className="flex items-center gap-2"
+            disabled={loading}
+            className="flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="w-4 h-4" />
             <span className="hidden sm:inline">Fechar</span>

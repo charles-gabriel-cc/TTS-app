@@ -41,6 +41,7 @@ import {
 
 interface ChatWithGalleryProps {
   onNavigateToChat?: (message?: string) => void;
+  onNavigateToArticleChat?: (professorName: string, articleTitle?: string) => void;
   isFromIdle?: boolean; // Indica se voltou do modo idle
 }
 
@@ -73,7 +74,7 @@ const fallbackGalleryItems = [
   }
 ];
 
-export default function ChatWithGallery({ onNavigateToChat, isFromIdle }: ChatWithGalleryProps) {
+export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleChat, isFromIdle }: ChatWithGalleryProps) {
 
   const [messageValue, setMessageValue] = useState("");
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -86,11 +87,12 @@ export default function ChatWithGallery({ onNavigateToChat, isFromIdle }: ChatWi
   const { 
     audioOutputEnabled, 
     setAudioOutputEnabled,
-    isRecording,
-    setIsRecording,
-    recordingDuration,
-    setRecordingDuration
+    isGlobalLoading
   } = useChatContext();
+
+  // Estados locais para evitar interferência com outros chats
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
 
   // Contexto da galeria com cache
   const {
@@ -223,6 +225,16 @@ export default function ChatWithGallery({ onNavigateToChat, isFromIdle }: ChatWi
     setSelectedPdf(null);
   }, [resetIdleTimer]);
 
+  const handleArticleChat = useCallback((article: PDFArticle) => {
+    // Reset do timer de inatividade
+    resetIdleTimer();
+    
+    // Navegar para chat específico do artigo
+    if (onNavigateToArticleChat) {
+      onNavigateToArticleChat(article.author, article.title);
+    }
+  }, [resetIdleTimer, onNavigateToArticleChat]);
+
 
 
 
@@ -311,12 +323,14 @@ export default function ChatWithGallery({ onNavigateToChat, isFromIdle }: ChatWi
               transition={{ delay: Math.random() * 0.2 }}
             >
               <motion.div
-                className="relative bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden cursor-pointer group hover:bg-white/10 hover:border-white/20 transition-all duration-200"
-                onClick={() => handleItemClick(article)}
+                className="relative bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden group hover:bg-white/10 hover:border-white/20 transition-all duration-200"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="aspect-[3/4] flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10">
+                <div 
+                  className="aspect-[3/4] flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10 cursor-pointer"
+                  onClick={() => handleItemClick(article)}
+                >
                   <div className="flex flex-col items-center gap-3 text-center p-4">
                     <FileText className="w-12 h-12 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
                     <div>
@@ -330,8 +344,24 @@ export default function ChatWithGallery({ onNavigateToChat, isFromIdle }: ChatWi
                   </div>
                 </div>
                 
+                {/* Botão de chat individual */}
+                <div className="absolute bottom-2 right-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleArticleChat(article);
+                    }}
+                    className="bg-cyan-500/20 border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/30 backdrop-blur-sm"
+                  >
+                    <MessageCircle className="w-3 h-3 mr-1" />
+                    Chat
+                  </Button>
+                </div>
+                
                 {/* Overlay de hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               </motion.div>
             </motion.div>
           ))

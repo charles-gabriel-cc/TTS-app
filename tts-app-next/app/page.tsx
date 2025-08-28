@@ -109,7 +109,7 @@ const AcademicBackground = () => (
   </div>
 );
 
-const ChatSession = dynamic(() => import('@/components/ChatSession'), {
+const MainChatSession = dynamic(() => import('@/components/MainChatSession'), {
   ssr: false
 })
 
@@ -117,12 +117,20 @@ const ChatWithGallery = dynamic(() => import('@/components/ChatWithGallery'), {
   ssr: false
 })
 
+const ArticleChatSession = dynamic(() => import('@/components/ArticleChatSession'), {
+  ssr: false
+})
+
 function HomeContent() {
   const [showIdleScreen, setShowIdleScreen] = useState(true)
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
-  const [currentView, setCurrentView] = useState<'gallery' | 'chat'>('gallery')
+  const [currentView, setCurrentView] = useState<'gallery' | 'chat' | 'article-chat'>('gallery')
   const [isFromIdle, setIsFromIdle] = useState(false)
-  const { setPendingMessage, clearAllSessions } = useChatContext()
+  const [articleChatData, setArticleChatData] = useState<{
+    professorName: string
+    articleTitle?: string
+  } | null>(null)
+  const { pendingMessage, setPendingMessage, clearPendingMessage, clearAllSessions, isGlobalLoading, shouldApplyGlobalLoading } = useChatContext()
 
   console.log('[HomeContent] Estado inicial:', {
     showIdleScreen,
@@ -159,7 +167,7 @@ function HomeContent() {
         } else {
           console.log('[Idle] Timer expirou mas tela de idle já está ativa')
         }
-      }, 30 * 1000) // 30 segundos de inatividade para teste
+              }, 120 * 1000) // 2 minutos de inatividade
     }
 
     // Função para resetar timer de inatividade
@@ -223,9 +231,19 @@ function HomeContent() {
     }
   }
 
+  const handleNavigateToArticleChat = (professorName: string, articleTitle?: string) => {
+    console.log("Navegando para chat de artigo:", { professorName, articleTitle })
+    setArticleChatData({
+      professorName,
+      articleTitle
+    })
+    setCurrentView('article-chat')
+  }
+
   const handleBackToGallery = () => {
     console.log("Voltando para galeria")
     setCurrentView('gallery')
+    setArticleChatData(null) // Limpar dados do chat de artigos
     // NÃO limpar sessões aqui - manter mensagens durante navegação
   }
 
@@ -271,6 +289,7 @@ function HomeContent() {
           >
             <ChatWithGallery 
               onNavigateToChat={handleNavigateToChat}
+              onNavigateToArticleChat={handleNavigateToArticleChat}
               isFromIdle={isFromIdle}
             />
             <motion.button
@@ -280,10 +299,42 @@ function HomeContent() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleBackToIdle}
-              className="fixed top-4 left-4 z-50 bg-black/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg border border-white/10 hover:bg-black/40 transition-colors"
+              disabled={shouldApplyGlobalLoading && isGlobalLoading}
+              className="fixed top-4 left-4 z-50 bg-black/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg border border-white/10 hover:bg-black/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ← Voltar ao Início
             </motion.button>
+          </motion.div>
+        )}
+        
+        {currentView === 'article-chat' && articleChatData && (
+          <motion.div
+            key="article-chat"
+            initial={{ 
+              opacity: 0, 
+              y: 20
+            }}
+            animate={{ 
+              opacity: 1, 
+              y: 0
+            }}
+            exit={{ 
+              opacity: 0, 
+              y: -20,
+              transition: { duration: 0.3, ease: "easeInOut" }
+            }}
+            transition={{ 
+              duration: 0.4, 
+              ease: [0.4, 0.0, 0.2, 1],
+              delay: 0.1
+            }}
+            className="absolute inset-0 z-20"
+          >
+            <ArticleChatSession 
+              professorName={articleChatData.professorName}
+              articleTitle={articleChatData.articleTitle}
+              onBackToGallery={handleBackToGallery}
+            />
           </motion.div>
         )}
         
@@ -310,21 +361,11 @@ function HomeContent() {
             }}
             className="absolute inset-0 z-20"
           >
-            <ChatSession 
-              title="Assistente Virtual do CCEN"
-              description="Conheça os professores do CCEN. Obtenha informações sobre os professores, suas áreas de atuação, acesso aos seus currículos lattes e outras informações."
+            <MainChatSession 
+              onBackToGallery={handleBackToGallery}
+              pendingMessage={pendingMessage}
+              onClearPendingMessage={clearPendingMessage}
             />
-            <motion.button
-              initial={{ opacity: 0, y: -20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleBackToGallery}
-              className="fixed top-4 left-4 z-50 bg-black/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg border border-white/10 hover:bg-black/40 transition-colors"
-            >
-              ← Voltar à Galeria
-            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>

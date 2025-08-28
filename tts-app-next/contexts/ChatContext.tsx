@@ -26,20 +26,33 @@ interface ChatContextType {
   setPendingMessage: (message: string | null) => void;
   clearPendingMessage: () => void;
   
+  // Estado global de loading
+  isGlobalLoading: boolean;
+  setIsGlobalLoading: (loading: boolean) => void;
+  
+  // Estado para controlar se o loading deve ser aplicado globalmente
+  shouldApplyGlobalLoading: boolean;
+  setShouldApplyGlobalLoading: (should: boolean) => void;
+  
   // Estados compartilhados do ChatInput
   audioOutputEnabled: boolean;
-  setAudioOutputEnabled: (enabled: boolean) => void;
+  setAudioOutputEnabled: (enabled: boolean | ((prev: boolean) => boolean)) => void;
   
   // Estados de gravação
   isRecording: boolean;
   setIsRecording: (recording: boolean) => void;
   recordingDuration: number;
-  setRecordingDuration: (duration: number) => void;
+  setRecordingDuration: (duration: number | ((prev: number) => number)) => void;
 
   // Gerenciamento de sessões de chat
   sessions: ChatSession[];
   currentSessionId: string | null;
   setCurrentSessionId: (sessionId: string | null) => void;
+  
+  // Sessões fixas por tipo de chat
+  mainChatSessionId: string | null;
+  getOrCreateMainChatSession: () => string;
+  getOrCreateArticleSession: (professorName: string, articleTitle?: string) => string;
   
   // Operações de sessão
   createSession: (name?: string) => string;
@@ -60,6 +73,8 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [isGlobalLoading, setIsGlobalLoading] = useState(false);
+  const [shouldApplyGlobalLoading, setShouldApplyGlobalLoading] = useState(true);
   const [audioOutputEnabled, setAudioOutputEnabled] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -67,6 +82,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Estados de sessão
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [mainChatSessionId, setMainChatSessionId] = useState<string | null>(null);
 
   const clearPendingMessage = useCallback(() => {
     setPendingMessage(null);
@@ -109,6 +125,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const clearAllSessions = useCallback(() => {
     setSessions([]);
     setCurrentSessionId(null);
+    setMainChatSessionId(null);
     console.log('[ChatContext] Todas as sessões foram limpas');
   }, []);
 
@@ -157,28 +174,67 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return sessions.find(s => s.id === sessionId) || null;
   }, [sessions]);
 
+  // Obter ou criar sessão do chat principal
+  const getOrCreateMainChatSession = useCallback((): string => {
+    if (mainChatSessionId) {
+      return mainChatSessionId;
+    }
+    
+    const sessionId = createSession('Chat Completo CCEN');
+    setMainChatSessionId(sessionId);
+    console.log('[ChatContext] Sessão do chat principal criada:', sessionId);
+    return sessionId;
+  }, [mainChatSessionId, createSession]);
+
+  // Obter ou criar sessão de artigo específico
+  const getOrCreateArticleSession = useCallback((professorName: string, articleTitle?: string): string => {
+    const sessionName = `Chat - ${professorName} - ${articleTitle || 'Artigo'}`;
+    
+    // Buscar sessão existente
+    const existingSession = sessions.find(session => 
+      session.name === sessionName
+    );
+    
+    if (existingSession) {
+      console.log('[ChatContext] Sessão de artigo existente encontrada:', existingSession.id);
+      return existingSession.id;
+    }
+    
+    // Criar nova sessão
+    const sessionId = createSession(sessionName);
+    console.log('[ChatContext] Nova sessão de artigo criada:', sessionId);
+    return sessionId;
+  }, [sessions, createSession]);
+
   return (
     <ChatContext.Provider value={{
-      pendingMessage,
-      setPendingMessage,
-      clearPendingMessage,
-      audioOutputEnabled,
-      setAudioOutputEnabled,
-      isRecording,
-      setIsRecording,
-      recordingDuration,
-      setRecordingDuration,
-      sessions,
-      currentSessionId,
-      setCurrentSessionId,
-      createSession,
-      deleteSession,
-      clearAllSessions,
-      addMessage,
-      clearSessionMessages,
-      getSessionMessages,
-      getCurrentSession,
-      getSessionById
+          pendingMessage,
+    setPendingMessage,
+    clearPendingMessage,
+    isGlobalLoading,
+    setIsGlobalLoading,
+    shouldApplyGlobalLoading,
+    setShouldApplyGlobalLoading,
+    audioOutputEnabled,
+    setAudioOutputEnabled,
+    isRecording,
+    setIsRecording,
+    recordingDuration,
+    setRecordingDuration,
+    sessions,
+    currentSessionId,
+    setCurrentSessionId,
+    mainChatSessionId,
+    getOrCreateMainChatSession,
+    getOrCreateArticleSession,
+    createSession,
+    deleteSession,
+    clearAllSessions,
+    addMessage,
+    clearSessionMessages,
+    getSessionMessages,
+    getCurrentSession,
+    getSessionById
     }}>
       {children}
     </ChatContext.Provider>

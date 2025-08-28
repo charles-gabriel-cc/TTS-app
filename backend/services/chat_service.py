@@ -313,3 +313,57 @@ OBJETIVO: Tornar a produção científica do CCEN acessível e interessante para
         except Exception as e:
             logger.error(f"Erro ao obter resposta do modelo: {str(e)}")
             raise
+
+    async def get_article_response(self, message, session_id, professor_name):
+        """
+        Obtém uma resposta do modelo para a mensagem fornecida, focada em artigos de um professor específico.
+        
+        Args:
+            message (str): Mensagem do usuário
+            session_id (str): ID da sessão
+            professor_name (str): Nome do professor para filtrar artigos
+            
+        Returns:
+            str: Resposta do modelo
+        """
+        try:
+            # Buscar artigos do professor específico
+            article_context = self.search_article(message, professor_name)
+            
+            # Criar prompt específico para artigos do professor
+            article_prompt = f"""
+<System>INSTRUÇÃO ESPECÍFICA PARA CHAT DE ARTIGOS:
+
+Você é um assistente especializado em artigos científicos do professor {professor_name} do CCEN da UFPE.
+
+CONTEXTO DOS ARTIGOS:
+{article_context}
+
+DIRETRIZES:
+1. IDIOMA: Responda SEMPRE em português brasileiro
+2. FOCO: Responda apenas sobre artigos e pesquisas do professor {professor_name}
+3. APRESENTAÇÃO: Seja claro e didático ao explicar os conceitos
+4. SIMPLIFICAÇÃO: Traduza termos técnicos para linguagem acessível
+5. TOM: Seja acolhedor e entusiástico sobre as pesquisas
+6. EVITE: Frases genéricas ou informações não relacionadas ao professor
+
+OBJETIVO: Tornar acessível a produção científica do professor {professor_name}.</System>
+
+Usuário: {message}
+"""
+            
+            if self.use_local_model:
+                response = self.agent_executor.invoke({"messages": [HumanMessage(content=article_prompt)]}, {'configurable': {'thread_id': session_id}})
+                return response['messages'][-1].content
+            else:
+                response = await openai.ChatCompletion.acreate(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": article_prompt},
+                        {"role": "user", "content": message}
+                    ]
+                )
+                return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Erro ao obter resposta de artigo do modelo: {str(e)}")
+            raise

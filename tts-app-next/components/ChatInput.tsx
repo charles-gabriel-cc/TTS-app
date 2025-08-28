@@ -52,7 +52,7 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration, disab
           size="icon"
           onClick={() => {
             resetIdleTimer();
-            onStop();
+            onStop?.();
           }}
           className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
         >
@@ -65,7 +65,7 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration, disab
           size="icon"
           onClick={() => {
             resetIdleTimer();
-            onCancel();
+            onCancel?.();
           }}
           className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
         >
