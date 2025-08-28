@@ -23,7 +23,8 @@ import tempfile
 import re
 import hashlib
 import time
-from collections import defaultdict
+import json
+import redis
 from services.transcription_service import TranscriptionService
 from services.chat_service import ChatService
 from utils.logger import setup_logger
@@ -33,10 +34,17 @@ from gtts import gTTS
 # Configurar logger
 logger = setup_logger(__name__)
 
-# Cache de respostas para recuperação em caso de queda de conexão
-# Estrutura: {session_id: {message_hash: {response_data, timestamp}}}
-response_cache = defaultdict(dict)
+# Cache de respostas via Redis para suportar múltiplos workers/processos
+# Estrutura no Redis (chave): response_cache:{session_id}:{message_hash}
+# Valor JSON: {"data": <response_data>, "timestamp": <epoch_seconds>}
 CACHE_EXPIRY_SECONDS = 300  # 5 minutos
+
+# Configuração do Redis (usar variável de ambiente REDIS_URL se disponível)
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
+
+def _cache_key(session_id: str, message_hash: str) -> str:
+    return f"response_cache:{session_id}:{message_hash}"
 
 def generate_message_hash(message: str, use_tts: bool = False) -> str:
     """Gera hash único para a mensagem"""
@@ -44,61 +52,38 @@ def generate_message_hash(message: str, use_tts: bool = False) -> str:
     return hashlib.md5(content.encode()).hexdigest()
 
 def cache_response(session_id: str, message_hash: str, response_data: dict):
-    """Armazena resposta no cache"""
-    response_cache[session_id][message_hash] = {
+    """Armazena resposta no Redis com expiração."""
+    payload = {
         'data': response_data,
         'timestamp': time.time()
     }
-    logger.info(f"Resposta cacheada para session {session_id}, hash {message_hash}")
+    redis_client.set(_cache_key(session_id, message_hash), json.dumps(payload), ex=CACHE_EXPIRY_SECONDS)
+    logger.info(f"Resposta cacheada (Redis) para session {session_id}, hash {message_hash}")
 
 def get_cached_response(session_id: str, message_hash: str) -> dict:
-    """Recupera resposta do cache se ainda válida e a remove após uso"""
-    if session_id in response_cache and message_hash in response_cache[session_id]:
-        cached = response_cache[session_id][message_hash]
-        if time.time() - cached['timestamp'] < CACHE_EXPIRY_SECONDS:
-            logger.info(f"Resposta recuperada do cache para session {session_id}, hash {message_hash}")
-            
-            # Remover do cache após uso para evitar reutilização
-            del response_cache[session_id][message_hash]
-            if not response_cache[session_id]:
-                del response_cache[session_id]
-            
-            logger.info(f"Cache limpo após uso para session {session_id}, hash {message_hash}")
-            return cached['data']
-        else:
-            # Remove entrada expirada
-            del response_cache[session_id][message_hash]
-            if not response_cache[session_id]:
-                del response_cache[session_id]
-    return None
+    """Recupera resposta do Redis (se existir) e a remove após uso."""
+    key = _cache_key(session_id, message_hash)
+    cached_str = redis_client.get(key)
+    if not cached_str:
+        return None
+    try:
+        cached = json.loads(cached_str)
+        logger.info(f"Resposta recuperada do cache (Redis) para session {session_id}, hash {message_hash}")
+        return cached.get('data')
+    finally:
+        # Remover do cache após uso para evitar reutilização
+        redis_client.delete(key)
+        logger.info(f"Entrada de cache (Redis) removida após uso: session {session_id}, hash {message_hash}")
 
-def cleanup_expired_cache():
-    """Remove entradas expiradas do cache"""
-    current_time = time.time()
-    sessions_to_remove = []
-    
-    for session_id, messages in response_cache.items():
-        messages_to_remove = []
-        for message_hash, cached in messages.items():
-            if current_time - cached['timestamp'] >= CACHE_EXPIRY_SECONDS:
-                messages_to_remove.append(message_hash)
-        
-        for message_hash in messages_to_remove:
-            del messages[message_hash]
-        
-        if not messages:
-            sessions_to_remove.append(session_id)
-    
-    for session_id in sessions_to_remove:
-        del response_cache[session_id]
+# Limpeza manual de expirados agora é responsabilidade do Redis (expiração nativa)
 
 def clear_specific_cache(session_id: str, message_hash: str):
-    """Remove uma entrada específica do cache"""
-    if session_id in response_cache and message_hash in response_cache[session_id]:
-        del response_cache[session_id][message_hash]
-        if not response_cache[session_id]:
-            del response_cache[session_id]
-        logger.info(f"Cache específico limpo: session {session_id}, hash {message_hash}")
+    """Remove uma entrada específica do cache (Redis)."""
+    deleted = redis_client.delete(_cache_key(session_id, message_hash))
+    if deleted:
+        logger.info(f"Cache específico (Redis) limpo: session {session_id}, hash {message_hash}")
+    else:
+        logger.info(f"Nenhuma entrada de cache (Redis) encontrada para remoção: session {session_id}, hash {message_hash}")
 
 # Criar aplicação FastAPI
 app = FastAPI(
@@ -255,9 +240,6 @@ async def chat(request: ChatRequest):
         
         response_data = {"response": cleaned_response}
         
-        # Limpar cache expirado periodicamente
-        cleanup_expired_cache()
-        
         return response_data
     except Exception as e:
         logger.error(f"Erro na rota de chat: {str(e)}")
@@ -284,9 +266,6 @@ async def article_chat(request: ArticleChatRequest):
         logger.info(f"Resposta limpa para frontend (artigo): {cleaned_response[:100]}...")
         
         response_data = {"response": cleaned_response}
-        
-        # Limpar cache expirado periodicamente
-        cleanup_expired_cache()
         
         return response_data
     except Exception as e:
@@ -352,9 +331,6 @@ async def article_chat_with_tts(request: ArticleChatRequest):
             "audio": audio_base64,
             "audio_format": "mp3"
         }
-        
-        # Limpar cache expirado periodicamente
-        cleanup_expired_cache()
         
         logger.info("Chat com TTS para artigo processado com sucesso")
         return response_data
@@ -422,9 +398,6 @@ async def chat_with_tts(request: ChatRequest):
             "audio_format": "mp3"
         }
         
-        # Limpar cache expirado periodicamente
-        cleanup_expired_cache()
-        
         logger.info("Chat com TTS processado com sucesso")
         return response_data
         
@@ -457,9 +430,12 @@ async def clear_cache():
     Útil para debug ou situações específicas.
     """
     try:
-        global response_cache
-        response_cache.clear()
-        logger.info("Cache limpo manualmente via endpoint")
+        # Remove todas as chaves do namespace de cache sem afetar outras chaves do Redis
+        count = 0
+        for key in redis_client.scan_iter(match="response_cache:*"):
+            redis_client.delete(key)
+            count += 1
+        logger.info(f"Cache (Redis) limpo manualmente via endpoint. Chaves removidas: {count}")
         return {
             "status": "success",
             "message": "Cache limpo com sucesso",
@@ -500,27 +476,35 @@ async def clear_specific_cache_endpoint(request: dict):
 async def get_pending_responses(session_id: str):
     """Retorna todas as respostas pendentes para uma sessão"""
     try:
-        cleanup_expired_cache()  # Limpar cache expirado
-        
         pending_responses = []
-        if session_id in response_cache:
-            for message_hash, cached in response_cache[session_id].items():
-                # Verificar se não expirou
-                if time.time() - cached['timestamp'] < CACHE_EXPIRY_SECONDS:
-                    pending_responses.append({
-                        'message_hash': message_hash,
-                        'response': cached['data'],
-                        'timestamp': cached['timestamp']
-                    })
-        
-        logger.info(f"Retornando {len(pending_responses)} respostas pendentes para session {session_id}")
+        prefix = f"response_cache:{session_id}:"
+        for key in redis_client.scan_iter(match=prefix + "*"):
+            cached_str = redis_client.get(key)
+            if not cached_str:
+                continue
+            try:
+                cached = json.loads(cached_str)
+            except Exception:
+                continue
+            # Extrair message_hash da chave
+            message_hash = key.split(":")[-1]
+            pending_responses.append({
+                'message_hash': message_hash,
+                'response': cached.get('data'),
+                'timestamp': cached.get('timestamp')
+            })
+        logger.info(f"Retornando {len(pending_responses)} respostas pendentes (Redis) para session {session_id}")
         return {"pending_responses": pending_responses}
-        
     except Exception as e:
         logger.error(f"Erro ao buscar respostas pendentes: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-if __name__ == "__main__":
-    import uvicorn
-    logger.info(f"Iniciando servidor em {SERVER_HOST}:{SERVER_PORT}")
-    uvicorn.run(app, host=str(SERVER_HOST), port=int(SERVER_PORT))
+"""
+Para iniciar o servidor em modo de produção com múltiplos workers (exemplo: 4):
+
+Bash:
+# gunicorn --bind "0.0.0.0:8000" --workers 4 --worker-class uvicorn.workers.UvicornWorker backend.server:app
+
+Windows PowerShell (se disponível no ambiente):
+# gunicorn --bind "0.0.0.0:8000" --workers 4 --worker-class uvicorn.workers.UvicornWorker backend.server:app
+"""

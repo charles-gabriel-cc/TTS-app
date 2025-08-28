@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     python3.10-distutils \
     python3-pip \
     curl \
+    netcat-openbsd \
     git \
     build-essential \
     ffmpeg \
@@ -50,6 +51,9 @@ RUN python -m pip install --no-cache-dir torch torchvision torchaudio --index-ur
 
 # Instalar outras dependências Python
 RUN python -m pip install --no-cache-dir -r requirements.txt
+
+# Instalar servidor e utilitários de produção
+RUN python -m pip install --no-cache-dir gunicorn uvicorn redis
 
 # Instalar fastembed-gpu e qdrant-client
 RUN python -m pip install --no-cache-dir fastembed-gpu

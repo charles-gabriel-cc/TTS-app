@@ -65,6 +65,8 @@ services:
       - SERVER_PORT=8000
       - QDRANT_URL=http://qdrant:6333
       - OLLAMA_BASE_URL=http://ollama:11434
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
       - USE_LOCAL_COLLECTION=true
       - COLLECTION_NAME=ccen-docentes
       - USE_LOCAL_MODEL=true
@@ -83,33 +85,29 @@ services:
       bash -c "
       echo '=== TTS-APP com CUDA 11.8 e Python $$(python --version) ===';
       echo '🔧 Verificando CUDA...';
-      nvidia-smi;
+      nvidia-smi || true;
       echo '⏳ Aguardando Qdrant ficar disponível...';
-      while ! curl -s http://qdrant:6333/health > /dev/null 2>&1; do
+      until curl -s http://qdrant:6333/health > /dev/null 2>&1; do
         echo '   Qdrant ainda não disponível, aguardando...';
         sleep 2;
       done;
       echo '✅ Qdrant está disponível!';
       echo '⏳ Aguardando Ollama ficar disponível...';
-      while ! curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
+      until curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
         echo '   Ollama ainda não disponível, aguardando...';
         sleep 3;
       done;
       echo '✅ Ollama está disponível!';
-      echo '🔥 Aquecendo Ollama...';
-      echo \"   Enviando mensagem inicial para carregar modelo: $${MODEL_NAME}...\";
-      response=$$(curl -s -X POST http://ollama:11434/api/generate -H 'Content-Type: application/json' -d '{\"model\":\"$${MODEL_NAME}\",\"prompt\":\"Hello\",\"stream\":false}' | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data.get(\"response\",\"Erro no parsing\").strip())' 2>/dev/null || echo 'Erro na conexão');
-      echo '🚀 Ollama respondeu:' \"$$response\";
-      echo '';
-      echo '🎯 AMBIENTE PRONTO!';
-      echo '📝 Para iniciar o servidor Python, execute:';
-      echo '   python server.py';
-      echo '';
-      echo '💡 Ou use o container interativamente:';
-      echo '   docker exec -it tts-app-backend bash';
-      echo '';
-      echo '🔄 Mantendo container rodando...';
-      tail -f /dev/null
+      echo '⏳ Aguardando Redis ficar disponível (tcp/6379)...';
+      until bash -c 'echo > /dev/tcp/redis/6379' 2>/dev/null; do
+        echo '   Redis ainda não disponível, aguardando...';
+        sleep 1;
+      done;
+      echo '✅ Redis está disponível!';
+      echo '📦 Instalando gunicorn/uvicorn/redis (runtime)...';
+      python -m pip install -q --no-cache-dir gunicorn uvicorn redis || true;
+      echo '🚀 Iniciando Gunicorn com múltiplos workers...';
+      exec gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
     networks:
       - tts-network
@@ -121,6 +119,15 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+  redis:
+    image: redis:7-alpine
+    container_name: tts-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - tts-network
 
 volumes:
   qdrant_data:
