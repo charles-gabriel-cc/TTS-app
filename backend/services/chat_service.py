@@ -140,7 +140,7 @@ class ChatService:
         """
         results = self.qdrant_client.facet(
             collection_name=self.collection_name,
-            key="nome_professor",
+            key="metadata.nome_professor",
             limit=50000
         )
         unique_teacher_names = [hit.value for hit in results.hits]
@@ -156,7 +156,7 @@ class ChatService:
         teacher_filter = models.Filter(
             must=[
                 models.FieldCondition(
-                    key="nome_professor",  # O nome do campo no seu payload do Qdrant
+                    key="metadata.nome_professor",  # O nome do campo agora está em metadata
                     #match=models.MatchValue(value=name)  # O valor que você quer que seja igual
                     match=models.MatchText(
                         text=name  # A string de busca para texto completo
@@ -173,9 +173,11 @@ class ChatService:
 
         contexts = []
         for result in results:
-            text = result.payload.get("text", "")
-            professor = result.payload.get("nome_professor", "")
-            dept = result.payload.get("departamento", "")
+            # Nova estrutura: content está no nível superior, metadados em metadata
+            text = result.payload.get("content", "")
+            metadata = result.payload.get("metadata", {})
+            professor = metadata.get("nome_professor", "")
+            dept = metadata.get("departamento", "")
             contexts.append(f"Professor: {professor}\nDepartamento: {dept}\nInformação: {text}\n")
         
         return "\n".join(contexts) if contexts else "Nenhum resultado encontrado."
@@ -198,9 +200,11 @@ class ChatService:
         # Format results
         contexts = []
         for result in results:
-            text = result.payload.get("text", "")
-            professor = result.payload.get("nome_professor", "")
-            dept = result.payload.get("departamento", "")
+            # Nova estrutura: content está no nível superior, metadados em metadata
+            text = result.payload.get("content", "")
+            metadata = result.payload.get("metadata", {})
+            professor = metadata.get("nome_professor", "")
+            dept = metadata.get("departamento", "")
             contexts.append(f"Professor: {professor}\nDepartamento: {dept}\nInformação: {text}\n")
         
         return "\n".join(contexts) if contexts else "Nenhum resultado encontrado."
@@ -216,7 +220,7 @@ class ChatService:
             # Criar filtros
             filters = [
                 models.FieldCondition(
-                    key="tipo_de_documento",
+                    key="metadata.tipo_de_documento",
                     match=models.MatchValue(value="artigo")
                 )
             ]
@@ -225,7 +229,7 @@ class ChatService:
             if professor_name and professor_name.strip():
                 filters.append(
                     models.FieldCondition(
-                        key="nome_professor",
+                        key="metadata.nome_professor",
                         match=models.MatchText(text=professor_name.strip())
                     )
                 )
@@ -241,11 +245,13 @@ class ChatService:
 
             contexts = []
             for result in results:
-                text = result.payload.get("text", "")
-                professor = result.payload.get("nome_professor", "")
-                dept = result.payload.get("departamento", "")
-                title = result.payload.get("titulo", "")
-                year = result.payload.get("ano", "")
+                # Nova estrutura: content está no nível superior, metadados em metadata
+                text = result.payload.get("content", "")
+                metadata = result.payload.get("metadata", {})
+                professor = metadata.get("nome_professor", "")
+                dept = metadata.get("departamento", "")
+                title = metadata.get("titulo", "")
+                year = metadata.get("ano", "")
                 
                 context = f"Professor: {professor}\nDepartamento: {dept}"
                 if title:

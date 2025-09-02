@@ -302,11 +302,11 @@ class ArticleService:
                 scroll_filter=models.Filter(
                     must=[
                         models.FieldCondition(
-                            key="nome_professor",
+                            key="metadata.nome_professor",
                             match=models.MatchValue(value=nome_professor)
                         ),
                         models.FieldCondition(
-                            key="source",
+                            key="metadata.source",
                             match=models.MatchValue(value=source_path)
                         )
                     ]
@@ -371,18 +371,20 @@ class ArticleService:
             )
             
             for point in response[0]:
-                article_id = point.payload.get('article_id')
+                # Nova estrutura: metadados estão em metadata
+                metadata = point.payload.get('metadata', {})
+                article_id = metadata.get('article_id')
                 if article_id and article_id not in articles:
                     articles[article_id] = {
                         'id': article_id,
-                        'title': point.payload.get('titulo', 'Título não disponível'),
-                        'author': point.payload.get('nome_professor', ''),
-                        'year': point.payload.get('ano', ''),
-                        'journal': point.payload.get('revista', ''),
-                        'doi': point.payload.get('doi', ''),
-                        'abstract': point.payload.get('abstract', ''),
-                        'keywords': point.payload.get('keywords', []),
-                        'source': point.payload.get('source', '')
+                        'title': metadata.get('titulo', 'Título não disponível'),
+                        'author': metadata.get('nome_professor', ''),
+                        'year': metadata.get('ano', ''),
+                        'journal': metadata.get('revista', ''),
+                        'doi': metadata.get('doi', ''),
+                        'abstract': metadata.get('abstract', ''),
+                        'keywords': metadata.get('keywords', []),
+                        'source': metadata.get('source', '')
                     }
                 
                 if len(articles) >= limit:
@@ -402,7 +404,7 @@ class ArticleService:
                 scroll_filter=models.Filter(
                     must=[
                         models.FieldCondition(
-                            key="article_id",
+                            key="metadata.article_id",
                             match=models.MatchValue(value=article_id)
                         )
                     ]
@@ -414,16 +416,18 @@ class ArticleService:
             
             if response[0]:
                 point = response[0][0]
+                # Nova estrutura: metadados estão em metadata
+                metadata = point.payload.get('metadata', {})
                 return {
                     'id': article_id,
-                    'title': point.payload.get('titulo', ''),
-                    'author': point.payload.get('nome_professor', ''),
-                    'year': point.payload.get('ano', ''),
-                    'journal': point.payload.get('revista', ''),
-                    'doi': point.payload.get('doi', ''),
-                    'abstract': point.payload.get('abstract', ''),
-                    'keywords': point.payload.get('keywords', []),
-                    'source': point.payload.get('source', ''),
+                    'title': metadata.get('titulo', ''),
+                    'author': metadata.get('nome_professor', ''),
+                    'year': metadata.get('ano', ''),
+                    'journal': metadata.get('revista', ''),
+                    'doi': metadata.get('doi', ''),
+                    'abstract': metadata.get('abstract', ''),
+                    'keywords': metadata.get('keywords', []),
+                    'source': metadata.get('source', ''),
                     'full_metadata': point.payload
                 }
             
@@ -443,7 +447,7 @@ class ArticleService:
                 query_filter=models.Filter(
                     must=[
                         models.FieldCondition(
-                            key="article_id",
+                            key="metadata.article_id",
                             match=models.MatchValue(value=article_id)
                         )
                     ]
@@ -455,12 +459,14 @@ class ArticleService:
             
             contexts = []
             for result in results:
+                # Nova estrutura: content está no nível superior, metadados em metadata
+                metadata = result.payload.get('metadata', {})
                 contexts.append({
-                    'text': result.payload.get('text', ''),
-                    'chunk_index': result.payload.get('chunk_index', 0),
+                    'text': result.payload.get('content', ''),
+                    'chunk_index': metadata.get('chunk_index', 0),
                     'score': result.score,
-                    'title': result.payload.get('titulo', ''),
-                    'author': result.payload.get('nome_professor', '')
+                    'title': metadata.get('titulo', ''),
+                    'author': metadata.get('nome_professor', '')
                 })
             
             return contexts

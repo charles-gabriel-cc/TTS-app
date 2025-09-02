@@ -107,7 +107,7 @@ services:
       echo '📦 Instalando gunicorn/uvicorn/redis (runtime)...';
       python -m pip install -q --no-cache-dir gunicorn uvicorn redis || true;
       echo '🚀 Iniciando Gunicorn com múltiplos workers...';
-      exec gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
+      exec gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
     networks:
       - tts-network
@@ -129,10 +129,32 @@ services:
     networks:
       - tts-network
 
+  # n8n - Automação de workflows
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: tts-n8n
+    ports:
+      - "15678:5678"
+    environment:
+      - GENERIC_TIMEZONE=America/Recife
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:15678/
+      - N8N_EDITOR_BASE_URL=http://localhost:15678/
+      - DB_SQLITE_VACUUM_ON_STARTUP=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+    networks:
+      - tts-network
+
 volumes:
   qdrant_data:
     driver: local
   ollama_data:
+    driver: local
+  n8n_data:
     driver: local
 
 networks:

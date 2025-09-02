@@ -30,7 +30,7 @@ docker-compose -f docker-compose.yml down
 
 echo.
 echo 3. Subindo containers...
-docker-compose -f docker-compose.yml up -d
+docker-compose -f docker-compose.yml up --build -d
 
 echo.
 echo 4. Aguardando containers ficarem prontos...

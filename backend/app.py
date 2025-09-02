@@ -28,9 +28,11 @@ def search_qdrant(query: str) -> str:
     # Format results
     contexts = []
     for result in results:
-        text = result.payload.get("text", "")
-        professor = result.payload.get("nome_professor", "")
-        dept = result.payload.get("departamento", "")
+        # Nova estrutura: content está no nível superior, metadados em metadata
+        text = result.payload.get("content", "")
+        metadata = result.payload.get("metadata", {})
+        professor = metadata.get("nome_professor", "")
+        dept = metadata.get("departamento", "")
         contexts.append(f"Professor: {professor}\nDepartamento: {dept}\nInformação: {text}\n")
     
     return "\n".join(contexts) if contexts else "Nenhum resultado encontrado."

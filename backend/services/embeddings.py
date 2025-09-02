@@ -77,7 +77,7 @@ def create_curriculos_collection(embed_model, qdrant_client, collection_name, di
                     # Verifica se já foi processado
                     response = qdrant_client.scroll(
                         collection_name=collection_name,
-                        scroll_filter={"must": [{"key": "id_lattes", "match": {"value": id_lattes}}]},
+                        scroll_filter={"must": [{"key": "metadata.id_lattes", "match": {"value": id_lattes}}]},
                         limit=1
                     )
                     if response[0]:
@@ -101,12 +101,17 @@ def create_curriculos_collection(embed_model, qdrant_client, collection_name, di
                             id=str(uuid.uuid4()),
                             vector=vetor,
                             payload={
-                                "id_lattes": id_lattes,
-                                "nome_professor": nome_professor,
-                                "departamento": departamento,
-                                "source": caminho_pdf,
-                                "tipo_de_documento": "curriculo",
-                                "text": texto
+                                # O conteúdo principal fica no nível superior do payload
+                                "content": texto,  
+
+                                # Todos os outros dados são agrupados em um objeto "metadata"
+                                "metadata": {      
+                                    "id_lattes": id_lattes,
+                                    "nome_professor": nome_professor,
+                                    "departamento": departamento,
+                                    "source": caminho_pdf,
+                                    "tipo_de_documento": "curriculo"
+                                }
                             }
                         )
                         points.append(ponto)
@@ -299,11 +304,11 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
                         scroll_filter=models.Filter(
                             must=[
                                 models.FieldCondition(
-                                    key="nome_professor",
+                                    key="metadata.nome_professor",
                                     match=models.MatchValue(value=nome_professor)
                                 ),
                                 models.FieldCondition(
-                                    key="source",
+                                    key="metadata.source",
                                     match=models.MatchValue(value=caminho_pdf)
                                 )
                             ]
@@ -334,7 +339,6 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
                         
                         chunk_metadata = metadata.copy()
                         chunk_metadata.update({
-                            "text": texto,
                             "chunk_index": i,
                             "chunk_id": f"{metadata['article_id']}_chunk_{i}"
                         })
@@ -342,7 +346,13 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
                         ponto = PointStruct(
                             id=str(uuid.uuid4()),
                             vector=vetor,
-                            payload=chunk_metadata
+                            payload={
+                                # O conteúdo principal fica no nível superior do payload
+                                "content": texto,
+                                
+                                # Todos os outros dados são agrupados em um objeto "metadata"
+                                "metadata": chunk_metadata
+                            }
                         )
                         points.append(ponto)
 
