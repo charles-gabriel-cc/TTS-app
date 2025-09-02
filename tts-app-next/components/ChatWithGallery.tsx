@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatContext } from '@/contexts/ChatContext';
@@ -54,6 +54,16 @@ interface PDFArticle {
   url: string;
 }
 
+interface PDFArticleWithMetadata extends PDFArticle {
+  publication_title?: string;
+  year?: string;
+  journal?: string;
+  doi?: string;
+  abstract?: string;
+  keywords?: string[];
+  department?: string;
+}
+
 // Dados de exemplo para a galeria (mantidos como fallback)
 const fallbackGalleryItems = [
   {
@@ -82,6 +92,9 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
   
   // Estado para controlar o visualizador de PDF
   const [selectedPdf, setSelectedPdf] = useState<PDFArticle | null>(null);
+  
+  // Estado para pesquisa
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Contexto para estados compartilhados
   const { 
@@ -235,6 +248,29 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
     }
   }, [resetIdleTimer, onNavigateToArticleChat]);
 
+  // Função para filtrar artigos baseado no termo de pesquisa
+  const filteredArticles = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return pdfArticles;
+    }
+    
+    const term = searchTerm.toLowerCase().trim();
+    return pdfArticles.filter(article => 
+      article.title.toLowerCase().includes(term) ||
+      article.author.toLowerCase().includes(term) ||
+      article.filename.toLowerCase().includes(term) ||
+      (article.publication_title && article.publication_title.toLowerCase().includes(term)) ||
+      (article.journal && article.journal.toLowerCase().includes(term)) ||
+      (article.keywords && article.keywords.some(keyword => keyword.toLowerCase().includes(term)))
+    );
+  }, [pdfArticles, searchTerm]);
+
+  // Função para limpar pesquisa
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm("");
+    resetIdleTimer();
+  }, [resetIdleTimer]);
+
 
 
 
@@ -252,7 +288,7 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
           <div>
             <h1 className="text-xl font-semibold text-white flex items-center gap-2">
               <GraduationCap className="w-6 h-6 text-cyan-400" />
-              Galeria do CCEN
+              Museu do CCEN
             </h1>
             <p className="text-sm text-white/70">Explore documentos e recursos acadêmicos</p>
           </div>
@@ -265,13 +301,13 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
             className="bg-white/10 backdrop-blur-sm hover:bg-white/20 border-white/30 text-white"
           >
             <MessageCircle className="w-4 h-4 mr-2" />
-            Chat Completo
+            Chat
           </Button>
         </div>
       </motion.div>
 
-      {/* Chat Input */}
-      <div className="p-4 border-b border-white/10 bg-black/10 relative z-10">
+      {/* Chat Input - COMENTADO PARA DESABILITAR */}
+      {/* <div className="p-4 border-b border-white/10 bg-black/10 relative z-10">
         <ChatInput
           value={messageValue}
           onChange={setMessageValue}
@@ -286,7 +322,48 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
           disabled={false}
           keyboardVisible={false}
           showAudioToggle={true}
+          transparentBackground={true}
         />
+      </div> */}
+
+      {/* Search Box */}
+      <div className="p-4 border-b border-white/10 bg-black/10 relative z-20">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+            <svg className="h-5 w-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              resetIdleTimer();
+            }}
+            placeholder="Pesquisar por nome do professor, título, revista ou palavras-chave..."
+            className="w-full pl-10 pr-10 py-3 bg-white/5 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all duration-200 relative z-0"
+          />
+          {searchTerm && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/60 hover:text-white transition-colors z-10"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <div className="mt-2 text-sm text-white/60">
+            {filteredArticles.length === 0 ? (
+              <span>Nenhum resultado encontrado para "{searchTerm}"</span>
+            ) : (
+              <span>{filteredArticles.length} resultado{filteredArticles.length !== 1 ? 's' : ''} encontrado{filteredArticles.length !== 1 ? 's' : ''}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Gallery Content */}
@@ -314,8 +391,8 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
               </Button>
             </div>
           </div>
-        ) : pdfArticles.length > 0 ? (
-          pdfArticles.map((article) => (
+        ) : filteredArticles.length > 0 ? (
+          filteredArticles.map((article) => (
             <motion.div
               key={article.id}
               initial={{ opacity: 0, y: 20 }}
@@ -328,16 +405,58 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
                 whileTap={{ scale: 0.98 }}
               >
                 <div 
-                  className="aspect-[3/4] flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10 cursor-pointer"
+                  className="min-h-[320px] flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10 cursor-pointer"
                   onClick={() => handleItemClick(article)}
                 >
-                  <div className="flex flex-col items-center gap-3 text-center p-4">
+                  <div className="flex flex-col items-center gap-3 text-center p-4 w-full">
                     <FileText className="w-12 h-12 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
-                    <div>
-                      <h3 className="text-sm font-medium text-white truncate max-w-32">
-                        {article.title}
+                    <div className="w-full space-y-2">
+                      {/* Título principal */}
+                      <h3 className="text-sm font-medium text-white break-words leading-tight max-w-40">
+                        {article.publication_title || article.title.toUpperCase()}
                       </h3>
-                      <p className="text-xs text-white/60 mt-1">
+                      
+                      {/* Autor */}
+                      {article.author && article.author !== article.title && (
+                        <p className="text-xs text-white/70 break-words leading-tight">
+                          {article.author.toUpperCase()}
+                        </p>
+                      )}
+                      
+                      {/* Ano */}
+                      {article.year && (
+                        <p className="text-xs text-cyan-300 font-medium">
+                          {article.year}
+                        </p>
+                      )}
+                      
+                      {/* Revista */}
+                      {article.journal && (
+                        <p className="text-xs text-white/60 break-words leading-tight max-w-40">
+                          {article.journal}
+                        </p>
+                      )}
+                      
+                      {/* Keywords */}
+                      {article.keywords && article.keywords.length > 0 && (
+                        <div className="flex flex-wrap gap-1 justify-center mt-2">
+                          {article.keywords.slice(0, 3).map((keyword, index) => (
+                            <span 
+                              key={index}
+                              className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full"
+                            >
+                              {keyword}
+                            </span>
+                          ))}
+                          {article.keywords.length > 3 && (
+                            <span className="text-xs text-white/50">
+                              +{article.keywords.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-white/60 mt-2">
                         Clique para visualizar
                       </p>
                     </div>
@@ -369,7 +488,9 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
           <div className="flex items-center justify-center col-span-full py-8">
             <div className="flex flex-col items-center gap-3 text-center">
               <FileText className="w-12 h-12 text-gray-400" />
-              <p className="text-sm text-white/70">Nenhum artigo encontrado</p>
+              <p className="text-sm text-white/70">
+                {searchTerm ? `Nenhum artigo encontrado para "${searchTerm}"` : "Nenhum artigo encontrado"}
+              </p>
             </div>
           </div>
         )}

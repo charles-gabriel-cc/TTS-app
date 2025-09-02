@@ -4,7 +4,6 @@ import React, { useRef, useEffect } from "react";
 import { Volume2, VolumeX, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useIdleContext } from '@/contexts/IdleContext';
 
@@ -35,9 +34,9 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration, disab
           size="icon"
           onClick={onStart}
           disabled={disabled}
-          className="rounded-full hover:bg-white/10 text-white/70 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          className="rounded-full hover:bg-white/10 text-white hover:text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
           </svg>
         </Button>
@@ -56,7 +55,7 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration, disab
           }}
           className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
         >
-          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
             <rect x="6" y="6" width="12" height="12" />
           </svg>
         </Button>
@@ -69,7 +68,7 @@ function AudioRecorder({ onStart, onStop, onCancel, isRecording, duration, disab
           }}
           className="w-8 h-8 rounded-full hover:bg-red-500/20 text-white hover:text-white"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </Button>
@@ -95,6 +94,7 @@ export interface ChatInputProps {
   placeholder?: string;
   className?: string;
   showAudioToggle?: boolean;
+  transparentBackground?: boolean;
 }
 
 export function ChatInput({
@@ -112,7 +112,8 @@ export function ChatInput({
   keyboardVisible = false,
   placeholder = "Digite sua mensagem...",
   className,
-  showAudioToggle = true
+  showAudioToggle = true,
+  transparentBackground = false
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -228,32 +229,15 @@ export function ChatInput({
     <div 
       className={cn(
         "border-t border-white/10 p-4 relative z-10",
-        keyboardVisible 
-          ? "bg-slate-900/90 backdrop-blur-md border-t border-cyan-500/50" 
-          : "bg-black/20 backdrop-blur-xl",
+        transparentBackground 
+          ? "" 
+          : keyboardVisible 
+            ? "bg-slate-900/90 backdrop-blur-md border-t border-cyan-500/50" 
+            : "bg-black/20 backdrop-blur-xl",
         className
       )}
     >
-      {showAudioToggle && (
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex items-center gap-3 text-sm bg-white/5 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/10 shadow-lg">
-            <span className="text-white/80 font-medium">Resposta com áudio</span>
-            <Switch
-              checked={audioOutputEnabled}
-              onCheckedChange={(checked) => {
-                resetIdleTimer();
-                onToggleAudioOutput(checked);
-              }}
-              className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-cyan-500 data-[state=checked]:to-teal-400 data-[state=unchecked]:bg-white/20 border-white/30 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 [&>span]:bg-white [&>span]:shadow-lg [&>span]:border [&>span]:border-white/20"
-            />
-            {audioOutputEnabled ? (
-              <Volume2 className="w-4 h-4 text-green-400 drop-shadow-sm" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-white/50" />
-            )}
-          </div>
-        </div>
-      )}
+
 
       <div className="relative">
         <div className="flex items-end gap-2 bg-white/5 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
@@ -278,6 +262,32 @@ export function ChatInput({
               disabled={disabled}
             />
             
+            {showAudioToggle && !isRecording && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  resetIdleTimer();
+                  onToggleAudioOutput(!audioOutputEnabled);
+                }}
+                disabled={disabled}
+                className={cn(
+                  "rounded-full hover:bg-white/10 transition-all duration-200",
+                  audioOutputEnabled 
+                    ? "text-green-400 hover:text-green-300" 
+                    : "text-white hover:text-white",
+                  disabled && "opacity-50 cursor-not-allowed hover:bg-transparent"
+                )}
+                title={audioOutputEnabled ? "Desativar resposta com áudio" : "Ativar resposta com áudio"}
+              >
+                {audioOutputEnabled ? (
+                  <Volume2 className="w-5 h-5" />
+                ) : (
+                  <VolumeX className="w-5 h-5" />
+                )}
+              </Button>
+            )}
+            
             {!isRecording && (
               <Button
                 onClick={() => {
@@ -288,7 +298,7 @@ export function ChatInput({
                 size="icon"
                 className="rounded-full bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-600 hover:to-teal-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               </Button>
             )}
           </div>

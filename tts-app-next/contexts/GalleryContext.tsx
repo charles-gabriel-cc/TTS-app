@@ -12,9 +12,19 @@ interface PDFArticle {
   url: string;
 }
 
+interface PDFArticleWithMetadata extends PDFArticle {
+  publication_title?: string;
+  year?: string;
+  journal?: string;
+  doi?: string;
+  abstract?: string;
+  keywords?: string[];
+  department?: string;
+}
+
 interface GalleryContextType {
   // Dados da galeria
-  pdfArticles: PDFArticle[];
+  pdfArticles: PDFArticleWithMetadata[];
   loading: boolean;
   error: string | null;
   
@@ -30,24 +40,33 @@ interface GalleryContextType {
 const GalleryContext = createContext<GalleryContextType | undefined>(undefined);
 
 export function GalleryProvider({ children }: { children: ReactNode }) {
-  const [pdfArticles, setPdfArticles] = useState<PDFArticle[]>([]);
+  const [pdfArticles, setPdfArticles] = useState<PDFArticleWithMetadata[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCached, setIsCached] = useState(false);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
 
-  // Função para buscar artigos da API
+  // Função para buscar artigos da API com metadados
   const fetchArticles = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const articles = await api.getPDFArticles();
+      // Tentar buscar com metadados primeiro
+      let articles;
+      try {
+        articles = await api.getPDFArticlesWithMetadata();
+        console.log(`[Gallery Cache] ${articles.length} artigos com metadados carregados`);
+      } catch (metadataError) {
+        console.warn('[Gallery Cache] Erro ao buscar com metadados, usando API básica:', metadataError);
+        // Fallback para API básica
+        articles = await api.getPDFArticles();
+        console.log(`[Gallery Cache] ${articles.length} artigos básicos carregados (fallback)`);
+      }
+      
       setPdfArticles(articles);
       setIsCached(true);
       setLastFetch(new Date());
-      
-      console.log(`[Gallery Cache] ${articles.length} artigos carregados e cacheados`);
       
     } catch (err) {
       console.error('Erro ao buscar artigos:', err);

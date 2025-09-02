@@ -43,6 +43,16 @@ interface PDFArticle {
   url: string
 }
 
+interface PDFArticleWithMetadata extends PDFArticle {
+  publication_title?: string
+  year?: string
+  journal?: string
+  doi?: string
+  abstract?: string
+  keywords?: string[]
+  department?: string
+}
+
 // Função para gerar um session_id único
 const generateSessionId = () => {
   return uuidv4()
@@ -388,6 +398,31 @@ export const api = {
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: Failed to fetch PDF articles`)
+        }
+
+        const data = await response.json()
+        return data
+      },
+      3 // maxRetries
+    )
+  },
+
+  // Função para buscar PDFs de artigos com metadados do Qdrant
+  async getPDFArticlesWithMetadata(): Promise<PDFArticleWithMetadata[]> {
+    const cacheKey = `pdfs_with_metadata_${sessionId}`
+    
+    return executeWithCache(
+      cacheKey,
+      async () => {
+        const response = await fetch(`${API_ENDPOINTS.backend}/articles/pdfs-with-metadata`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to fetch PDF articles with metadata`)
         }
 
         const data = await response.json()

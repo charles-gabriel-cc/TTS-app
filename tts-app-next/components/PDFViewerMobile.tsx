@@ -23,7 +23,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   const [pdfFile, setPdfFile] = useState<Blob | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.0);
+  const [scale, setScale] = useState<number>(1.6);
   const [rotation, setRotation] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +35,18 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   const touchEndX = useRef<number>(0);
   const touchEndY = useRef<number>(0);
   const contentRef = useRef<HTMLDivElement>(null);
+  
+  // Refs para detecção de pinch-to-zoom
+  const initialDistance = useRef<number>(0);
+  const initialScale = useRef<number>(1.6);
+  const isPinching = useRef<boolean>(false);
+
+  // Atualizar initialScale quando scale mudar
+  useEffect(() => {
+    if (!isPinching.current) {
+      initialScale.current = scale;
+    }
+  }, [scale]);
 
 
 
@@ -108,19 +120,65 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
     setRotation(prev => (prev + 90) % 360);
   };
 
-  // Funções para detecção de swipe
+  // Função para calcular distância entre dois pontos
+  const getDistance = (touch1: React.Touch, touch2: React.Touch): number => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Funções para detecção de swipe e pinch-to-zoom
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
-  }, []);
+    
+    // Detectar pinch-to-zoom (dois dedos)
+    if (e.touches.length === 2) {
+      isPinching.current = true;
+      initialDistance.current = getDistance(e.touches[0], e.touches[1]);
+      initialScale.current = scale;
+      console.log('[PDFViewerMobile] Pinch iniciado:', {
+        initialDistance: initialDistance.current,
+        initialScale: initialScale.current
+      });
+    }
+  }, [scale]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     touchEndX.current = e.touches[0].clientX;
     touchEndY.current = e.touches[0].clientY;
+    
+    // Processar pinch-to-zoom
+    if (e.touches.length === 2 && isPinching.current) {
+      e.preventDefault(); // Prevenir scroll durante pinch
+      
+      const currentDistance = getDistance(e.touches[0], e.touches[1]);
+      const scaleFactor = currentDistance / initialDistance.current;
+      const newScale = Math.max(0.5, Math.min(3.0, initialScale.current * scaleFactor));
+      
+      // Aplicar suavização para evitar mudanças bruscas
+      setScale(prevScale => {
+        const smoothedScale = prevScale + (newScale - prevScale) * 0.3;
+        return Math.max(0.5, Math.min(3.0, smoothedScale));
+      });
+      
+      console.log('[PDFViewerMobile] Pinch em progresso:', {
+        currentDistance,
+        scaleFactor,
+        newScale
+      });
+    }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
-    // Só processar swipe se há páginas disponíveis
+    // Finalizar pinch-to-zoom
+    if (isPinching.current) {
+      isPinching.current = false;
+      console.log('[PDFViewerMobile] Pinch finalizado, escala final:', scale);
+      return;
+    }
+    
+    // Só processar swipe se há páginas disponíveis e não está fazendo pinch
     if (numPages === 0) {
       console.log('[PDFViewerMobile] Swipe ignorado - nenhuma página disponível');
       return;
@@ -160,7 +218,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
         });
       }
     }
-  }, [numPages]);
+  }, [numPages, scale]);
 
   const handleDownload = async () => {
     console.log('[PDFViewerMobile] Iniciando download do PDF:', articleId);
@@ -232,78 +290,18 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
         </div>
       </div>
 
-            {/* Controls */}
-      <div className="flex items-center justify-between p-3 bg-gray-100 border-b">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePreviousPage}
-            disabled={pageNumber <= 1}
-            className="flex items-center gap-1"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Anterior</span>
-          </Button>
-          
-          <span className="text-sm font-medium px-2">
-            {pageNumber} de {numPages}
-          </span>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={pageNumber >= numPages}
-            className="flex items-center gap-1"
-          >
-            <span className="hidden sm:inline">Próxima</span>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
+      
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleZoomOut}
-            disabled={scale <= 0.5}
-            className="flex items-center gap-1"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </Button>
-          
-          <span className="text-sm font-medium px-2 min-w-[60px] text-center">
-            {Math.round(scale * 100)}%
-          </span>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleZoomIn}
-            disabled={scale >= 3.0}
-            className="flex items-center gap-1"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRotate}
-            className="flex items-center gap-1"
-          >
-            <RotateCw className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Swipe Indicator */}
-      <div className="px-3 py-2 bg-blue-50 border-b border-blue-200">
-        <div className="flex items-center justify-center gap-2 text-xs text-blue-600">
+      {/* Gesture Indicator */}
+      <div className="px-3 py-2 bg-blue-50 border-b border-blue-200 relative">
+        <div className="flex items-center justify-center text-xs text-blue-600">
           <ChevronLeft className="w-3 h-3" />
-          <span>Deslize para navegar entre páginas</span>
+          <span className="mx-1">Deslize para navegar</span>
           <ChevronRight className="w-3 h-3" />
+        </div>
+        {/* Contador de páginas sutil */}
+        <div className="absolute bottom-1 right-3 text-xs text-blue-400 font-medium">
+          {pageNumber} / {numPages}
         </div>
       </div>
 

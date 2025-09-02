@@ -292,7 +292,7 @@ function HomeContent() {
               onNavigateToArticleChat={handleNavigateToArticleChat}
               isFromIdle={isFromIdle}
             />
-            <motion.button
+            {/* <motion.button
               initial={{ opacity: 0, y: -20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
@@ -303,7 +303,7 @@ function HomeContent() {
               className="fixed top-4 left-4 z-50 bg-black/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg border border-white/10 hover:bg-black/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ← Voltar ao Início
-            </motion.button>
+            </motion.button> */}
           </motion.div>
         )}
         
@@ -374,7 +374,7 @@ function HomeContent() {
         <IdleScreen
           isVisible={showIdleScreen}
           onDismiss={handleIdleScreenDismiss}
-          title="Assistente Virtual do CCEN"
+          title="Museu do CCEN"
           description="Conheça os professores do CCEN. Obtenha informações sobre os professores, suas áreas de atuação, acesso aos seus currículos lattes e outras informações."
           callToAction="Toque em qualquer lugar para começar"
         />
