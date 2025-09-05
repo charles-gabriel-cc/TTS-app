@@ -228,7 +228,7 @@ export function ChatInput({
   return (
     <div 
       className={cn(
-        "border-t border-white/10 p-4 relative z-10",
+        "border-t border-white/10 p-4 relative z-10 transition-all duration-300 ease-out",
         transparentBackground 
           ? "" 
           : keyboardVisible 

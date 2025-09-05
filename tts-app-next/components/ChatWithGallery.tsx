@@ -8,6 +8,7 @@ import { useGalleryContext } from '@/contexts/GalleryContext';
 import { useIdleContext } from '@/contexts/IdleContext';
 import PdfViewer from "@/components/PDFViewer";
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useKeyboardDetection } from '@/hooks/useKeyboardDetection';
 import dynamic from 'next/dynamic';
 
 // Importação dinâmica do PDFViewerMobile para otimização
@@ -119,6 +120,9 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
 
   // Detectar se é dispositivo mobile
   const isMobile = useIsMobile();
+  
+  // Detectar teclado virtual
+  const { isVisible: keyboardVisible, height: keyboardHeight, isAnimating: keyboardAnimating } = useKeyboardDetection();
   
   // Limpar PDF quando voltar do modo idle
   useEffect(() => {
@@ -320,7 +324,7 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
           audioOutputEnabled={audioOutputEnabled}
           onToggleAudioOutput={handleToggleAudioOutput}
           disabled={false}
-          keyboardVisible={false}
+          keyboardVisible={keyboardVisible}
           showAudioToggle={true}
           transparentBackground={true}
         />

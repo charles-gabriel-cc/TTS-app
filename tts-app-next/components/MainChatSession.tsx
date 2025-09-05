@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { GraduationCap, MessageCircle, ArrowLeft, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
+import { useKeyboardDetection } from '@/hooks/useKeyboardDetection'
 
 interface MainChatSessionProps {
   onBackToGallery: () => void
@@ -49,6 +50,9 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
   } = useChatContext()
 
   const { resetIdleTimer } = useIdleContext()
+  
+  // Detectar teclado virtual
+  const { isVisible: keyboardVisible, height: keyboardHeight, isAnimating: keyboardAnimating, animatedHeight } = useKeyboardDetection()
 
   // Usar sessão fixa para o chat principal
   const mainSessionId = getOrCreateMainChatSession()
@@ -79,7 +83,19 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
     
     if (isRecording) {
       interval = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
+        setRecordingDuration(prev => {
+          const newDuration = prev + 1;
+          
+          // Limite de 30 segundos - cancelar gravação automaticamente
+          if (newDuration >= 30) {
+            setIsRecording(false);
+            if (interval) {
+              clearInterval(interval);
+            }
+            return 0;
+          }
+          return newDuration;
+        });
       }, 1000);
     }
     
@@ -88,7 +104,7 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
         clearInterval(interval);
       }
     };
-  }, [isRecording, setRecordingDuration]);
+  }, [isRecording, setRecordingDuration, setIsRecording]);
 
   const handleSendMessage = useCallback(async (message: string) => {
     if (!message.trim() || isLoading) return
@@ -240,13 +256,24 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
   }, [messageValue, handleSendMessage])
 
   const handleBackClick = useCallback(() => {
-    if (!isLoading) {
+    if (!isLoading && !isRecording) {
       onBackToGallery()
     }
-  }, [isLoading, onBackToGallery])
+  }, [isLoading, isRecording, onBackToGallery])
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div 
+      className={cn(
+        "flex flex-col relative overflow-hidden",
+        "mobile-vh keyboard-transition mobile-optimized",
+        keyboardVisible && "compact-layout"
+      )}
+      style={{
+        height: keyboardVisible 
+          ? `calc(100vh - ${animatedHeight}px)` 
+          : '100vh'
+      }}
+    >
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Gradient Background */}
@@ -356,7 +383,7 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
             variant="ghost"
             size="sm"
             onClick={handleBackClick}
-            disabled={isLoading}
+            disabled={isLoading || isRecording}
             className="text-white/70 hover:text-white hover:bg-white/10 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -424,7 +451,15 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
       </div>
 
       {/* Chat Input */}
-      <div className="relative z-50">
+      <div 
+        className={cn(
+          "relative",
+          keyboardVisible ? "fixed left-0 right-0 z-[9999]" : "z-50"
+        )}
+        style={{
+          bottom: keyboardVisible ? `${animatedHeight}px` : undefined
+        }}
+      >
         <ChatInput
           value={messageValue}
           onChange={setMessageValue}
@@ -437,7 +472,7 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
           audioOutputEnabled={audioOutputEnabled}
           onToggleAudioOutput={handleToggleAudioOutput}
           disabled={isLoading}
-          keyboardVisible={false}
+          keyboardVisible={keyboardVisible}
           showAudioToggle={true}
         />
       </div>

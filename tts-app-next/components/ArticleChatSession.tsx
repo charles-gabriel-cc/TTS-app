@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { GraduationCap, MessageCircle, ArrowLeft, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
+import { useKeyboardDetection } from '@/hooks/useKeyboardDetection'
 
 interface ArticleChatSessionProps {
   professorName: string
@@ -43,6 +44,9 @@ export default function ArticleChatSession({
   } = useChatContext()
 
   const { resetIdleTimer } = useIdleContext()
+  
+  // Detectar teclado virtual
+  const { isVisible: keyboardVisible, height: keyboardHeight, isAnimating: keyboardAnimating, animatedHeight } = useKeyboardDetection()
 
   // Usar sessão fixa para este artigo específico
   const articleSessionId = getOrCreateArticleSession(professorName, articleTitle)
@@ -73,7 +77,19 @@ export default function ArticleChatSession({
     
     if (isRecording) {
       interval = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
+        setRecordingDuration(prev => {
+          const newDuration = prev + 1;
+          
+          // Limite de 30 segundos - cancelar gravação automaticamente
+          if (newDuration >= 30) {
+            setIsRecording(false);
+            if (interval) {
+              clearInterval(interval);
+            }
+            return 0;
+          }
+          return newDuration;
+        });
       }, 1000);
     }
     
@@ -82,7 +98,7 @@ export default function ArticleChatSession({
         clearInterval(interval);
       }
     };
-  }, [isRecording, setRecordingDuration]);
+  }, [isRecording, setRecordingDuration, setIsRecording]);
 
   const handleSendMessage = useCallback(async (message: string) => {
     if (!message.trim() || isLoading || !articleSessionId) return
@@ -215,18 +231,31 @@ export default function ArticleChatSession({
   }, [messageValue, handleSendMessage])
 
   const handleBackClick = useCallback(() => {
-    resetIdleTimer()
-    // Parar áudio antes de sair
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
+    if (!isLoading && !isRecording) {
+      resetIdleTimer()
+      // Parar áudio antes de sair
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      setPlayingMessageId(null)
+      onBackToGallery()
     }
-    setPlayingMessageId(null)
-    onBackToGallery()
-  }, [resetIdleTimer, onBackToGallery])
+  }, [isLoading, isRecording, resetIdleTimer, onBackToGallery])
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div 
+      className={cn(
+        "flex flex-col relative overflow-hidden",
+        "mobile-vh keyboard-transition mobile-optimized",
+        keyboardVisible && "compact-layout"
+      )}
+      style={{
+        height: keyboardVisible 
+          ? `calc(100vh - ${animatedHeight}px)` 
+          : '100vh'
+      }}
+    >
       {/* Header */}
       <motion.div 
         className="border-b border-white/10 bg-black/20 backdrop-blur-xl p-4 relative z-10"
@@ -241,7 +270,7 @@ export default function ArticleChatSession({
                  variant="ghost"
                  size="sm"
                  onClick={handleBackClick}
-                 disabled={isLoading}
+                 disabled={isLoading || isRecording}
                  className="text-white/70 hover:text-white hover:bg-white/10 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                >
                  <ArrowLeft className="w-4 h-4" />
@@ -309,7 +338,15 @@ export default function ArticleChatSession({
       </div>
 
       {/* Input */}
-      <div className="relative z-50">
+      <div 
+        className={cn(
+          "relative",
+          keyboardVisible ? "fixed left-0 right-0 z-[9999]" : "z-50"
+        )}
+        style={{
+          bottom: keyboardVisible ? `${animatedHeight}px` : undefined
+        }}
+      >
         <ChatInput
           value={messageValue}
           onChange={setMessageValue}
@@ -322,7 +359,7 @@ export default function ArticleChatSession({
           audioOutputEnabled={audioOutputEnabled}
           onToggleAudioOutput={handleToggleAudioOutput}
           disabled={isLoading}
-          keyboardVisible={false}
+          keyboardVisible={keyboardVisible}
           showAudioToggle={true}
         />
       </div>
