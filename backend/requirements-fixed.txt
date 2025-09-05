@@ -31,3 +31,4 @@ trainer
 coqpit 
 PyMuPDF==1.16.14
 PyPDF2>=3.0.0
+httpx

@@ -14,7 +14,8 @@ from config import (
     ARTICLES_COLLECTION_NAME,
     QDRANT_URL,
     QDRANT_API_KEY,
-    DOCS
+    DOCS,
+    WEBHOOK_URL
 )
 import os
 import base64
@@ -25,6 +26,7 @@ import hashlib
 import time
 import json
 import redis
+import httpx
 from services.transcription_service import TranscriptionService
 from services.chat_service import ChatService
 from utils.logger import setup_logger
@@ -181,6 +183,10 @@ else:
         qdrant_api_key=QDRANT_API_KEY
     )
 
+# Log da configuração do webhook
+logger.info(f"🔗 Webhook configurado: {WEBHOOK_URL}")
+logger.info(f"📡 Chat service será substituído por webhook na rota /chat/")
+
 # Função para limpar comandos de controle das mensagens do usuário
 def clean_user_message(message: str) -> str:
     """Remove comandos de controle como /think, /nothink, /no_think da mensagem do usuário"""
@@ -199,6 +205,34 @@ def clean_response_text(text: str) -> str:
     # Limpar espaços no início e fim
     cleaned_text = cleaned_text.strip()
     return cleaned_text
+
+# Função para testar conectividade com o webhook
+async def test_webhook_connectivity():
+    """Testa se o webhook está acessível"""
+    try:
+        logger.info(f"Testando conectividade com webhook: {WEBHOOK_URL}")
+        
+        async with httpx.AsyncClient() as client:
+            # Teste simples de conectividade com timeout baixo
+            response = await client.get(
+                WEBHOOK_URL.replace("/webhook-test/", "/health"),  # Tentar endpoint de health
+                timeout=httpx.Timeout(5.0, connect=3.0)
+            )
+            logger.info(f"✅ Webhook acessível - Status: {response.status_code}")
+            return True
+            
+    except httpx.ConnectError as e:
+        logger.error(f"❌ Erro de conexão com webhook: {e}")
+        logger.error(f"Verifique se o serviço está rodando em: {WEBHOOK_URL}")
+        return False
+        
+    except httpx.TimeoutException as e:
+        logger.error(f"❌ Timeout ao conectar com webhook: {e}")
+        return False
+        
+    except Exception as e:
+        logger.error(f"❌ Erro inesperado ao testar webhook: {e}")
+        return False
 
 # Modelo para requisições de chat
 class ChatRequest(BaseModel):
@@ -221,6 +255,26 @@ async def transcribe_audio(audio: UploadFile = File(...)):
         logger.error(f"Erro na rota de transcrição: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Rota para testar conectividade com o webhook
+@app.get("/test-webhook/")
+async def test_webhook():
+    """Testa se o webhook está acessível"""
+    try:
+        is_accessible = await test_webhook_connectivity()
+        return {
+            "webhook_url": WEBHOOK_URL,
+            "accessible": is_accessible,
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        logger.error(f"Erro ao testar webhook: {str(e)}")
+        return {
+            "webhook_url": WEBHOOK_URL,
+            "accessible": False,
+            "error": str(e),
+            "timestamp": time.time()
+        }
+
 # Rota para chat
 @app.post("/chat/")
 async def chat(request: ChatRequest):
@@ -230,9 +284,76 @@ async def chat(request: ChatRequest):
         logger.info(f"Mensagem original: {request.message}")
         logger.info(f"Mensagem limpa: {cleaned_message}")
         
-        # Processar nova mensagem SEM cache - sempre gerar nova resposta
-        logger.info(f"Gerando nova resposta para: {cleaned_message[:50]}...")
-        response = await chat_service.get_response(cleaned_message, request.session_id)
+        # Usar webhook em vez do chat_service
+        webhook_url = WEBHOOK_URL
+        logger.info(f"URL do webhook configurada: {webhook_url}")
+        
+        # Preparar dados para o webhook
+        webhook_data = {
+            "message": cleaned_message,
+            "session_id": request.session_id,
+            "context": "general"
+        }
+        logger.info(f"Dados preparados para webhook: {webhook_data}")
+        
+        logger.info(f"Iniciando requisição HTTP para webhook...")
+        
+        # Fazer requisição para o webhook
+        try:
+            async with httpx.AsyncClient() as client:
+                logger.info(f"Cliente HTTP criado, enviando POST para {webhook_url}")
+                
+                # Configurar timeout e headers
+                timeout = httpx.Timeout(30.0, connect=10.0)
+                headers = {
+                    "Content-Type": "application/json",
+                    "User-Agent": "TTS-App-Backend/1.0"
+                }
+                
+                logger.info(f"Configurações: timeout={timeout}, headers={headers}")
+                
+                webhook_response = await client.post(
+                    webhook_url,
+                    json=webhook_data,
+                    timeout=timeout,
+                    headers=headers
+                )
+                
+                logger.info(f"Resposta recebida do webhook: status={webhook_response.status_code}")
+                logger.info(f"Headers da resposta: {dict(webhook_response.headers)}")
+                
+                if webhook_response.status_code == 200:
+                    try:
+                        webhook_result = webhook_response.json()
+                        logger.info(f"Resposta JSON do webhook: {webhook_result}")
+                        response = webhook_result.get("response", "Desculpe, não consegui processar sua mensagem.")
+                    except json.JSONDecodeError as json_err:
+                        logger.error(f"Erro ao decodificar JSON da resposta: {json_err}")
+                        logger.error(f"Conteúdo da resposta: {webhook_response.text}")
+                        response = "Desculpe, resposta inválida do webhook."
+                else:
+                    logger.error(f"Webhook retornou status {webhook_response.status_code}")
+                    logger.error(f"Conteúdo da resposta: {webhook_response.text}")
+                    response = "Desculpe, ocorreu um erro ao processar sua mensagem."
+                    
+        except httpx.ConnectError as conn_err:
+            logger.error(f"Erro de conexão com webhook: {conn_err}")
+            logger.error(f"Detalhes da conexão: {type(conn_err).__name__}")
+            response = "Desculpe, não foi possível conectar ao serviço de chat."
+            
+        except httpx.TimeoutException as timeout_err:
+            logger.error(f"Timeout na requisição para webhook: {timeout_err}")
+            response = "Desculpe, o serviço de chat demorou muito para responder."
+            
+        except httpx.HTTPStatusError as http_err:
+            logger.error(f"Erro HTTP do webhook: {http_err}")
+            logger.error(f"Status: {http_err.response.status_code}, Resposta: {http_err.response.text}")
+            response = "Desculpe, erro na comunicação com o serviço de chat."
+            
+        except Exception as http_exc:
+            logger.error(f"Erro inesperado na requisição HTTP: {http_exc}")
+            logger.error(f"Tipo do erro: {type(http_exc).__name__}")
+            response = "Desculpe, erro inesperado na comunicação."
         
         # Limpar tags <think> da resposta antes de retornar ao frontend
         cleaned_response = clean_response_text(response)
@@ -242,7 +363,10 @@ async def chat(request: ChatRequest):
         
         return response_data
     except Exception as e:
-        logger.error(f"Erro na rota de chat: {str(e)}")
+        logger.error(f"Erro geral na rota de chat: {str(e)}")
+        logger.error(f"Tipo do erro: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback completo: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Rota para chat específico de artigos
@@ -255,11 +379,77 @@ async def article_chat(request: ArticleChatRequest):
         logger.info(f"Mensagem limpa (artigo): {cleaned_message}")
         logger.info(f"Professor filtrado: {request.professor_name}")
         
-        # Processar nova mensagem SEM cache - sempre gerar nova resposta
-        logger.info(f"Gerando nova resposta para artigo: {cleaned_message[:50]}...")
+        # Usar webhook em vez do article_chat_service
+        webhook_url = WEBHOOK_URL
+        logger.info(f"URL do webhook configurada (artigo): {webhook_url}")
         
-        # Usar o serviço de chat de artigos com filtro de professor
-        response = await article_chat_service.get_article_response(cleaned_message, request.session_id, request.professor_name)
+        # Preparar dados para o webhook com contexto de artigo
+        webhook_data = {
+            "message": cleaned_message,
+            "session_id": request.session_id,
+            "professor_name": request.professor_name,
+            "context": "article_chat"
+        }
+        logger.info(f"Dados preparados para webhook (artigo): {webhook_data}")
+        
+        logger.info(f"Iniciando requisição HTTP para webhook (artigo)...")
+        
+        # Fazer requisição para o webhook
+        try:
+            async with httpx.AsyncClient() as client:
+                logger.info(f"Cliente HTTP criado, enviando POST para {webhook_url}")
+                
+                # Configurar timeout e headers
+                timeout = httpx.Timeout(30.0, connect=10.0)
+                headers = {
+                    "Content-Type": "application/json",
+                    "User-Agent": "TTS-App-Backend/1.0"
+                }
+                
+                logger.info(f"Configurações (artigo): timeout={timeout}, headers={headers}")
+                
+                webhook_response = await client.post(
+                    webhook_url,
+                    json=webhook_data,
+                    timeout=timeout,
+                    headers=headers
+                )
+                
+                logger.info(f"Resposta recebida do webhook (artigo): status={webhook_response.status_code}")
+                logger.info(f"Headers da resposta (artigo): {dict(webhook_response.headers)}")
+                
+                if webhook_response.status_code == 200:
+                    try:
+                        webhook_result = webhook_response.json()
+                        logger.info(f"Resposta JSON do webhook (artigo): {webhook_result}")
+                        response = webhook_result.get("response", "Desculpe, não consegui processar sua mensagem sobre artigos.")
+                    except json.JSONDecodeError as json_err:
+                        logger.error(f"Erro ao decodificar JSON da resposta (artigo): {json_err}")
+                        logger.error(f"Conteúdo da resposta (artigo): {webhook_response.text}")
+                        response = "Desculpe, resposta inválida do webhook para artigos."
+                else:
+                    logger.error(f"Webhook retornou status {webhook_response.status_code} (artigo)")
+                    logger.error(f"Conteúdo da resposta (artigo): {webhook_response.text}")
+                    response = "Desculpe, ocorreu um erro ao processar sua mensagem sobre artigos."
+                    
+        except httpx.ConnectError as conn_err:
+            logger.error(f"Erro de conexão com webhook (artigo): {conn_err}")
+            logger.error(f"Detalhes da conexão (artigo): {type(conn_err).__name__}")
+            response = "Desculpe, não foi possível conectar ao serviço de chat de artigos."
+            
+        except httpx.TimeoutException as timeout_err:
+            logger.error(f"Timeout na requisição para webhook (artigo): {timeout_err}")
+            response = "Desculpe, o serviço de chat de artigos demorou muito para responder."
+            
+        except httpx.HTTPStatusError as http_err:
+            logger.error(f"Erro HTTP do webhook (artigo): {http_err}")
+            logger.error(f"Status: {http_err.response.status_code}, Resposta: {http_err.response.text}")
+            response = "Desculpe, erro na comunicação com o serviço de chat de artigos."
+            
+        except Exception as http_exc:
+            logger.error(f"Erro inesperado na requisição HTTP (artigo): {http_exc}")
+            logger.error(f"Tipo do erro (artigo): {type(http_exc).__name__}")
+            response = "Desculpe, erro inesperado na comunicação com artigos."
         
         # Limpar tags <think> da resposta antes de retornar ao frontend
         cleaned_response = clean_response_text(response)
@@ -269,7 +459,10 @@ async def article_chat(request: ArticleChatRequest):
         
         return response_data
     except Exception as e:
-        logger.error(f"Erro na rota de chat de artigos: {str(e)}")
+        logger.error(f"Erro geral na rota de chat de artigos: {str(e)}")
+        logger.error(f"Tipo do erro (artigo): {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback completo (artigo): {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/article_chat_with_tts/")
@@ -281,16 +474,81 @@ async def article_chat_with_tts(request: ArticleChatRequest):
         logger.info(f"Mensagem limpa (artigo TTS): {cleaned_message}")
         logger.info(f"Professor filtrado: {request.professor_name}")
         
-        # Gerar nova resposta SEM cache - sempre gerar nova resposta
-        logger.info(f"Gerando nova resposta TTS para artigo: {cleaned_message[:50]}...")
+        # Usar webhook em vez do article_chat_service
+        webhook_url = WEBHOOK_URL
+        logger.info(f"URL do webhook configurada (artigo TTS): {webhook_url}")
         
-        # 2. Obter a resposta de texto do chat service de artigos
-        text_response = await article_chat_service.get_article_response(cleaned_message, request.session_id, request.professor_name)
-        logger.info(f"Resposta de texto gerada (artigo): {text_response[:100]}...")
+        # Preparar dados para o webhook com contexto de artigo TTS
+        webhook_data = {
+            "message": cleaned_message,
+            "session_id": request.session_id,
+            "professor_name": request.professor_name,
+            "context": "article_chat"
+        }
+        logger.info(f"Dados preparados para webhook (artigo TTS): {webhook_data}")
+        
+        logger.info(f"Iniciando requisição HTTP para webhook (artigo TTS)...")
+        
+        # Fazer requisição para o webhook
+        try:
+            async with httpx.AsyncClient() as client:
+                logger.info(f"Cliente HTTP criado, enviando POST para {webhook_url}")
+                
+                # Configurar timeout e headers
+                timeout = httpx.Timeout(30.0, connect=10.0)
+                headers = {
+                    "Content-Type": "application/json",
+                    "User-Agent": "TTS-App-Backend/1.0"
+                }
+                
+                logger.info(f"Configurações (artigo TTS): timeout={timeout}, headers={headers}")
+                
+                webhook_response = await client.post(
+                    webhook_url,
+                    json=webhook_data,
+                    timeout=timeout,
+                    headers=headers
+                )
+                
+                logger.info(f"Resposta recebida do webhook (artigo TTS): status={webhook_response.status_code}")
+                logger.info(f"Headers da resposta (artigo TTS): {dict(webhook_response.headers)}")
+                
+                if webhook_response.status_code == 200:
+                    try:
+                        webhook_result = webhook_response.json()
+                        logger.info(f"Resposta JSON do webhook (artigo TTS): {webhook_result}")
+                        text_response = webhook_result.get("response", "Desculpe, não consegui processar sua mensagem sobre artigos.")
+                    except json.JSONDecodeError as json_err:
+                        logger.error(f"Erro ao decodificar JSON da resposta (artigo TTS): {json_err}")
+                        logger.error(f"Conteúdo da resposta (artigo TTS): {webhook_response.text}")
+                        text_response = "Desculpe, resposta inválida do webhook para artigos."
+                else:
+                    logger.error(f"Webhook retornou status {webhook_response.status_code} (artigo TTS)")
+                    logger.error(f"Conteúdo da resposta (artigo TTS): {webhook_response.text}")
+                    text_response = "Desculpe, ocorreu um erro ao processar sua mensagem sobre artigos."
+                    
+        except httpx.ConnectError as conn_err:
+            logger.error(f"Erro de conexão com webhook (artigo TTS): {conn_err}")
+            logger.error(f"Detalhes da conexão (artigo TTS): {type(conn_err).__name__}")
+            text_response = "Desculpe, não foi possível conectar ao serviço de chat de artigos."
+            
+        except httpx.TimeoutException as timeout_err:
+            logger.error(f"Timeout na requisição para webhook (artigo TTS): {timeout_err}")
+            text_response = "Desculpe, o serviço de chat de artigos demorou muito para responder."
+            
+        except httpx.HTTPStatusError as http_err:
+            logger.error(f"Erro HTTP do webhook (artigo TTS): {http_err}")
+            logger.error(f"Status: {http_err.response.status_code}, Resposta: {http_err.response.text}")
+            text_response = "Desculpe, erro na comunicação com o serviço de chat de artigos."
+            
+        except Exception as http_exc:
+            logger.error(f"Erro inesperado na requisição HTTP (artigo TTS): {http_exc}")
+            logger.error(f"Tipo do erro (artigo TTS): {type(http_exc).__name__}")
+            text_response = "Desculpe, erro inesperado na comunicação com artigos."
         
         # 3. Limpar texto de resposta para o frontend (remover tags <think>)
         cleaned_response = clean_response_text(text_response)
-        logger.info(f"Resposta limpa para frontend (artigo): {cleaned_response[:100]}...")
+        logger.info(f"Resposta limpa para frontend (artigo TTS): {cleaned_response[:100]}...")
         
         # 4. Limpar texto para TTS (remover tags <think> e asteriscos)
         cleaned_text_for_tts = re.sub(r'<think>.*?</think>', '', text_response, flags=re.DOTALL | re.IGNORECASE)
@@ -298,7 +556,7 @@ async def article_chat_with_tts(request: ArticleChatRequest):
         cleaned_text_for_tts = re.sub(r'\*', '', cleaned_text_for_tts)
         # Limpar espaços extras
         cleaned_text_for_tts = re.sub(r'\s+', ' ', cleaned_text_for_tts).strip()
-        logger.info(f"Texto limpo para TTS (artigo): {cleaned_text_for_tts[:100]}...")
+        logger.info(f"Texto limpo para TTS (artigo TTS): {cleaned_text_for_tts[:100]}...")
         
         # 5. Gerar áudio usando gTTS
         logger.info("Gerando áudio com gTTS (pt-br) para artigo...")
@@ -336,7 +594,10 @@ async def article_chat_with_tts(request: ArticleChatRequest):
         return response_data
         
     except Exception as e:
-        logger.error(f"Erro na rota de chat com TTS para artigo: {str(e)}")
+        logger.error(f"Erro geral na rota de chat com TTS para artigo: {str(e)}")
+        logger.error(f"Tipo do erro (artigo TTS): {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback completo (artigo TTS): {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/chat_with_tts/")
@@ -347,12 +608,76 @@ async def chat_with_tts(request: ChatRequest):
         logger.info(f"Mensagem original: {request.message}")
         logger.info(f"Mensagem limpa: {cleaned_message}")
         
-        # Gerar nova resposta SEM cache - sempre gerar nova resposta
-        logger.info(f"Gerando nova resposta TTS para: {cleaned_message[:50]}...")
+        # Usar webhook em vez do chat_service
+        webhook_url = WEBHOOK_URL
+        logger.info(f"URL do webhook configurada (TTS): {webhook_url}")
         
-        # 2. Obter a resposta de texto do chat service
-        text_response = await chat_service.get_response(cleaned_message, request.session_id)
-        logger.info(f"Resposta de texto gerada: {text_response[:100]}...")
+        # Preparar dados para o webhook com contexto de TTS
+        webhook_data = {
+            "message": cleaned_message,
+            "session_id": request.session_id,
+            "context": "general"
+        }
+        logger.info(f"Dados preparados para webhook (TTS): {webhook_data}")
+        
+        logger.info(f"Iniciando requisição HTTP para webhook (TTS)...")
+        
+        # Fazer requisição para o webhook
+        try:
+            async with httpx.AsyncClient() as client:
+                logger.info(f"Cliente HTTP criado, enviando POST para {webhook_url}")
+                
+                # Configurar timeout e headers
+                timeout = httpx.Timeout(30.0, connect=10.0)
+                headers = {
+                    "Content-Type": "application/json",
+                    "User-Agent": "TTS-App-Backend/1.0"
+                }
+                
+                logger.info(f"Configurações (TTS): timeout={timeout}, headers={headers}")
+                
+                webhook_response = await client.post(
+                    webhook_url,
+                    json=webhook_data,
+                    timeout=timeout,
+                    headers=headers
+                )
+                
+                logger.info(f"Resposta recebida do webhook (TTS): status={webhook_response.status_code}")
+                logger.info(f"Headers da resposta (TTS): {dict(webhook_response.headers)}")
+                
+                if webhook_response.status_code == 200:
+                    try:
+                        webhook_result = webhook_response.json()
+                        logger.info(f"Resposta JSON do webhook (TTS): {webhook_result}")
+                        text_response = webhook_result.get("response", "Desculpe, não consegui processar sua mensagem.")
+                    except json.JSONDecodeError as json_err:
+                        logger.error(f"Erro ao decodificar JSON da resposta (TTS): {json_err}")
+                        logger.error(f"Conteúdo da resposta (TTS): {webhook_response.text}")
+                        text_response = "Desculpe, resposta inválida do webhook."
+                else:
+                    logger.error(f"Webhook retornou status {webhook_response.status_code} (TTS)")
+                    logger.error(f"Conteúdo da resposta (TTS): {webhook_response.text}")
+                    text_response = "Desculpe, ocorreu um erro ao processar sua mensagem."
+                    
+        except httpx.ConnectError as conn_err:
+            logger.error(f"Erro de conexão com webhook (TTS): {conn_err}")
+            logger.error(f"Detalhes da conexão (TTS): {type(conn_err).__name__}")
+            text_response = "Desculpe, não foi possível conectar ao serviço de chat."
+            
+        except httpx.TimeoutException as timeout_err:
+            logger.error(f"Timeout na requisição para webhook (TTS): {timeout_err}")
+            text_response = "Desculpe, o serviço de chat demorou muito para responder."
+            
+        except httpx.HTTPStatusError as http_err:
+            logger.error(f"Erro HTTP do webhook (TTS): {http_err}")
+            logger.error(f"Status: {http_err.response.status_code}, Resposta: {http_err.response.text}")
+            text_response = "Desculpe, erro na comunicação com o serviço de chat."
+            
+        except Exception as http_exc:
+            logger.error(f"Erro inesperado na requisição HTTP (TTS): {http_exc}")
+            logger.error(f"Tipo do erro (TTS): {type(http_exc).__name__}")
+            text_response = "Desculpe, erro inesperado na comunicação."
         
         # 3. Limpar texto de resposta para o frontend (remover tags <think>)
         cleaned_response = clean_response_text(text_response)
@@ -402,7 +727,10 @@ async def chat_with_tts(request: ChatRequest):
         return response_data
         
     except Exception as e:
-        logger.error(f"Erro na rota de chat com TTS: {str(e)}")
+        logger.error(f"Erro geral na rota de chat com TTS: {str(e)}")
+        logger.error(f"Tipo do erro (TTS): {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback completo (TTS): {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Endpoint de health check para verificar status do servidor

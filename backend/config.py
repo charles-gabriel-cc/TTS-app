@@ -26,3 +26,8 @@ QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 DOCS = "ccen-docentes"
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")
+
+# Configuração do Webhook
+# Para Docker: use host.docker.internal para acessar o host
+# Alternativa: 172.17.0.1 (gateway padrão do Docker)
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "http://172.17.0.1:15678/webhook-test/cfcade94-5e28-4017-8668-938ecf82f7a9")
