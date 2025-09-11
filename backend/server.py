@@ -304,7 +304,7 @@ async def chat(request: ChatRequest):
                 logger.info(f"Cliente HTTP criado, enviando POST para {webhook_url}")
                 
                 # Configurar timeout e headers
-                timeout = httpx.Timeout(30.0, connect=10.0)
+                timeout = httpx.Timeout(60.0, connect=20.0)
                 headers = {
                     "Content-Type": "application/json",
                     "User-Agent": "TTS-App-Backend/1.0"
@@ -400,7 +400,7 @@ async def article_chat(request: ArticleChatRequest):
                 logger.info(f"Cliente HTTP criado, enviando POST para {webhook_url}")
                 
                 # Configurar timeout e headers
-                timeout = httpx.Timeout(30.0, connect=10.0)
+                timeout = httpx.Timeout(60.0, connect=20.0)
                 headers = {
                     "Content-Type": "application/json",
                     "User-Agent": "TTS-App-Backend/1.0"
@@ -495,7 +495,7 @@ async def article_chat_with_tts(request: ArticleChatRequest):
                 logger.info(f"Cliente HTTP criado, enviando POST para {webhook_url}")
                 
                 # Configurar timeout e headers
-                timeout = httpx.Timeout(30.0, connect=10.0)
+                timeout = httpx.Timeout(60.0, connect=20.0)
                 headers = {
                     "Content-Type": "application/json",
                     "User-Agent": "TTS-App-Backend/1.0"
@@ -628,7 +628,7 @@ async def chat_with_tts(request: ChatRequest):
                 logger.info(f"Cliente HTTP criado, enviando POST para {webhook_url}")
                 
                 # Configurar timeout e headers
-                timeout = httpx.Timeout(30.0, connect=10.0)
+                timeout = httpx.Timeout(60.0, connect=20.0)
                 headers = {
                     "Content-Type": "application/json",
                     "User-Agent": "TTS-App-Backend/1.0"

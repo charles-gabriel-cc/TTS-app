@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
-import { X, Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '@/services/api';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -23,30 +23,38 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   const [pdfFile, setPdfFile] = useState<Blob | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.6);
+  // Zoom/Pan por CSS transform para suavidade
+  const [zoom, setZoom] = useState<number>(1.0);
+  const [translateX, setTranslateX] = useState<number>(0);
+  const [translateY, setTranslateY] = useState<number>(0);
   const [rotation, setRotation] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState<boolean>(false);
   
-  // Refs para detecção de swipe
-  const touchStartX = useRef<number>(0);
-  const touchStartY = useRef<number>(0);
-  const touchEndX = useRef<number>(0);
-  const touchEndY = useRef<number>(0);
   const contentRef = useRef<HTMLDivElement>(null);
   
   // Refs para detecção de pinch-to-zoom
   const initialDistance = useRef<number>(0);
-  const initialScale = useRef<number>(1.6);
+  const initialScale = useRef<number>(1.0);
   const isPinching = useRef<boolean>(false);
+  // Pointer Events: rastrear múltiplos ponteiros para pinch no Android
+  const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pointerInitialDistance = useRef<number>(0);
+  const initialZoomRef = useRef<number>(1.0);
+  const initialTranslateRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pinchFocalContentRef = useRef<{ x: number; y: number } | null>(null);
+  const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
+  const isPanningRef = useRef<boolean>(false);
+  const pageWrapperRef = useRef<HTMLDivElement>(null);
+  const baseSizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
 
   // Atualizar initialScale quando scale mudar
   useEffect(() => {
     if (!isPinching.current) {
-      initialScale.current = scale;
+      initialScale.current = zoom;
     }
-  }, [scale]);
+  }, [zoom]);
 
 
 
@@ -108,146 +116,149 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
     setPageNumber(prev => Math.min(prev + 1, numPages));
   };
 
+  const clampTranslate = useCallback((tx: number, ty: number, z: number) => {
+    const containerRect = contentRef.current?.getBoundingClientRect();
+    const baseWidth = baseSizeRef.current.width;
+    const baseHeight = baseSizeRef.current.height;
+    if (!containerRect || !baseWidth || !baseHeight) return { x: tx, y: ty };
+    const scaledWidth = baseWidth * z;
+    const scaledHeight = baseHeight * z;
+    const minX = Math.min(0, containerRect.width - scaledWidth);
+    const minY = Math.min(0, containerRect.height - scaledHeight);
+    const maxX = 0;
+    const maxY = 0;
+    return {
+      x: Math.min(maxX, Math.max(minX, tx)),
+      y: Math.min(maxY, Math.max(minY, ty)),
+    };
+  }, []);
+
   const handleZoomIn = () => {
-    setScale(prev => Math.min(prev + 0.2, 3.0));
+    const newZ = Math.min(zoom + 0.2, 3.0);
+    const containerRect = contentRef.current?.getBoundingClientRect();
+    const center = containerRect ? { x: containerRect.width / 2, y: containerRect.height / 2 } : { x: 0, y: 0 };
+    const contentPoint = { x: (center.x - translateX) / zoom, y: (center.y - translateY) / zoom };
+    const newTranslate = { x: center.x - contentPoint.x * newZ, y: center.y - contentPoint.y * newZ };
+    const clamped = clampTranslate(newTranslate.x, newTranslate.y, newZ);
+    setZoom(newZ);
+    setTranslateX(clamped.x);
+    setTranslateY(clamped.y);
   };
 
   const handleZoomOut = () => {
-    setScale(prev => Math.max(prev - 0.2, 0.5));
+    const newZ = Math.max(zoom - 0.2, 1.0);
+    const containerRect = contentRef.current?.getBoundingClientRect();
+    const center = containerRect ? { x: containerRect.width / 2, y: containerRect.height / 2 } : { x: 0, y: 0 };
+    const contentPoint = { x: (center.x - translateX) / zoom, y: (center.y - translateY) / zoom };
+    const newTranslate = { x: center.x - contentPoint.x * newZ, y: center.y - contentPoint.y * newZ };
+    const clamped = clampTranslate(newTranslate.x, newTranslate.y, newZ);
+    setZoom(newZ);
+    setTranslateX(clamped.x);
+    setTranslateY(clamped.y);
+    if (newZ === 1.0) {
+      setTranslateX(0);
+      setTranslateY(0);
+    }
   };
 
   const handleRotate = () => {
     setRotation(prev => (prev + 90) % 360);
   };
 
-  // Função para calcular distância entre dois pontos
-  const getDistance = (touch1: React.Touch, touch2: React.Touch): number => {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
+  // Removido: swipe por touch; manteremos apenas pinch-to-zoom via Pointer Events e botões de navegação
+
+  // ===== Pointer Events para pinch-to-zoom (mais confiável no Android) =====
+  const getPointerDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
+    const dx = p1.x - p2.x;
+    const dy = p1.y - p2.y;
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  // Funções para detecção de swipe e pinch-to-zoom
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    
-    // Detectar pinch-to-zoom (dois dedos)
-    if (e.touches.length === 2) {
-      isPinching.current = true;
-      initialDistance.current = getDistance(e.touches[0], e.touches[1]);
-      initialScale.current = scale;
-      console.log('[PDFViewerMobile] Pinch iniciado:', {
-        initialDistance: initialDistance.current,
-        initialScale: initialScale.current
-      });
-    }
-  }, [scale]);
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    // Capturar o ponteiro e armazenar posição
+    const target = e.currentTarget as HTMLDivElement;
+    try { target.setPointerCapture?.(e.pointerId); } catch {}
+    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
-    touchEndY.current = e.touches[0].clientY;
-    
-    // Processar pinch-to-zoom
-    if (e.touches.length === 2 && isPinching.current) {
-      e.preventDefault(); // Prevenir scroll durante pinch
-      
-      const currentDistance = getDistance(e.touches[0], e.touches[1]);
-      const scaleFactor = currentDistance / initialDistance.current;
-      const newScale = Math.max(0.5, Math.min(3.0, initialScale.current * scaleFactor));
-      
-      // Aplicar suavização para evitar mudanças bruscas
-      setScale(prevScale => {
-        const smoothedScale = prevScale + (newScale - prevScale) * 0.3;
-        return Math.max(0.5, Math.min(3.0, smoothedScale));
+    if (activePointers.current.size === 2) {
+      const [p1, p2] = Array.from(activePointers.current.values());
+      pointerInitialDistance.current = getPointerDistance(p1, p2);
+      initialScale.current = zoom;
+      isPinching.current = true;
+      initialZoomRef.current = zoom;
+      initialTranslateRef.current = { x: translateX, y: translateY };
+      // ponto focal em coordenadas de conteúdo
+      const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      pinchFocalContentRef.current = { x: (mid.x - translateX) / zoom, y: (mid.y - translateY) / zoom };
+    } else if (activePointers.current.size === 1) {
+      lastPanPointRef.current = { x: e.clientX, y: e.clientY };
+    }
+  }, [zoom, translateX, translateY]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!activePointers.current.has(e.pointerId)) return;
+    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (activePointers.current.size >= 2 && pointerInitialDistance.current > 0) {
+      e.preventDefault();
+      const [p1, p2] = Array.from(activePointers.current.values());
+      const currentDistance = getPointerDistance(p1, p2);
+      if (!isFinite(currentDistance) || currentDistance <= 0) return;
+      const scaleFactor = currentDistance / pointerInitialDistance.current;
+      const newScale = Math.max(1.0, Math.min(3.0, initialScale.current * scaleFactor));
+      isPinching.current = true;
+      const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      const focal = pinchFocalContentRef.current || { x: (mid.x - translateX) / (zoom || 1), y: (mid.y - translateY) / (zoom || 1) };
+      const targetTranslate = { x: mid.x - focal.x * newScale, y: mid.y - focal.y * newScale };
+      const clamped = clampTranslate(targetTranslate.x, targetTranslate.y, newScale);
+      setZoom(prevScale => {
+        const smoothed = prevScale + (newScale - prevScale) * 0.3;
+        return Math.max(1.0, Math.min(3.0, smoothed));
       });
-      
-      console.log('[PDFViewerMobile] Pinch em progresso:', {
-        currentDistance,
-        scaleFactor,
-        newScale
-      });
+      setTranslateX(clamped.x);
+      setTranslateY(clamped.y);
+    } else if (activePointers.current.size === 1 && zoom > 1 && lastPanPointRef.current) {
+      e.preventDefault();
+      const last = lastPanPointRef.current;
+      const dx = e.clientX - last.x;
+      const dy = e.clientY - last.y;
+      let nextX = translateX + dx;
+      let nextY = translateY + dy;
+      const clamped = clampTranslate(nextX, nextY, zoom);
+      setTranslateX(clamped.x);
+      setTranslateY(clamped.y);
+      lastPanPointRef.current = { x: e.clientX, y: e.clientY };
+      isPanningRef.current = true;
+    }
+  }, [zoom, translateX, translateY, clampTranslate]);
+
+  const endPointerPinchIfNeeded = () => {
+    if (isPinching.current && activePointers.current.size < 2) {
+      isPinching.current = false;
+      pointerInitialDistance.current = 0;
+    }
+  };
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    activePointers.current.delete(e.pointerId);
+    try { (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId); } catch {}
+    endPointerPinchIfNeeded();
+    if (activePointers.current.size === 0) {
+      // pequeno atraso para evitar conflito com fim do gesto
+      setTimeout(() => { isPanningRef.current = false; }, 50);
     }
   }, []);
 
-  const handleTouchEnd = useCallback(() => {
-    // Finalizar pinch-to-zoom
-    if (isPinching.current) {
-      isPinching.current = false;
-      console.log('[PDFViewerMobile] Pinch finalizado, escala final:', scale);
-      return;
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    activePointers.current.delete(e.pointerId);
+    try { (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId); } catch {}
+    endPointerPinchIfNeeded();
+    if (activePointers.current.size === 0) {
+      isPanningRef.current = false;
     }
-    
-    // Só processar swipe se há páginas disponíveis e não está fazendo pinch
-    if (numPages === 0) {
-      console.log('[PDFViewerMobile] Swipe ignorado - nenhuma página disponível');
-      return;
-    }
-    
-    const minSwipeDistance = 50; // Distância mínima para considerar um swipe
-    const maxVerticalDistance = 100; // Distância máxima vertical para evitar conflito com scroll
-    
-    const deltaX = touchEndX.current - touchStartX.current;
-    const deltaY = Math.abs(touchEndY.current - touchStartY.current);
-    
-    console.log('[PDFViewerMobile] Swipe detectado:', {
-      deltaX,
-      deltaY,
-      minSwipeDistance,
-      maxVerticalDistance,
-      isValid: Math.abs(deltaX) > minSwipeDistance && deltaY < maxVerticalDistance
-    });
-    
-    // Verificar se é um swipe horizontal válido
-    if (Math.abs(deltaX) > minSwipeDistance && deltaY < maxVerticalDistance) {
-      if (deltaX > 0) {
-        // Swipe para direita - página anterior
-        console.log('[PDFViewerMobile] Swipe para direita detectado - página anterior');
-        setPageNumber(prev => {
-          const newPage = Math.max(prev - 1, 1);
-          console.log('[PDFViewerMobile] Mudando página:', { prev, newPage });
-          return newPage;
-        });
-      } else {
-        // Swipe para esquerda - próxima página
-        console.log('[PDFViewerMobile] Swipe para esquerda detectado - próxima página');
-        setPageNumber(prev => {
-          const newPage = Math.min(prev + 1, numPages);
-          console.log('[PDFViewerMobile] Mudando página:', { prev, newPage, numPages });
-          return newPage;
-        });
-      }
-    }
-  }, [numPages, scale]);
+  }, []);
 
-  const handleDownload = async () => {
-    console.log('[PDFViewerMobile] Iniciando download do PDF:', articleId);
-    
-    try {
-      const blob = await api.downloadPDF(articleId);
-      console.log('[PDFViewerMobile] PDF baixado para download:', {
-        blobSize: blob.size,
-        blobType: blob.type
-      });
-      
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${articleTitle}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      console.log('[PDFViewerMobile] Download iniciado com sucesso');
-    } catch (err) {
-      console.error('[PDFViewerMobile] Erro ao baixar PDF:', {
-        error: err,
-        message: err instanceof Error ? err.message : 'Erro desconhecido'
-      });
-      setError('Erro ao baixar o PDF.');
-    }
-  };
+  // Botão de download removido no mobile
 
   const handleClose = () => {
     setIsClosing(true);
@@ -271,15 +282,6 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDownload}
-            className="flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Baixar</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             onClick={handleClose}
             disabled={loading}
             className="flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -294,12 +296,26 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
 
       {/* Gesture Indicator */}
       <div className="px-3 py-2 bg-blue-50 border-b border-blue-200 relative">
-        <div className="flex items-center justify-center text-xs text-blue-600">
-          <ChevronLeft className="w-3 h-3" />
-          <span className="mx-1">Deslize para navegar</span>
-          <ChevronRight className="w-3 h-3" />
+        <div className="flex items-center justify-center gap-2 text-xs text-blue-600">
+          <button
+            onClick={handlePreviousPage}
+            disabled={pageNumber <= 1}
+            className="h-7 w-7 rounded-full bg-white border border-blue-200 text-blue-600 flex items-center justify-center disabled:opacity-40"
+            aria-label="Página anterior"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <span className="mx-1">Navegue pelas páginas</span>
+          <button
+            onClick={handleNextPage}
+            disabled={pageNumber >= numPages}
+            className="h-7 w-7 rounded-full bg-white border border-blue-200 text-blue-600 flex items-center justify-center disabled:opacity-40"
+            aria-label="Próxima página"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
-        {/* Contador de páginas sutil */}
+        {/* Contador de páginas */}
         <div className="absolute bottom-1 right-3 text-xs text-blue-400 font-medium">
           {pageNumber} / {numPages}
         </div>
@@ -309,9 +325,11 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
       <div 
         ref={contentRef}
         className="flex-1 overflow-auto bg-gray-50"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'none' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       >
         {loading && (
           <div className="flex items-center justify-center h-full">
@@ -362,31 +380,41 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
                  </div>
                }
              >
-               <Page
-                 pageNumber={Math.max(1, Math.min(pageNumber, numPages))}
-                 scale={scale}
-                 rotate={rotation}
-                 className="shadow-lg"
-                 renderTextLayer={true}
-                 renderAnnotationLayer={true}
-                 onLoadError={(error) => {
+               <div
+                 ref={pageWrapperRef}
+                 style={{
+                   transform: `translate(${translateX}px, ${translateY}px) scale(${zoom}) rotate(${rotation}deg)`,
+                   transformOrigin: '0 0',
+                   willChange: 'transform',
+                 }}
+               >
+                 <Page
+                   pageNumber={Math.max(1, Math.min(pageNumber, numPages))}
+                   scale={1.0}
+                   rotate={0}
+                   className="shadow-lg"
+                   renderTextLayer={true}
+                   renderAnnotationLayer={true}
+                   onLoadError={(error) => {
                    console.error('[PDFViewerMobile] Erro ao carregar página:', {
                      error,
                      pageNumber,
                      numPages,
                      articleId
                    });
-                 }}
-                 onRenderSuccess={() => {
-                   console.log('[PDFViewerMobile] Página renderizada com sucesso:', {
-                     pageNumber,
-                     numPages,
-                     scale,
-                     rotation,
-                     articleId
-                   });
-                 }}
-               />
+                   }}
+                   onRenderSuccess={() => {
+                     // medir tamanho base da página (sem zoom)
+                     const canvas = pageWrapperRef.current?.querySelector('canvas');
+                     if (canvas) {
+                       const rect = canvas.getBoundingClientRect();
+                       if (rect.width && rect.height) {
+                         baseSizeRef.current = { width: rect.width, height: rect.height };
+                       }
+                     }
+                   }}
+                 />
+               </div>
              </Document>
            </div>
          )}

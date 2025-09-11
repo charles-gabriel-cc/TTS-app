@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button'
 import { ChatInput } from '@/components/ChatInput'
 import { useChatContext } from '@/contexts/ChatContext'
 import { useIdleContext } from '@/contexts/IdleContext'
+import { useGalleryContext } from '@/contexts/GalleryContext'
 import { api } from '@/services/api'
 import { motion, AnimatePresence } from 'framer-motion'
-import { GraduationCap, MessageCircle, ArrowLeft, Play, Pause } from 'lucide-react'
+import { GraduationCap, MessageCircle, ArrowLeft, Play, Pause, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
 import { useKeyboardDetection } from '@/hooks/useKeyboardDetection'
+import PdfViewerMobile from '@/components/PDFViewerMobile'
 
 interface ArticleChatSessionProps {
   professorName: string
@@ -45,12 +47,64 @@ export default function ArticleChatSession({
 
   const { resetIdleTimer } = useIdleContext()
   
+  // Contexto da galeria para reutilizar cache de PDFs
+  const { pdfArticles } = useGalleryContext()
+  
   // Detectar teclado virtual
   const { isVisible: keyboardVisible, height: keyboardHeight, isAnimating: keyboardAnimating, animatedHeight } = useKeyboardDetection()
 
   // Usar sessão fixa para este artigo específico
   const articleSessionId = getOrCreateArticleSession(professorName, articleTitle)
   const messages = getSessionMessages(articleSessionId)
+
+  // Estado para visualizar PDF do artigo
+  const [isPdfOpen, setIsPdfOpen] = useState(false)
+  const [resolvedArticleId, setResolvedArticleId] = useState<string | null>(null)
+  const [resolvingArticleId, setResolvingArticleId] = useState(false)
+
+  const resolveArticleId = useCallback(() => {
+    if (!articleTitle) return null
+    try {
+      setResolvingArticleId(true)
+      // Usar dados já carregados do GalleryContext em vez de nova requisição
+      const byExactTitle = pdfArticles.find(item => item.title?.toLowerCase() === articleTitle.toLowerCase())
+      if (byExactTitle) return byExactTitle.id
+      const byIncludes = pdfArticles.find(item => item.title?.toLowerCase().includes(articleTitle.toLowerCase()))
+      if (byIncludes) return byIncludes.id
+      // fallback: buscar por filename contendo o título normalizado
+      const norm = articleTitle.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+      const byFilename = pdfArticles.find(item => item.filename?.toLowerCase().includes(norm))
+      if (byFilename) return byFilename.id
+      return null
+    } catch (e) {
+      console.warn('[ArticleChatSession] Falha ao resolver articleId:', e)
+      return null
+    } finally {
+      setResolvingArticleId(false)
+    }
+  }, [articleTitle, pdfArticles])
+
+  useEffect(() => {
+    // Pré-resolver de forma oportunista quando os dados da galeria estiverem disponíveis
+    if (articleTitle && pdfArticles.length > 0) {
+      const id = resolveArticleId()
+      if (id) setResolvedArticleId(id)
+    }
+  }, [articleTitle, pdfArticles, resolveArticleId])
+
+  const handleOpenPdf = useCallback(() => {
+    resetIdleTimer()
+    let id = resolvedArticleId
+    if (!id && !resolvingArticleId) {
+      id = resolveArticleId()
+      if (id) setResolvedArticleId(id)
+    }
+    if (!id) {
+      console.warn('[ArticleChatSession] articleId não encontrado para', articleTitle)
+      return
+    }
+    setIsPdfOpen(true)
+  }, [resolvedArticleId, resolveArticleId, resolvingArticleId, resetIdleTimer, articleTitle])
 
   // Desabilitar loading global para este chat (chat de artigos)
   useEffect(() => {
@@ -347,6 +401,17 @@ export default function ArticleChatSession({
           bottom: keyboardVisible ? `${animatedHeight}px` : undefined
         }}
       >
+        {/* Botão flutuante PDF - apenas para chats de artigos */}
+        {articleTitle && (
+          <button
+            onClick={handleOpenPdf}
+            disabled={resolvingArticleId}
+            className="absolute right-4 -top-12 h-10 w-10 rounded-full bg-white/90 backdrop-blur shadow-md border border-white/60 flex items-center justify-center active:scale-95 disabled:opacity-60"
+            aria-label="Abrir PDF do artigo"
+          >
+            <FileText className="w-5 h-5 text-cyan-600" />
+          </button>
+        )}
         <ChatInput
           value={messageValue}
           onChange={setMessageValue}
@@ -363,6 +428,15 @@ export default function ArticleChatSession({
           showAudioToggle={true}
         />
       </div>
+
+      {/* PDF Viewer overlay */}
+      {isPdfOpen && resolvedArticleId && articleTitle && (
+        <PdfViewerMobile
+          articleId={resolvedArticleId}
+          articleTitle={articleTitle}
+          onClose={() => setIsPdfOpen(false)}
+        />
+      )}
     </div>
   )
 }
