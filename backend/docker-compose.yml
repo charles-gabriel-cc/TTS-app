@@ -143,8 +143,10 @@ services:
       - WEBHOOK_URL=http://localhost:15678/
       - N8N_EDITOR_BASE_URL=http://localhost:15678/
       - DB_SQLITE_VACUUM_ON_STARTUP=true
+      - NODES_INCLUDE=n8n-nodes-qdrant
     volumes:
       - n8n_data:/home/node/.n8n
+      - 'D:/projetos/TTS-app/backend/articles:/articles'
     restart: unless-stopped
     networks:
       - tts-network
