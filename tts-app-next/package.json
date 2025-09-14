@@ -16,7 +16,9 @@
     "cap:build": "npm run build && npx cap copy && npx cap sync",
     "cap:open": "npx cap open android",
     "cap:run": "npm run cap:build && npx cap run android",
-    "cap:dev": "npm run build && npx cap copy && npx cap run android --livereload --external"
+    "cap:dev": "npm run build && npx cap copy && npx cap run android --livereload --external",
+    "cap:icon": "node scripts/copy-icon.js",
+    "cap:build-with-icon": "npm run cap:icon && npm run cap:build"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.0",
@@ -64,6 +66,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.1.0",
     "postcss": "^8.5.4",
+    "sharp": "^0.34.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }

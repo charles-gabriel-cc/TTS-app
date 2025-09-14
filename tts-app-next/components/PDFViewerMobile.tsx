@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw, Maximize2 } from 'lucide-react';
 import { api } from '@/services/api';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -34,26 +34,18 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   
   const contentRef = useRef<HTMLDivElement>(null);
   
-  // Refs para detecção de pinch-to-zoom
-  const initialDistance = useRef<number>(0);
-  const initialScale = useRef<number>(1.0);
-  const isPinching = useRef<boolean>(false);
-  // Pointer Events: rastrear múltiplos ponteiros para pinch no Android
+  // Refs para pinch-to-zoom e pan
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pointerInitialDistance = useRef<number>(0);
-  const initialZoomRef = useRef<number>(1.0);
-  const initialTranslateRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const initialScale = useRef<number>(1.0);
   const pinchFocalContentRef = useRef<{ x: number; y: number } | null>(null);
   const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
-  const isPanningRef = useRef<boolean>(false);
   const pageWrapperRef = useRef<HTMLDivElement>(null);
   const baseSizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
 
   // Atualizar initialScale quando scale mudar
   useEffect(() => {
-    if (!isPinching.current) {
-      initialScale.current = zoom;
-    }
+    initialScale.current = zoom;
   }, [zoom]);
 
 
@@ -98,6 +90,23 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
     loadPdf();
   }, [articleId]);
 
+  // Listener para redimensionamento da tela
+  useEffect(() => {
+    const handleResize = () => {
+      if (numPages > 0) {
+        calculateInitialZoom();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [numPages]);
+
   const handleDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     console.log('[PDFViewerMobile] Documento carregado com sucesso:', {
       numPages,
@@ -106,6 +115,48 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
     });
     setNumPages(numPages);
     setPageNumber(1);
+    
+    // Calcular zoom inicial para caber a página na tela
+    setTimeout(() => {
+      calculateInitialZoom();
+    }, 100); // Pequeno delay para garantir que o DOM esteja renderizado
+  };
+
+  const calculateInitialZoom = () => {
+    const container = contentRef.current;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = containerRect.width - 32; // Subtrair padding
+    const containerHeight = containerRect.height - 32; // Subtrair padding
+
+    // Proporção padrão de página A4 (210x297mm = 0.707)
+    const pageAspectRatio = 0.707;
+    
+    // Calcular dimensões da página baseadas na largura do container
+    const pageWidth = containerWidth;
+    const pageHeight = pageWidth / pageAspectRatio;
+    
+    // Se a altura da página for maior que o container, ajustar pela altura
+    let finalZoom = 1.0;
+    if (pageHeight > containerHeight) {
+      finalZoom = containerHeight / pageHeight;
+    }
+    
+    // Garantir que o zoom não seja muito pequeno (mínimo 0.6) nem muito grande (máximo 2.0)
+    finalZoom = Math.max(0.6, Math.min(finalZoom, 2.0));
+    
+    console.log('[PDFViewerMobile] Calculando zoom inicial:', {
+      containerWidth,
+      containerHeight,
+      pageWidth,
+      pageHeight,
+      finalZoom
+    });
+    
+    setZoom(finalZoom);
+    setTranslateX(0);
+    setTranslateY(0);
   };
 
   const handlePreviousPage = () => {
@@ -117,52 +168,34 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
   };
 
   const clampTranslate = useCallback((tx: number, ty: number, z: number) => {
-    const containerRect = contentRef.current?.getBoundingClientRect();
-    const baseWidth = baseSizeRef.current.width;
-    const baseHeight = baseSizeRef.current.height;
-    if (!containerRect || !baseWidth || !baseHeight) return { x: tx, y: ty };
-    const scaledWidth = baseWidth * z;
-    const scaledHeight = baseHeight * z;
-    const minX = Math.min(0, containerRect.width - scaledWidth);
-    const minY = Math.min(0, containerRect.height - scaledHeight);
-    const maxX = 0;
-    const maxY = 0;
-    return {
-      x: Math.min(maxX, Math.max(minX, tx)),
-      y: Math.min(maxY, Math.max(minY, ty)),
-    };
+    // Comportamento igual para todos os zooms - sempre permitir movimento livre
+    // Como funciona no zoom 100%, funciona em todos os zooms
+    return { x: tx, y: ty };
   }, []);
 
   const handleZoomIn = () => {
     const newZ = Math.min(zoom + 0.2, 3.0);
-    const containerRect = contentRef.current?.getBoundingClientRect();
-    const center = containerRect ? { x: containerRect.width / 2, y: containerRect.height / 2 } : { x: 0, y: 0 };
-    const contentPoint = { x: (center.x - translateX) / zoom, y: (center.y - translateY) / zoom };
-    const newTranslate = { x: center.x - contentPoint.x * newZ, y: center.y - contentPoint.y * newZ };
-    const clamped = clampTranslate(newTranslate.x, newTranslate.y, newZ);
+    // Com transformOrigin: 'center center', o zoom mantém a posição central
+    // Não precisamos recalcular translate, apenas aplicar o novo zoom
     setZoom(newZ);
-    setTranslateX(clamped.x);
-    setTranslateY(clamped.y);
   };
 
   const handleZoomOut = () => {
-    const newZ = Math.max(zoom - 0.2, 1.0);
-    const containerRect = contentRef.current?.getBoundingClientRect();
-    const center = containerRect ? { x: containerRect.width / 2, y: containerRect.height / 2 } : { x: 0, y: 0 };
-    const contentPoint = { x: (center.x - translateX) / zoom, y: (center.y - translateY) / zoom };
-    const newTranslate = { x: center.x - contentPoint.x * newZ, y: center.y - contentPoint.y * newZ };
-    const clamped = clampTranslate(newTranslate.x, newTranslate.y, newZ);
+    const newZ = Math.max(zoom - 0.2, 0.6); // Permitir zoom até 0.6 (60%)
+    // Com transformOrigin: 'center center', o zoom mantém a posição central
+    // Não precisamos recalcular translate, apenas aplicar o novo zoom
     setZoom(newZ);
-    setTranslateX(clamped.x);
-    setTranslateY(clamped.y);
-    if (newZ === 1.0) {
-      setTranslateX(0);
-      setTranslateY(0);
-    }
   };
 
   const handleRotate = () => {
     setRotation(prev => (prev + 90) % 360);
+  };
+
+  const handleResetView = () => {
+    setTranslateX(0);
+    setTranslateY(0);
+    setRotation(0);
+    calculateInitialZoom();
   };
 
   // Removido: swipe por touch; manteremos apenas pinch-to-zoom via Pointer Events e botões de navegação
@@ -184,58 +217,74 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
       const [p1, p2] = Array.from(activePointers.current.values());
       pointerInitialDistance.current = getPointerDistance(p1, p2);
       initialScale.current = zoom;
-      isPinching.current = true;
-      initialZoomRef.current = zoom;
-      initialTranslateRef.current = { x: translateX, y: translateY };
-      // ponto focal em coordenadas de conteúdo
+      // Ponto focal: centro entre os dois dedos
       const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-      pinchFocalContentRef.current = { x: (mid.x - translateX) / zoom, y: (mid.y - translateY) / zoom };
+      pinchFocalContentRef.current = { x: mid.x, y: mid.y };
     } else if (activePointers.current.size === 1) {
       lastPanPointRef.current = { x: e.clientX, y: e.clientY };
     }
-  }, [zoom, translateX, translateY]);
+  }, [zoom]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!activePointers.current.has(e.pointerId)) return;
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
+    // PINCH TO ZOOM - Solução simples e definitiva
     if (activePointers.current.size >= 2 && pointerInitialDistance.current > 0) {
       e.preventDefault();
       const [p1, p2] = Array.from(activePointers.current.values());
       const currentDistance = getPointerDistance(p1, p2);
       if (!isFinite(currentDistance) || currentDistance <= 0) return;
+      
+      // Calcular novo zoom com sensibilidade muito baixa
       const scaleFactor = currentDistance / pointerInitialDistance.current;
-      const newScale = Math.max(1.0, Math.min(3.0, initialScale.current * scaleFactor));
-      isPinching.current = true;
-      const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-      const focal = pinchFocalContentRef.current || { x: (mid.x - translateX) / (zoom || 1), y: (mid.y - translateY) / (zoom || 1) };
-      const targetTranslate = { x: mid.x - focal.x * newScale, y: mid.y - focal.y * newScale };
-      const clamped = clampTranslate(targetTranslate.x, targetTranslate.y, newScale);
-      setZoom(prevScale => {
-        const smoothed = prevScale + (newScale - prevScale) * 0.3;
-        return Math.max(1.0, Math.min(3.0, smoothed));
-      });
-      setTranslateX(clamped.x);
-      setTranslateY(clamped.y);
-    } else if (activePointers.current.size === 1 && zoom > 1 && lastPanPointRef.current) {
+      // Aplicar suavização extrema (0.2 = muito menos sensível)
+      const smoothedScaleFactor = 1 + (scaleFactor - 1) * 0.2;
+      const newScale = Math.max(0.6, Math.min(3.0, initialScale.current * smoothedScaleFactor));
+      
+      // Ponto focal: centro atual entre os dedos
+      const currentMid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      const focal = pinchFocalContentRef.current;
+      
+      if (focal && contentRef.current) {
+        // Obter dimensões do container
+        const containerRect = contentRef.current.getBoundingClientRect();
+        const containerCenterX = containerRect.left + containerRect.width / 2;
+        const containerCenterY = containerRect.top + containerRect.height / 2;
+        
+        // Calcular coordenadas relativas ao centro do container
+        const relativeX = currentMid.x - containerCenterX;
+        const relativeY = currentMid.y - containerCenterY;
+        
+        // Fórmula corrigida para zoom in e zoom out
+        const scaleRatio = newScale / zoom;
+        
+        // Calcular novo translate mantendo o ponto focal fixo
+        const newTranslateX = translateX + relativeX * (1 - scaleRatio);
+        const newTranslateY = translateY + relativeY * (1 - scaleRatio);
+        
+        setZoom(newScale);
+        setTranslateX(newTranslateX);
+        setTranslateY(newTranslateY);
+      }
+    } 
+    // PAN - Movimento com um dedo
+    else if (activePointers.current.size === 1 && lastPanPointRef.current) {
       e.preventDefault();
       const last = lastPanPointRef.current;
       const dx = e.clientX - last.x;
       const dy = e.clientY - last.y;
-      let nextX = translateX + dx;
-      let nextY = translateY + dy;
-      const clamped = clampTranslate(nextX, nextY, zoom);
-      setTranslateX(clamped.x);
-      setTranslateY(clamped.y);
+      
+      setTranslateX(translateX + dx);
+      setTranslateY(translateY + dy);
       lastPanPointRef.current = { x: e.clientX, y: e.clientY };
-      isPanningRef.current = true;
     }
-  }, [zoom, translateX, translateY, clampTranslate]);
+  }, [zoom, translateX, translateY]);
 
   const endPointerPinchIfNeeded = () => {
-    if (isPinching.current && activePointers.current.size < 2) {
-      isPinching.current = false;
+    if (activePointers.current.size < 2) {
       pointerInitialDistance.current = 0;
+      pinchFocalContentRef.current = null;
     }
   };
 
@@ -244,8 +293,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
     try { (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId); } catch {}
     endPointerPinchIfNeeded();
     if (activePointers.current.size === 0) {
-      // pequeno atraso para evitar conflito com fim do gesto
-      setTimeout(() => { isPanningRef.current = false; }, 50);
+      lastPanPointRef.current = null;
     }
   }, []);
 
@@ -254,7 +302,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
     try { (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId); } catch {}
     endPointerPinchIfNeeded();
     if (activePointers.current.size === 0) {
-      isPanningRef.current = false;
+      lastPanPointRef.current = null;
     }
   }, []);
 
@@ -294,30 +342,71 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
 
       
 
-      {/* Gesture Indicator */}
-      <div className="px-3 py-2 bg-blue-50 border-b border-blue-200 relative">
-        <div className="flex items-center justify-center gap-2 text-xs text-blue-600">
-          <button
+      {/* Controls */}
+      <div className="flex items-center justify-between p-3 bg-gray-100 border-b">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handlePreviousPage}
             disabled={pageNumber <= 1}
-            className="h-7 w-7 rounded-full bg-white border border-blue-200 text-blue-600 flex items-center justify-center disabled:opacity-40"
-            aria-label="Página anterior"
+            className="flex items-center gap-1"
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-          <span className="mx-1">Navegue pelas páginas</span>
-          <button
+            <ChevronLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Anterior</span>
+          </Button>
+
+          <span className="text-sm font-medium px-2">
+            {pageNumber} de {numPages}
+          </span>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleNextPage}
             disabled={pageNumber >= numPages}
-            className="h-7 w-7 rounded-full bg-white border border-blue-200 text-blue-600 flex items-center justify-center disabled:opacity-40"
-            aria-label="Próxima página"
+            className="flex items-center gap-1"
           >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+            <span className="hidden sm:inline">Próxima</span>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
-        {/* Contador de páginas */}
-        <div className="absolute bottom-1 right-3 text-xs text-blue-400 font-medium">
-          {pageNumber} / {numPages}
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleZoomOut}
+            disabled={zoom <= 0.6}
+            className="flex items-center gap-1"
+          >
+            <ZoomOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Zoom -</span>
+          </Button>
+
+          <span className="text-sm font-medium px-2 min-w-[3rem] text-center">
+            {Math.round(zoom * 100)}%
+          </span>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleZoomIn}
+            disabled={zoom >= 3.0}
+            className="flex items-center gap-1"
+          >
+            <ZoomIn className="w-4 h-4" />
+            <span className="hidden sm:inline">Zoom +</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetView}
+            className="flex items-center gap-1"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -384,7 +473,7 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
                  ref={pageWrapperRef}
                  style={{
                    transform: `translate(${translateX}px, ${translateY}px) scale(${zoom}) rotate(${rotation}deg)`,
-                   transformOrigin: '0 0',
+                   transformOrigin: 'center center',
                    willChange: 'transform',
                  }}
                >
@@ -410,6 +499,19 @@ const PdfViewerMobile: React.FC<PdfViewerMobileProps> = ({ articleId, articleTit
                        const rect = canvas.getBoundingClientRect();
                        if (rect.width && rect.height) {
                          baseSizeRef.current = { width: rect.width, height: rect.height };
+                         console.log('[PDFViewerMobile] Base size atualizado:', baseSizeRef.current);
+                       }
+                     }
+                     
+                     // Fallback: usar dimensões do container se canvas não estiver disponível
+                     if (!baseSizeRef.current.width || !baseSizeRef.current.height) {
+                       const containerRect = contentRef.current?.getBoundingClientRect();
+                       if (containerRect) {
+                         baseSizeRef.current = { 
+                           width: containerRect.width - 32, // Subtrair padding
+                           height: containerRect.height - 32 
+                         };
+                         console.log('[PDFViewerMobile] Base size fallback:', baseSizeRef.current);
                        }
                      }
                    }}

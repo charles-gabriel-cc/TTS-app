@@ -32,7 +32,6 @@ import {
   GraduationCap, 
   Users, 
   MessageCircle, 
-  FileText,
   X,
   BookOpen,
   FileImage,
@@ -73,7 +72,7 @@ const fallbackGalleryItems = [
     title: 'Manual do Estudante',
     description: 'Guia completo para novos alunos',
     url: '/api/documents/manual-estudante.pdf',
-    icon: FileText
+    icon: BookOpen
   },
   {
     id: 2,
@@ -252,20 +251,31 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
     }
   }, [resetIdleTimer, onNavigateToArticleChat]);
 
+  // Função para normalizar texto (remover acentos e converter para minúsculas)
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .trim();
+  };
+
   // Função para filtrar artigos baseado no termo de pesquisa
   const filteredArticles = useMemo(() => {
     if (!searchTerm.trim()) {
       return pdfArticles;
     }
     
-    const term = searchTerm.toLowerCase().trim();
+    const normalizedTerm = normalizeText(searchTerm);
     return pdfArticles.filter(article => 
-      article.title.toLowerCase().includes(term) ||
-      article.author.toLowerCase().includes(term) ||
-      article.filename.toLowerCase().includes(term) ||
-      (article.publication_title && article.publication_title.toLowerCase().includes(term)) ||
-      (article.journal && article.journal.toLowerCase().includes(term)) ||
-      (article.keywords && article.keywords.some(keyword => keyword.toLowerCase().includes(term)))
+      normalizeText(article.title).includes(normalizedTerm) ||
+      normalizeText(article.author).includes(normalizedTerm) ||
+      normalizeText(article.filename).includes(normalizedTerm) ||
+      (article.publication_title && normalizeText(article.publication_title).includes(normalizedTerm)) ||
+      (article.journal && normalizeText(article.journal).includes(normalizedTerm)) ||
+      (article.department && normalizeText(article.department).includes(normalizedTerm)) ||
+      (article.year && article.year.toString().includes(normalizedTerm)) ||
+      (article.keywords && article.keywords.some(keyword => normalizeText(keyword).includes(normalizedTerm)))
     );
   }, [pdfArticles, searchTerm]);
 
@@ -345,7 +355,7 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
               setSearchTerm(e.target.value);
               resetIdleTimer();
             }}
-            placeholder="Pesquisar por nome do professor, título, revista ou palavras-chave..."
+            placeholder="Pesquisar por nome do professor, título do artigo, departamento, ano ou palavras-chave..."
             className="w-full pl-10 pr-10 py-3 bg-white/5 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all duration-200 relative z-0"
           />
           {searchTerm && (
@@ -383,7 +393,7 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
         ) : error ? (
           <div className="flex items-center justify-center col-span-full py-8">
             <div className="flex flex-col items-center gap-3 text-center">
-              <FileText className="w-12 h-12 text-red-400" />
+              <Loader2 className="w-12 h-12 text-red-400 animate-spin" />
               <p className="text-sm text-white/70">{error}</p>
               <Button
                 variant="outline"
@@ -404,94 +414,115 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
               transition={{ delay: Math.random() * 0.2 }}
             >
               <motion.div
-                className="relative bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden group hover:bg-white/10 hover:border-white/20 transition-all duration-200"
-                whileHover={{ scale: 1.02 }}
+                className="relative bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden group hover:bg-white/10 hover:border-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div 
-                  className="min-h-[320px] flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10 cursor-pointer"
+                  className="bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-blue-500/5 cursor-pointer p-5"
                   onClick={() => handleItemClick(article)}
                 >
-                  <div className="flex flex-col items-center gap-3 text-center p-4 w-full">
-                    <FileText className="w-12 h-12 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
-                    <div className="w-full space-y-2">
-                      {/* Título principal */}
-                      <h3 className="text-sm font-medium text-white break-words leading-tight max-w-40">
-                        {article.publication_title || article.title.toUpperCase()}
-                      </h3>
+                  <div className="flex flex-col">
+                    {/* Header com título e botão de chat */}
+                    <div className="mb-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-base font-semibold text-white leading-tight flex-1 pr-3">
+                          {article.publication_title || article.title}
+                        </h3>
+                        {/* Botão de chat individual */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleArticleChat(article);
+                          }}
+                          className="bg-cyan-500/20 border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/30 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 flex-shrink-0"
+                        >
+                          <MessageCircle className="w-3 h-3 mr-1" />
+                          Chat
+                        </Button>
+                      </div>
                       
-                      {/* Autor */}
-                      {article.author && article.author !== article.title && (
-                        <p className="text-xs text-white/70 break-words leading-tight">
-                          {article.author.toUpperCase()}
-                        </p>
-                      )}
-                      
-                      {/* Ano */}
-                      {article.year && (
-                        <p className="text-xs text-cyan-300 font-medium">
-                          {article.year}
-                        </p>
+                        {/* Autor e Ano */}
+                        <div className="flex items-center justify-between">
+                          {article.author && article.author !== article.title && (
+                            <p className="text-sm text-white/80 font-medium">
+                              {article.author.toUpperCase()}
+                            </p>
+                          )}
+                          {article.year && (
+                            <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full font-medium">
+                              {article.year}
+                            </span>
+                          )}
+                        </div>
+                    </div>
+                    
+                    {/* Informações do artigo */}
+                    <div className="space-y-3">
+                      {/* Departamento */}
+                      {article.department && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-purple-400 rounded-full flex-shrink-0"></div>
+                          <span className="text-sm text-purple-300 font-medium">
+                            {article.department}
+                          </span>
+                        </div>
                       )}
                       
                       {/* Revista */}
                       {article.journal && (
-                        <p className="text-xs text-white/60 break-words leading-tight max-w-40">
-                          {article.journal}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+                          <span className="text-sm text-white/70 truncate">
+                            {article.journal}
+                          </span>
+                        </div>
                       )}
                       
                       {/* Keywords */}
                       {article.keywords && article.keywords.length > 0 && (
-                        <div className="flex flex-wrap gap-1 justify-center mt-2">
-                          {article.keywords.slice(0, 3).map((keyword, index) => (
-                            <span 
-                              key={index}
-                              className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full"
-                            >
-                              {keyword}
-                            </span>
-                          ))}
-                          {article.keywords.length > 3 && (
-                            <span className="text-xs text-white/50">
-                              +{article.keywords.length - 3}
-                            </span>
-                          )}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-cyan-400 rounded-full flex-shrink-0"></div>
+                            <span className="text-xs text-white/60 font-medium">Palavras-chave:</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {article.keywords.slice(0, 4).map((keyword, index) => (
+                              <span 
+                                key={index}
+                                className="text-xs bg-cyan-500/15 text-cyan-300 px-2.5 py-1 rounded-lg border border-cyan-400/20"
+                              >
+                                {keyword}
+                              </span>
+                            ))}
+                            {article.keywords.length > 4 && (
+                              <span className="text-xs text-white/50 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
+                                +{article.keywords.length - 4}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
-                      
-                      <p className="text-xs text-white/60 mt-2">
-                        Clique para visualizar
+                    </div>
+                    
+                    {/* Footer com ação */}
+                    <div className="mt-4 pt-3 border-t border-white/10">
+                      <p className="text-xs text-white/60 text-center">
+                        Clique para visualizar o artigo
                       </p>
                     </div>
                   </div>
                 </div>
                 
-                {/* Botão de chat individual */}
-                <div className="absolute bottom-2 right-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleArticleChat(article);
-                    }}
-                    className="bg-cyan-500/20 border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/30 backdrop-blur-sm"
-                  >
-                    <MessageCircle className="w-3 h-3 mr-1" />
-                    Chat
-                  </Button>
-                </div>
-                
-                {/* Overlay de hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               </motion.div>
             </motion.div>
           ))
         ) : (
           <div className="flex items-center justify-center col-span-full py-8">
             <div className="flex flex-col items-center gap-3 text-center">
-              <FileText className="w-12 h-12 text-gray-400" />
+              <BookOpen className="w-12 h-12 text-gray-400" />
               <p className="text-sm text-white/70">
                 {searchTerm ? `Nenhum artigo encontrado para "${searchTerm}"` : "Nenhum artigo encontrado"}
               </p>

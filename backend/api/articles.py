@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 import os
 import glob
+import json
 from pathlib import Path
 
 # Importar serviços necessários
@@ -49,6 +50,41 @@ try:
 except Exception as e:
     logger.warning(f"Não foi possível inicializar ArticleService: {e}")
     article_service = None
+
+# Função para carregar dados do information.json
+def load_article_information() -> Dict[str, Dict]:
+    """
+    Carrega os dados do arquivo information.json e retorna um dicionário
+    indexado por filename para facilitar o matching
+    """
+    try:
+        info_file = Path("information.json")
+        if not info_file.exists():
+            logger.warning("Arquivo information.json não encontrado")
+            return {}
+        
+        with open(info_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Extrair os dados do array allData
+        if isinstance(data, list) and len(data) > 0 and "allData" in data[0]:
+            articles_data = data[0]["allData"]
+        else:
+            logger.warning("Estrutura do information.json não é a esperada")
+            return {}
+        
+        # Criar dicionário indexado por filename
+        articles_dict = {}
+        for article in articles_data:
+            if "filename" in article:
+                articles_dict[article["filename"]] = article
+        
+        logger.info(f"Carregados {len(articles_dict)} artigos do information.json")
+        return articles_dict
+        
+    except Exception as e:
+        logger.error(f"Erro ao carregar information.json: {e}")
+        return {}
 
 @router.get("/pdfs", response_model=List[PDFArticle])
 async def get_pdf_articles():
@@ -231,10 +267,13 @@ async def view_pdf(professor_name: str):
 @router.get("/pdfs-with-metadata", response_model=List[ArticleWithMetadata])
 async def get_pdf_articles_with_metadata():
     """
-    Retorna todos os PDFs de artigos com metadados do Qdrant (títulos de publicações, anos, etc.)
+    Retorna todos os PDFs de artigos com metadados do information.json e Qdrant
     """
     try:
-        # Primeiro, buscar artigos básicos do sistema de arquivos
+        # Carregar dados do information.json
+        article_info = load_article_information()
+        
+        # Buscar artigos básicos do sistema de arquivos
         articles_dir = Path("articles")
         
         if not articles_dir.exists():
@@ -259,13 +298,31 @@ async def get_pdf_articles_with_metadata():
                 article = ArticleWithMetadata(
                     id=professor_name,  # Usar nome do professor como ID
                     filename=filename,
-                    title=professor_name,  # Nome do professor como título
+                    title=professor_name,  # Nome do professor como título (fallback)
                     author=professor_name,  # Nome do professor como autor
                     size=file_size,
                     url=str(file_path)  # Caminho do arquivo como URL
                 )
                 
-                # Tentar buscar metadados do Qdrant se o serviço estiver disponível
+                # Tentar encontrar dados correspondentes no information.json
+                if filename in article_info:
+                    info_data = article_info[filename]
+                    
+                    # Atualizar com dados do information.json
+                    article.publication_title = info_data.get('title', professor_name)
+                    article.year = info_data.get('ano')
+                    article.keywords = info_data.get('keywords', [])
+                    article.department = info_data.get('departamento')
+                    
+                    # Usar o título da publicação como título principal se disponível
+                    if info_data.get('title'):
+                        article.title = info_data['title']
+                    
+                    logger.debug(f"Dados do information.json carregados para {filename}")
+                else:
+                    logger.debug(f"Nenhum dado encontrado no information.json para {filename}")
+                
+                # Tentar buscar metadados adicionais do Qdrant se o serviço estiver disponível
                 if article_service:
                     try:
                         # Buscar artigos do Qdrant que correspondam ao professor
@@ -276,16 +333,22 @@ async def get_pdf_articles_with_metadata():
                             if (qdrant_article['author'].lower() == professor_name.lower() or 
                                 professor_name.lower() in qdrant_article['author'].lower()):
                                 
-                                # Preencher metadados do Qdrant
-                                article.publication_title = qdrant_article.get('title', '')
-                                article.year = qdrant_article.get('year', '')
-                                article.journal = qdrant_article.get('journal', '')
-                                article.doi = qdrant_article.get('doi', '')
-                                article.abstract = qdrant_article.get('abstract', '')
-                                article.keywords = qdrant_article.get('keywords', [])
+                                # Preencher metadados do Qdrant apenas se não estiverem no information.json
+                                if not article.publication_title:
+                                    article.publication_title = qdrant_article.get('title', '')
+                                if not article.year:
+                                    article.year = qdrant_article.get('year', '')
+                                if not article.journal:
+                                    article.journal = qdrant_article.get('journal', '')
+                                if not article.doi:
+                                    article.doi = qdrant_article.get('doi', '')
+                                if not article.abstract:
+                                    article.abstract = qdrant_article.get('abstract', '')
+                                if not article.keywords:
+                                    article.keywords = qdrant_article.get('keywords', [])
                                 
-                                # Se encontrou metadados, usar o título da publicação como título principal
-                                if article.publication_title:
+                                # Se encontrou metadados e não tem título do information.json, usar o título da publicação
+                                if article.publication_title and not info_data.get('title'):
                                     article.title = article.publication_title
                                 
                                 break  # Usar o primeiro artigo encontrado
@@ -300,8 +363,8 @@ async def get_pdf_articles_with_metadata():
                 logger.error(f"Erro ao processar arquivo {pdf_path}: {str(e)}")
                 continue
         
-        # Ordenar por nome do professor
-        articles.sort(key=lambda x: x.title.lower())
+        # Ordenar por título da publicação ou nome do professor
+        articles.sort(key=lambda x: (x.publication_title or x.title).lower())
         
         logger.info(f"Retornando {len(articles)} artigos PDF com metadados")
         return articles

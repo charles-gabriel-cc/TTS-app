@@ -23,6 +23,7 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null)
   const [messageValue, setMessageValue] = useState("")
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   
   // Gerar posições das partículas uma única vez
   const particlePositions = useMemo(() => 
@@ -57,6 +58,11 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
   // Usar sessão fixa para o chat principal
   const mainSessionId = getOrCreateMainChatSession()
   const messages = getSessionMessages(mainSessionId)
+
+  // Scroll automático para o final quando uma nova mensagem for adicionada
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   // Desabilitar loading global para este chat (chat principal)
   useEffect(() => {
@@ -448,6 +454,8 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
             </div>
           </motion.div>
         )}
+        {/* Elemento de referência para scroll automático */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Chat Input */}

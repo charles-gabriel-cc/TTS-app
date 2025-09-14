@@ -217,7 +217,7 @@ const IdleScreen: React.FC<IdleScreenProps> = ({
                 className="relative max-w-md mx-auto px-8 py-12 text-center"
                 variants={containerVariants}
               >
-                {/* Icon Group */}
+                {/* Icon Group - Acima do logo */}
                 <motion.div 
                   className="flex justify-center items-center space-x-4 mb-8"
                   variants={itemVariants}
@@ -241,6 +241,25 @@ const IdleScreen: React.FC<IdleScreenProps> = ({
                     transition={{ delay: 0.2 }}
                   >
                     <MessageCircle className="w-8 h-8 text-white" />
+                  </motion.div>
+                </motion.div>
+
+                {/* Logo do Museu CCEN - No meio */}
+                <motion.div 
+                  className="flex justify-center items-center mb-8"
+                  variants={itemVariants}
+                >
+                  <motion.div
+                    className="p-8 bg-white/10 rounded-3xl backdrop-blur-sm"
+                    variants={iconVariants}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <img 
+                      src="/images/logo_museu_ccen.png" 
+                      alt="Museu de Ciências Exatas" 
+                      className="w-48 h-48 object-contain"
+                    />
                   </motion.div>
                 </motion.div>
 

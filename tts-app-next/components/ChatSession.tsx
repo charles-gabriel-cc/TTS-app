@@ -194,6 +194,7 @@ export default function ChatSession({
   const lastSentMessageRef = useRef<string>('');
   const lastSentTimeRef = useRef<number>(0);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Contexto para resetar timer de inatividade
   const { resetIdleTimer } = useIdleContext();
@@ -202,6 +203,11 @@ export default function ChatSession({
   const effectiveSessionId = getOrCreateMainChatSession();
   const messages = getSessionMessages(effectiveSessionId);
   const currentSession = getCurrentSession();
+
+  // Scroll automático para o final quando uma nova mensagem for adicionada
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   // Notificar criação da sessão se necessário
   useEffect(() => {
@@ -516,6 +522,8 @@ export default function ChatSession({
             </div>
           </motion.div>
         )}
+        {/* Elemento de referência para scroll automático */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Suggested Actions */}

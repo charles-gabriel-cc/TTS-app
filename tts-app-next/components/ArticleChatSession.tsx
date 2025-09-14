@@ -29,6 +29,7 @@ export default function ArticleChatSession({
   const [isLoading, setIsLoading] = useState(false)
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   
   const { 
     audioOutputEnabled, 
@@ -56,6 +57,11 @@ export default function ArticleChatSession({
   // Usar sessão fixa para este artigo específico
   const articleSessionId = getOrCreateArticleSession(professorName, articleTitle)
   const messages = getSessionMessages(articleSessionId)
+
+  // Scroll automático para o final quando uma nova mensagem for adicionada
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   // Estado para visualizar PDF do artigo
   const [isPdfOpen, setIsPdfOpen] = useState(false)
@@ -340,7 +346,7 @@ export default function ArticleChatSession({
               </p>
             )}
             <p className="text-xs text-white/50 ml-6 mt-1">
-              Chat específico sobre artigos do professor
+              Chat específico sobre artigo do professor
             </p>
           </div>
         </div>
@@ -353,10 +359,10 @@ export default function ArticleChatSession({
             <div className="text-center">
               <MessageCircle className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">
-                Chat sobre Artigos
+                Chat sobre Artigo
               </h3>
               <p className="text-white/70 max-w-md">
-                Faça perguntas sobre os artigos científicos do professor {professorName}. 
+                Faça perguntas sobre o artigo científico do professor {professorName}. 
                 Posso explicar conceitos, metodologias e descobertas de forma acessível.
               </p>
             </div>
@@ -389,6 +395,8 @@ export default function ArticleChatSession({
             </div>
           </motion.div>
         )}
+        {/* Elemento de referência para scroll automático */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}

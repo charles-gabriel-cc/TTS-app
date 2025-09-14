@@ -18,6 +18,29 @@ const AcademicBackground = () => (
     <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-400 via-teal-400 via-blue-500 to-purple-600 opacity-25"></div>
     <div className="absolute inset-0 bg-gradient-to-bl from-purple-400 via-violet-500 via-fuchsia-500 to-pink-500 opacity-30"></div>
     
+    {/* Logo do Museu CCEN - Fundo Sutil */}
+    <div className="absolute inset-0 flex items-center justify-center opacity-5">
+      <motion.div
+        className="w-96 h-96"
+        animate={{ 
+          scale: [1, 1.02, 1],
+          opacity: [0.05, 0.08, 0.05]
+        }}
+        transition={{ 
+          duration: 20, 
+          repeat: Infinity, 
+          ease: "easeInOut" 
+        }}
+        style={{ willChange: 'transform, opacity' }}
+      >
+        <img 
+          src="/images/logo_museu_ccen.png" 
+          alt="Museu de Ciências Exatas" 
+          className="w-full h-full object-contain"
+        />
+      </motion.div>
+    </div>
+    
     {/* Mathematical Symbols - REDUZIDO PARA PERFORMANCE */}
     <div className="absolute inset-0 opacity-25">
       <motion.div 
@@ -374,7 +397,7 @@ function HomeContent() {
         <IdleScreen
           isVisible={showIdleScreen}
           onDismiss={handleIdleScreenDismiss}
-          title="Museu do CCEN"
+          title=""
           description="Conheça os professores do CCEN. Obtenha informações sobre os professores, suas áreas de atuação, acesso aos seus currículos lattes e outras informações."
           callToAction="Toque em qualquer lugar para começar"
         />
