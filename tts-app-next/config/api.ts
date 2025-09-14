@@ -17,7 +17,7 @@ export const TIMEOUT_CONFIG = {
   SERVER_HEALTH_CHECK: 5,
   
   // Timeout para requisições de chat (em segundos)
-  CHAT_REQUEST: 120,
+  CHAT_REQUEST: 240,
   
   // Timeout para requisições de transcrição de áudio (em segundos)
   TRANSCRIPTION_REQUEST: 60,

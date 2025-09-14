@@ -107,7 +107,7 @@ services:
       echo '📦 Instalando gunicorn/uvicorn/redis (runtime)...';
       python -m pip install -q --no-cache-dir gunicorn uvicorn redis || true;
       echo '🚀 Iniciando Gunicorn com múltiplos workers...';
-      exec gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
+      exec gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
     networks:
       - tts-network
@@ -131,7 +131,7 @@ services:
 
   # n8n - Automação de workflows
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.109.1
     container_name: tts-n8n
     ports:
       - "15678:5678"
