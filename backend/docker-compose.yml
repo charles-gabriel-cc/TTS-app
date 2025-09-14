@@ -136,6 +136,7 @@ services:
     ports:
       - "15678:5678"
     environment:
+
       - GENERIC_TIMEZONE=America/Recife
       - N8N_HOST=localhost
       - N8N_PORT=5678
