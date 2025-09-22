@@ -6,7 +6,8 @@ from typing import List, Dict, Optional
 import pandas as pd
 from llama_index.readers.file import PDFReader
 from llama_index.core.node_parser import SemanticSplitterNodeParser
-from llama_index.embeddings.ollama import OllamaEmbedding
+# from llama_index.embeddings.google import GoogleGenerativeAIEmbedding  # Não disponível na versão atual
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from qdrant_client import QdrantClient, models
 from qdrant_client.models import Distance, VectorParams, PointStruct
 from utils.logger import setup_logger
@@ -14,15 +15,17 @@ from utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 class ArticleService:
-    def __init__(self, qdrant_client: QdrantClient, embed_model_name: str = "all-minilm:l6-v2"):
+    def __init__(self, qdrant_client: QdrantClient, embed_model_name: str = "models/embedding-001"):
         self.qdrant_client = qdrant_client
         self.embed_model_name = embed_model_name
         self.collection_name = "ccen-artigos"
         
         # Inicializar modelo de embedding
-        ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.embed_model = OllamaEmbedding(model_name=embed_model_name, base_url=ollama_base_url)
-        self.parser = SemanticSplitterNodeParser.from_defaults(embed_model=self.embed_model)
+        self.embed_model = GoogleGenerativeAIEmbeddings(model=embed_model_name)
+        # SemanticSplitterNodeParser não funciona com GoogleGenerativeAIEmbeddings
+        # Usar parser simples por enquanto
+        from llama_index.core.node_parser import SentenceSplitter
+        self.parser = SentenceSplitter(chunk_size=1024, chunk_overlap=200)
         
         # Carregar metadados do CSV
         self.professor_metadata = self._load_professor_metadata()
@@ -57,7 +60,7 @@ class ArticleService:
                 # Criar coleção
                 self.qdrant_client.create_collection(
                     collection_name=self.collection_name,
-                    vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+                    vectors_config=VectorParams(size=768, distance=Distance.COSINE)
                 )
                 logger.info(f"✅ Coleção '{self.collection_name}' criada.")
             else:
@@ -329,7 +332,7 @@ class ArticleService:
             points = []
             for i, node in enumerate(nodes):
                 texto = node.text
-                vetor = self.embed_model.get_text_embedding(texto)
+                vetor = self.embed_model.embed_query(texto)
                 
                 # Adicionar metadados específicos do chunk
                 chunk_metadata = metadata.copy()

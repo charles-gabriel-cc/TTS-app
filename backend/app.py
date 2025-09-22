@@ -1,4 +1,5 @@
-from langchain_ollama import OllamaEmbeddings, OllamaLLM
+from langchain_ollama import OllamaLLM
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from qdrant_client import QdrantClient
 import gradio as gr
 from langchain_core.prompts import ChatPromptTemplate
@@ -8,7 +9,15 @@ from config import (
     COLLECTION_NAME
 )
 
-embeddings = OllamaEmbeddings(model="all-minilm:l6-v2")
+# Tentar usar Gemini Pro primeiro, fallback para Ollama se necessário
+try:
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    print("✅ Usando Gemini Pro para embeddings")
+except Exception as e:
+    print(f"⚠️ Falha ao inicializar Gemini Pro: {e}")
+    print("🔄 Usando fallback Ollama para embeddings")
+    from langchain_ollama import OllamaEmbeddings
+    embeddings = OllamaEmbeddings(model="all-minilm:l6-v2")
 qdrant_client = QdrantClient(
     url=QDRANT_URL, 
     api_key=QDRANT_API_KEY

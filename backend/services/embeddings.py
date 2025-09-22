@@ -1,6 +1,6 @@
 from llama_index.readers.file import PDFReader
 from llama_index.core.node_parser import SemanticSplitterNodeParser
-from llama_index.embeddings.ollama import OllamaEmbedding
+# from llama_index.embeddings.google import GoogleGenerativeAIEmbedding  # Não disponível na versão atual
 from qdrant_client import QdrantClient, models
 from qdrant_client.models import Distance, VectorParams, PointStruct
 import os
@@ -16,15 +16,18 @@ def create_curriculos_collection(embed_model, qdrant_client, collection_name, di
     """
     print(f"🚀 Criando coleção de currículos: {collection_name}")
     
-    ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    embed_model = OllamaEmbedding(model_name=embed_model, base_url=ollama_base_url)
-    parser = SemanticSplitterNodeParser.from_defaults(embed_model=embed_model)
+    # Usar LangChain GoogleGenerativeAIEmbeddings em vez de LlamaIndex
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+    embed_model = GoogleGenerativeAIEmbeddings(model=embed_model)
+    # SemanticSplitterNodeParser não funciona com GoogleGenerativeAIEmbeddings
+    from llama_index.core.node_parser import SentenceSplitter
+    parser = SentenceSplitter(chunk_size=1024, chunk_overlap=200)
 
     # Cria a coleção se não existir
     if collection_name not in [c.name for c in qdrant_client.get_collections().collections]:
         qdrant_client.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+            vectors_config=VectorParams(size=768, distance=Distance.COSINE)
         )
         print(f"✅ Coleção '{collection_name}' criada.")
     else:
@@ -96,7 +99,7 @@ def create_curriculos_collection(embed_model, qdrant_client, collection_name, di
                     points = []
                     for node in nodes:
                         texto = node.text
-                        vetor = embed_model.get_text_embedding(texto)
+                        vetor = embed_model.embed_query(texto)
                         ponto = PointStruct(
                             id=str(uuid.uuid4()),
                             vector=vetor,
@@ -238,15 +241,18 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
     """
     print(f"🚀 Criando coleção de artigos: {collection_name}")
     
-    ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    embed_model = OllamaEmbedding(model_name=embed_model, base_url=ollama_base_url)
-    parser = SemanticSplitterNodeParser.from_defaults(embed_model=embed_model)
+    # Usar LangChain GoogleGenerativeAIEmbeddings em vez de LlamaIndex
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+    embed_model = GoogleGenerativeAIEmbeddings(model=embed_model)
+    # SemanticSplitterNodeParser não funciona com GoogleGenerativeAIEmbeddings
+    from llama_index.core.node_parser import SentenceSplitter
+    parser = SentenceSplitter(chunk_size=1024, chunk_overlap=200)
 
     # Cria a coleção se não existir
     if collection_name not in [c.name for c in qdrant_client.get_collections().collections]:
         qdrant_client.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+            vectors_config=VectorParams(size=768, distance=Distance.COSINE)
         )
         print(f"✅ Coleção '{collection_name}' criada.")
     else:
@@ -335,7 +341,7 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
                     points = []
                     for i, node in enumerate(nodes):
                         texto = node.text
-                        vetor = embed_model.get_text_embedding(texto)
+                        vetor = embed_model.embed_query(texto)
                         
                         chunk_metadata = metadata.copy()
                         chunk_metadata.update({

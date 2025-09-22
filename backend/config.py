@@ -14,7 +14,7 @@ WHISPER_MODEL = "medium"  # ou "tiny", "small", "medium", "large"
 # Configurações do Chat
 USE_LOCAL_MODEL = True  # Alternar entre modelo local e OpenAI
 MODEL_NAME = os.getenv("MODEL_NAME")
-EMBED_MODEL = "all-minilm:l6-v2"
+EMBED_MODEL = "models/text-embedding-004"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 USE_LOCAL_COLLECTION = True
 
@@ -26,6 +26,9 @@ QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 DOCS = "ccen-docentes"
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")
+
+# Configurações do Gemini
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Configuração do Webhook
 # Para Docker: use host.docker.internal para acessar o host

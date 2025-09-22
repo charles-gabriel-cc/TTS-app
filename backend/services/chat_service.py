@@ -1,5 +1,6 @@
 import openai
-from langchain_ollama import OllamaEmbeddings, OllamaLLM, ChatOllama
+from langchain_ollama import OllamaLLM, ChatOllama
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from utils.logger import setup_logger
 from qdrant_client import QdrantClient, models
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -108,17 +109,26 @@ class ChatService:
                 Responde sempre em PORTUGUÊS BRASILEIRO.
                                                  """
         
-        self.agent_executor = create_react_agent(self.llm, self.tools, checkpointer=self.memory, prompt=self.prompt)
-        self.agent_executor.invoke({"messages": [HumanMessage(content="Aquecendo agente")]}, {'configurable': {'thread_id': 0}})
-        print("Agente aquecido")    
+        # Nova API do langgraph não aceita mais prompt como parâmetro
+        self.agent_executor = create_react_agent(self.llm, self.tools, checkpointer=self.memory)
+        # Removido aquecimento do agente devido a bug no langchain_ollama
+        print("Agente inicializado (aquecimento desabilitado)")    
         
 
     def set_collection(self, use_local_collection=False, collection_name=None, embed_model=None, qdrant_url=None, qdrant_api_key=None, path="./", docs=None):
         self.use_local_collection = use_local_collection
         self.collection_name = collection_name
-        import os
-        ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
+        # Tentar usar Gemini Pro primeiro, fallback para Ollama se necessário
+        try:
+            self.embeddings = GoogleGenerativeAIEmbeddings(model=embed_model)
+            logger.info(f"✅ Usando Gemini Pro para embeddings: {embed_model}")
+        except Exception as e:
+            logger.warning(f"⚠️ Falha ao inicializar Gemini Pro: {e}")
+            logger.info("🔄 Usando fallback Ollama para embeddings")
+            import os
+            from langchain_ollama import OllamaEmbeddings
+            ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            self.embeddings = OllamaEmbeddings(model="all-minilm:l6-v2", base_url=ollama_base_url)
         self.path = path
         self.docs = docs
 

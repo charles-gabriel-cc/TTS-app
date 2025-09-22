@@ -70,6 +70,8 @@ services:
       - USE_LOCAL_COLLECTION=true
       - COLLECTION_NAME=ccen-docentes
       - USE_LOCAL_MODEL=true
+      # Configurações do Gemini
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       # Configurações CUDA
       - NVIDIA_VISIBLE_DEVICES=all
       - CUDA_VISIBLE_DEVICES=0
@@ -104,10 +106,12 @@ services:
         sleep 1;
       done;
       echo '✅ Redis está disponível!';
-      echo '📦 Instalando gunicorn/uvicorn/redis (runtime)...';
+      echo '📦 Instalando dependências runtime...';
       python -m pip install -q --no-cache-dir gunicorn uvicorn redis || true;
+      echo '📦 Executando instalador simples do Gemini...';
+      python install_gemini_simple.py || echo '⚠️ Instalador do Gemini falhou, mas continuando...';
       echo '🚀 Iniciando Gunicorn com múltiplos workers...';
-      exec gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
+      exec gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
     networks:
       - tts-network
