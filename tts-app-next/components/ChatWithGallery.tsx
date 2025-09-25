@@ -36,7 +36,8 @@ import {
   BookOpen,
   FileImage,
   Video,
-  Loader2
+  Loader2,
+  Filter
 } from "lucide-react";
 
 interface ChatWithGalleryProps {
@@ -95,6 +96,12 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
   
   // Estado para pesquisa
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Estado de filtros
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
+  const [yearFrom, setYearFrom] = useState<string>("");
+  const [yearTo, setYearTo] = useState<string>("");
 
   // Contexto para estados compartilhados
   const { 
@@ -261,23 +268,43 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
   };
 
   // Função para filtrar artigos baseado no termo de pesquisa
+  const availableDepartments = useMemo(() => {
+    return ['Física', 'Química', 'Estatística', 'Matemática'];
+  }, []);
+
   const filteredArticles = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return pdfArticles;
-    }
-    
-    const normalizedTerm = normalizeText(searchTerm);
-    return pdfArticles.filter(article => 
-      normalizeText(article.title).includes(normalizedTerm) ||
-      normalizeText(article.author).includes(normalizedTerm) ||
-      normalizeText(article.filename).includes(normalizedTerm) ||
-      (article.publication_title && normalizeText(article.publication_title).includes(normalizedTerm)) ||
-      (article.journal && normalizeText(article.journal).includes(normalizedTerm)) ||
-      (article.department && normalizeText(article.department).includes(normalizedTerm)) ||
-      (article.year && article.year.toString().includes(normalizedTerm)) ||
-      (article.keywords && article.keywords.some(keyword => normalizeText(keyword).includes(normalizedTerm)))
-    );
-  }, [pdfArticles, searchTerm]);
+    const matchesSearch = (article: PDFArticleWithMetadata) => {
+      if (!searchTerm.trim()) return true;
+      const normalizedTerm = normalizeText(searchTerm);
+      return (
+        normalizeText(article.title).includes(normalizedTerm) ||
+        normalizeText(article.author).includes(normalizedTerm) ||
+        normalizeText(article.filename).includes(normalizedTerm) ||
+        (article.publication_title && normalizeText(article.publication_title).includes(normalizedTerm)) ||
+        (article.journal && normalizeText(article.journal).includes(normalizedTerm)) ||
+        (article.department && normalizeText(article.department).includes(normalizedTerm)) ||
+        (article.year && article.year.toString().includes(normalizedTerm)) ||
+        (article.keywords && article.keywords.some(keyword => normalizeText(keyword).includes(normalizedTerm)))
+      );
+    };
+
+    const matchesDepartment = (article: PDFArticleWithMetadata) => {
+      if (!selectedDepartment) return true;
+      return (article.department || "").toLowerCase() === selectedDepartment.toLowerCase();
+    };
+
+    const matchesYearRange = (article: PDFArticleWithMetadata) => {
+      if (!article.year) return !(yearFrom || yearTo); // se não há ano no artigo, só passa se nenhum filtro de ano ativo
+      const year = parseInt(article.year.toString(), 10);
+      const from = yearFrom ? parseInt(yearFrom, 10) : undefined;
+      const to = yearTo ? parseInt(yearTo, 10) : undefined;
+      if (from !== undefined && year < from) return false;
+      if (to !== undefined && year > to) return false;
+      return true;
+    };
+
+    return pdfArticles.filter(a => matchesSearch(a) && matchesDepartment(a) && matchesYearRange(a));
+  }, [pdfArticles, searchTerm, selectedDepartment, yearFrom, yearTo]);
 
   // Função para limpar pesquisa
   const handleClearSearch = useCallback(() => {
@@ -356,8 +383,16 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
               resetIdleTimer();
             }}
             placeholder="Pesquisar por nome do professor, título do artigo, departamento, ano ou palavras-chave..."
-            className="w-full pl-10 pr-10 py-3 bg-white/5 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all duration-200 relative z-0"
+            className="w-full pl-10 pr-24 py-3 bg-white/5 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all duration-200 relative z-0"
           />
+          {/* Botão de filtros */}
+          <button
+            onClick={() => setIsFilterOpen((v) => !v)}
+            className="absolute inset-y-0 right-8 pr-2 flex items-center text-white/70 hover:text-white transition-colors z-10"
+            aria-label="Abrir filtros"
+          >
+            <Filter className="h-5 w-5" />
+          </button>
           {searchTerm && (
             <button
               onClick={handleClearSearch}
@@ -367,6 +402,74 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+          )}
+
+          {/* Dropdown de filtros */}
+          {isFilterOpen && (
+            <div className="absolute top-full right-0 mt-2 w-80 bg-black/80 border border-white/10 rounded-lg shadow-xl p-4 z-30 backdrop-blur-md">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-semibold text-white">Filtros</h4>
+                <button className="text-white/60 hover:text-white" onClick={() => setIsFilterOpen(false)} aria-label="Fechar filtros">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Departamento */}
+              <div className="mb-3">
+                <label className="block text-xs text-white/60 mb-1">Departamento</label>
+                <select
+                  value={selectedDepartment || ""}
+                  onChange={(e) => setSelectedDepartment(e.target.value || null)}
+                  className="w-full bg-white text-black text-sm rounded-md px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                >
+                  <option value="">Todos</option>
+                  {availableDepartments.map(dep => (
+                    <option key={dep} value={dep}>{dep}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Ano */}
+              <div className="mb-3">
+                <label className="block text-xs text-white/60 mb-1">Ano (faixa)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="de"
+                    value={yearFrom}
+                    onChange={(e) => setYearFrom(e.target.value)}
+                    className="w-1/2 bg-white text-black text-sm rounded-md px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                  />
+                  <span className="text-white/50">—</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="até"
+                    value={yearTo}
+                    onChange={(e) => setYearTo(e.target.value)}
+                    className="w-1/2 bg-white text-black text-sm rounded-md px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  className="text-xs text-white/70 hover:text-white underline underline-offset-4"
+                  onClick={() => { setSelectedDepartment(null); setYearFrom(""); setYearTo(""); }}
+                >
+                  Limpar filtros
+                </button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  onClick={() => setIsFilterOpen(false)}
+                >
+                  Aplicar
+                </Button>
+              </div>
+            </div>
           )}
         </div>
         {searchTerm && (
