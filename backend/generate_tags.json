@@ -1,0 +1,424 @@
+{
+  "name": "generate_tags",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1328,
+        224
+      ],
+      "id": "bebd9e2f-8ff8-40db-bed4-8a2cda8a20f0",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/articles/*.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        224
+      ],
+      "id": "e53563a4-2d92-4558-9f6b-5de05cf89304",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 'items' é uma variável especial no nó Code\n// que contém todos os itens recebidos.\n\nconst todosOsTitulos = [];\n\nfor (const item of items) {\n  // Para cada 'item' na lista, pegamos o JSON dele\n  const titulo = item.json.info.Title;\n\n  // Adicionamos o título extraído a uma nova lista\n  todosOsTitulos.push({\n    titulo_do_pdf: titulo\n  });\n}\n$input.first().json.text\n// O nó de código retorna o que você colocar aqui.\n// Estamos retornando a lista que acabamos de criar.\nreturn todosOsTitulos;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        224
+      ],
+      "id": "70101e26-5bd3-4d59-b304-6690aa460e8e",
+      "name": "Code"
+    },
+    {
+      "parameters": {},
+      "name": "Read PDF1",
+      "type": "n8n-nodes-base.readPDF",
+      "position": [
+        -864,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "cd467808-9949-462c-8bfd-d240ab75581a"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**Prompt for AI Agent: Title Verification and Correction**\n\n**Your Role:** You are an expert academic editor and a meticulous data extractor. Your primary task is to ensure that the provided text has the correct title.\n\n**The Context:** I will provide you with a block of text that is supposed to be an academic article or a similar document. In many cases, the user might mistakenly provide a fragment of the text, a sentence from the abstract, or a generic placeholder like \"Title\" as the actual title. The real title is almost always located at the very beginning of the document, typically appearing before the \"Abstract\" or any author information. It is usually the most prominent piece of text, often with a larger font size or bold formatting in its original format.\n\n**Your Task:**\n\n1.  **Analyze the User's Input for the Title:** Carefully examine the initial input that is presented as the \"title.\"\n2.  **Scan the Provided Text for the Real Title:** Search the beginning of the accompanying article text for a more plausible title. The real title is characterized by:\n    * Its position: It will be at or very near the top of the text.\n    * Its relationship to the abstract: It will almost always appear *before* the word \"Abstract\".\n    * Its content: It will be a concise and descriptive phrase summarizing the core topic of the paper. It will not be a full sentence extracted from the abstract or the body of the text.\n3.  **Decision Making:**\n    * **If you are highly confident** that the user's provided title is incorrect and you have identified the actual title within the article text, you MUST replace the incorrect title with the one you have identified.\n    * **If the user's provided title seems plausible** and is also found at the beginning of the text before the abstract, you should keep it.\n    * **If you cannot confidently determine the title** from the provided text, do not make a change.\n4.  **Output:**\n    * If a correction is made, provide the corrected title.\n    * If no correction is needed, simply output the original title.\n\n**Examples to Guide Your Logic:**\n\n**Example 1: Clear-cut case for correction**\n\n* **User Provided Title:** \"This paper investigates the impact of\"\n* **Article Text:**\n    ```\n    The Impact of Renewable Energy on Global Economies\n\n    John Doe, Jane Smith\n\n    **Abstract**\n\n    This paper investigates the impact of renewable energy sources on the economies of developed and developing nations. We analyze...\n    ```\n* **Your Action:** Replace \"This paper investigates the impact of\" with \"The Impact of Renewable Energy on Global Economies\".\n\n**Example 2: Placeholder title**\n\n* **User Provided Title:** \"Research Paper\"\n* **Article Text:**\n    ```\n    A Novel Approach to Machine Learning Model Optimization\n\n    **Abstract**\n\n    In this study, we present a novel approach to optimizing machine learning models for large-scale datasets. Our method...\n    ```\n* **Your Action:** Replace \"Research Paper\" with \"A Novel Approach to Machine Learning Model Optimization\".\n\n**Example 3: No correction needed**\n\n* **User Provided Title:** \"The Role of Artificial Intelligence in Modern Healthcare\"\n* **Article Text:**\n    ```\n    The Role of Artificial Intelligence in Modern Healthcare\n\n    **Abstract**\n\n    Artificial intelligence (AI) is revolutionizing the healthcare industry. This paper explores the various applications of AI...\n    ```\n* **Your Action:** Keep the original title.\n\n**Final Instruction:** Execute this task with precision. Your goal is to ensure the accuracy of the document's title based on the evidence within the provided text. Do not infer a title if it is not explicitly present.\n\n##TITLE EXTRACT\n{{ $('Loop Over Items').item.json.titulo_do_pdf }}\n##TEXT OF THE ARTICLE\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        320
+      ],
+      "id": "a186b753-8732-4ac3-a837-394065334463",
+      "name": "AI Agent1",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        64,
+        480
+      ],
+      "id": "5a80d222-f3c9-4447-9571-82a4a4253044",
+      "name": "Google Gemini Chat Model1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        304
+      ],
+      "id": "19190744-e3b4-48ce-be20-85867cc71b91",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "820f85d6-2314-4a86-9d6d-f9f7e17137ea",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"title\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        480
+      ],
+      "id": "ee037df4-05d6-4ab9-aa72-80f547924ca6",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Acessa os itens que chegam como input para este nó\nconst items = $input.all();\n\nlet previousData = [];\n\n// Tenta pegar os dados da iteração anterior.\n// Isso vai FALHAR na primeira iteração, e é exatamente o que queremos.\ntry {\n  previousData = $items(\"Json Final\")[0].json.allData;\n} catch (error) {\n  // Se o bloco 'try' falhar, significa que é a primeira iteração.\n  // O 'catch' captura o erro e nós simplesmente definimos 'previousData'\n  // como um array vazio, sem travar o workflow.\n  previousData = [];\n}\n// Pega o título e o nome do arquivo da iteração ATUAL\nconst newTitle = $items(\"AI Agent1\")[0].json.output.title; \nconst newFileName = $('Edit Fields').first().json.fileName;\nconst newDepartamento = $items(\"AI Agent2\")[0].json.output.departamento; \nconst newKeywords = $items(\"AI Agent2\")[0].json.output.keywords;\nconst newAno = $items(\"AI Agent2\")[0].json.output.ano; \n\n// Adiciona os novos dados ao array (que estará vazio na 1ª iteração\n// ou conterá os dados anteriores nas iterações seguintes)\nconst newData = {\n  \"filename\": newFileName,\n  \"title\": newTitle,\n  \"departamento\": newDepartamento,\n  \"keywords\": newKeywords,\n  \"ano\": newAno\n};\npreviousData.push(newData);\n\n// Retorna o array completo para a próxima iteração\nreturn {\n  allData: previousData\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        320
+      ],
+      "id": "450c5312-f8b4-45c0-b9b5-90cd0f399cb4",
+      "name": "Json Final"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "19835e03-3b14-4b1a-a869-f95fab35b609",
+              "name": "fileName",
+              "value": "={{ $('Read/Write Files from Disk').item.json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "5ec1e734-9e86-4586-bfd6-096d3d362713",
+              "name": "text",
+              "value": "={{ $('Read PDF1').item.json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        320
+      ],
+      "id": "a4604610-73e5-48d1-ab2f-ba422422ac28",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert academic classifier AI. Your task is to analyze the provided article text, which will be in English, and perform the following actions:\n\nClassify the Department: Identify which of the following four departments the article belongs to: \"Chemistry\", \"Physics\", \"Mathematics\", or \"Statistics\".\n\nExtract Keywords: Identify a maximum of three of the most relevant keywords from the text that summarize the core topic.\n\nExtract Publication Year: Identify the year the article was published from the text.\n\nTranslate and Format the Output: Provide your response as a single JSON object that strictly adheres to the schema below. The values in the JSON object must be in Portuguese. Do not add any explanatory text before or after the JSON object.\n\nJSON Output Schema:\n\nJSON\n\n{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"departamento\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n        \"keywords\": {\n            \"type\": \"array\",\n            \"description\": \"A list of relevant keywords.\",\n            \"items\": {\n                \"type\": \"string\"\n            }\n        },\n        \"ano\": {\n            \"type\": \"int\"\n        }\n\t}\n}\nMapping for 'departamento' field (output must be in Portuguese):\n\nIf the article is from the Chemistry department, the value must be \"Química\".\n\nIf the article is from the Physics department, the value must be \"Física\".\n\nIf the article is from the Mathematics department, the value must be \"Matemática\".\n\nIf the article is from the Statistics department, the value must be \"Estatística\".\n\nExample:\n\nInput Text (in English):\n\"Published in 2023, this paper explores the application of Bayesian inference in analyzing large-scale datasets. We introduce a novel Markov Chain Monte Carlo (MCMC) algorithm to improve the efficiency of posterior distribution sampling. The method's performance is evaluated against traditional frequentist approaches, demonstrating a significant reduction in computational time and improved accuracy in parameter estimation for hierarchical models. We applied our model to a real-world dataset on population growth, showing its robustness and practical utility.\"\n\nYour Expected Output (in Portuguese):\n\nJSON\n\n{\n  \"departamento\": \"Estatística\",\n  \"keywords\": [\n    \"Inferência Bayesiana\",\n    \"Algoritmo MCMC\",\n    \"Modelos hierárquicos\"\n  ],\n  \"ano\": 2023\n}\nNow, analyze the following user-provided article text and generate the corresponding JSON output in Portuguese.\n\n##ARTICLE TEXT\n{{ $('Read PDF1').item.json.text }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        320
+      ],
+      "id": "0284a928-77ac-4d3d-8a8e-928fdc207a66",
+      "name": "AI Agent2",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        320,
+        496
+      ],
+      "id": "7944381a-7351-4edf-a29f-8694f572ab86",
+      "name": "Google Gemini Chat Model2"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"departamento\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n      \"keywords\": {\n        \"type\": \"array\",\n        \"description\": \"A list of relevant keywords.\",\n        \"items\": {\n          \"type\": \"string\"\n        }\n      },\n      \"ano\": {\n          \"type\": \"int\"\n      }\n\t}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        496
+      ],
+      "id": "9af1d14b-97ed-4a95-badf-0e88ee4a77f7",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**Prompt Engineered**\n\n**Role:** You are an expert science communicator and public relations officer for the Center for Exact and Natural Sciences (CCEN) at the Federal University of Pernambuco (UFPE). Your mission is to make complex scientific research accessible and exciting for a general audience, including students, journalists, and the public.\n\n**Context:** You have been given a scientific article written by a professor from CCEN. Your task is to analyze the article's text and generate a brief, engaging summary that answers the user's question: \"Tell me about Professor [Professor's Name]'s article, '[Article Title]'\".\n\n**Task Instructions:**\n\n1.  **Analyze the Article:** Carefully read and understand the core concepts of the provided scientific article, including the research problem, methodology, key findings, and potential impact.\n2.  **Translate All Content:** The source text is in English. You MUST translate all necessary information, including the title and technical terms, into Brazilian Portuguese for your final response.\n3.  **Simplify and Explain:** Your primary goal is to explain the research in simple, accessible language. Break down complex jargon and technical terms into easy-to-understand analogies or definitions.\n4.  **Structure the Output:** Format your response strictly using the Markdown template provided below. Do not deviate from this structure.\n5.  **Adopt the Persona:** Your tone should be enthusiastic, clear, and welcoming. Imagine you are explaining an amazing scientific discovery to a friend.\n\n**Constraints:**\n\n* **Language:** Your final output MUST ALWAYS be in Brazilian Portuguese.\n* **Tone:** Avoid generic, robotic phrases like \"Based on the provided data\" or \"The article discusses.\" Be direct and engaging.\n* **Length:** Keep the explanation concise and focused on the most important aspects of the article.\n\n**Output Format (Strict Template):**\n\n## 🔬 Descobertas do CCEN: Uma Análise do Artigo\n\n**👨‍🏫 Professor(a):** [Nome do Professor(a)]\n**🏢 Departamento:** [Departamento do Professor(a)]\n**📄 Título Original:** [Título Original do Artigo em Inglês]\n**🇧🇷 Título em Português:** [Tradução do Título para o Português]\n\n### O Que os Pesquisadores Descobriram?\n\n[Explicação clara e simples da pesquisa. Comece com o problema principal que o artigo tenta resolver. Use 2-3 parágrafos para descrever a pesquisa, os métodos (de forma simplificada) e as principais descobertas. Use analogias se ajudar a explicar termos complexos.]\n\n### Por Que Isso é Importante?\n\n[Conclua explicando o impacto ou a importância dessa pesquisa. Por que o público geral deveria se interessar por isso? Pode ser um avanço no conhecimento, uma nova tecnologia, ou um passo para resolver um problema maior.]\n\n## ARTICLE TEXT\n{{ $('Edit Fields').item.json.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        320
+      ],
+      "id": "ed8cdd57-90ca-4848-a4b3-81a452bfc641",
+      "name": "AI Agent",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        624,
+        480
+      ],
+      "id": "63d5ddcd-0224-4536-a588-30c83ce069e8",
+      "name": "Google Gemini Chat Model"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Read PDF1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PDF1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Json Final": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Json Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a4e0ab6a-b644-42f5-8832-7570df9920d4",
+  "meta": {
+    "instanceId": "cfb5caf386a94ef6e229d25f5b3cde047a156187b06c23c42b7984a1e78bb221"
+  },
+  "id": "jDwXmgNAemQMwZGq",
+  "tags": []
+}
