@@ -302,7 +302,7 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
           <div>
             <h1 className="text-xl font-semibold text-white flex items-center gap-2">
               <GraduationCap className="w-6 h-6 text-cyan-400" />
-              Museu do CCEN
+              Museu de Ciências Exatas
             </h1>
             <p className="text-sm text-white/70">Explore documentos e recursos acadêmicos</p>
           </div>

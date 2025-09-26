@@ -107,7 +107,7 @@ services:
       echo '📦 Instalando gunicorn/uvicorn/redis (runtime)...';
       python -m pip install -q --no-cache-dir gunicorn uvicorn redis || true;
       echo '🚀 Iniciando Gunicorn com múltiplos workers...';
-      exec gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
+      exec gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
     networks:
       - tts-network
@@ -147,7 +147,7 @@ services:
       - NODES_INCLUDE=n8n-nodes-qdrant
     volumes:
       - n8n_data:/home/node/.n8n
-      - 'D:/projetos/TTS-app/backend/articles:/articles'
+      #- 'D:/projetos/TTS-app/backend/articles:/articles'
     restart: unless-stopped
     networks:
       - tts-network
