@@ -37,13 +37,15 @@ import {
   FileImage,
   Video,
   Loader2,
-  Filter
+  Filter,
+  ArrowLeft
 } from "lucide-react";
 
 interface ChatWithGalleryProps {
   onNavigateToChat?: (message?: string) => void;
   onNavigateToArticleChat?: (professorName: string, articleTitle?: string) => void;
   isFromIdle?: boolean; // Indica se voltou do modo idle
+  onBack?: () => void; // Voltar para a tela de seleção
 }
 
 interface PDFArticle {
@@ -85,7 +87,7 @@ const fallbackGalleryItems = [
   }
 ];
 
-export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleChat, isFromIdle }: ChatWithGalleryProps) {
+export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleChat, isFromIdle, onBack }: ChatWithGalleryProps) {
 
   const [messageValue, setMessageValue] = useState("");
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -100,8 +102,6 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
   // Estado de filtros
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
-  const [yearFrom, setYearFrom] = useState<string>("");
-  const [yearTo, setYearTo] = useState<string>("");
 
   // Contexto para estados compartilhados
   const { 
@@ -293,18 +293,8 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
       return (article.department || "").toLowerCase() === selectedDepartment.toLowerCase();
     };
 
-    const matchesYearRange = (article: PDFArticleWithMetadata) => {
-      if (!article.year) return !(yearFrom || yearTo); // se não há ano no artigo, só passa se nenhum filtro de ano ativo
-      const year = parseInt(article.year.toString(), 10);
-      const from = yearFrom ? parseInt(yearFrom, 10) : undefined;
-      const to = yearTo ? parseInt(yearTo, 10) : undefined;
-      if (from !== undefined && year < from) return false;
-      if (to !== undefined && year > to) return false;
-      return true;
-    };
-
-    return pdfArticles.filter(a => matchesSearch(a) && matchesDepartment(a) && matchesYearRange(a));
-  }, [pdfArticles, searchTerm, selectedDepartment, yearFrom, yearTo]);
+    return pdfArticles.filter(a => matchesSearch(a) && matchesDepartment(a));
+  }, [pdfArticles, searchTerm, selectedDepartment]);
 
   // Função para limpar pesquisa
   const handleClearSearch = useCallback(() => {
@@ -326,24 +316,26 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
         transition={{ duration: 0.5 }}
       >
         <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-xl font-semibold text-white flex items-center gap-2">
-              <GraduationCap className="w-6 h-6 text-cyan-400" />
-              Museu do CCEN
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  resetIdleTimer();
+                  onBack();
+                }}
+                className="text-white/70 hover:text-white hover:bg-white/10 p-1"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
+            <h1 className="text-xl font-semibold text-white">
+              Museu do +C
             </h1>
             <p className="text-sm text-white/70">Explore documentos e recursos acadêmicos</p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              resetIdleTimer();
-              onNavigateToChat?.();
-            }}
-            className="bg-white/10 backdrop-blur-sm hover:bg-white/20 border-white/30 text-white"
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Chat
-          </Button>
+          <div />
         </div>
       </motion.div>
 
@@ -382,7 +374,7 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
               setSearchTerm(e.target.value);
               resetIdleTimer();
             }}
-            placeholder="Pesquisar por nome do professor, título do artigo, departamento, ano ou palavras-chave..."
+            placeholder="Pesquisar por nome do professor, título do artigo, departamento ou palavras-chave..."
             className="w-full pl-10 pr-24 py-3 bg-white/5 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all duration-200 relative z-0"
           />
           {/* Botão de filtros */}
@@ -429,34 +421,11 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
                 </select>
               </div>
 
-              {/* Ano */}
-              <div className="mb-3">
-                <label className="block text-xs text-white/60 mb-1">Ano (faixa)</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="de"
-                    value={yearFrom}
-                    onChange={(e) => setYearFrom(e.target.value)}
-                    className="w-1/2 bg-white text-black text-sm rounded-md px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-                  />
-                  <span className="text-white/50">—</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="até"
-                    value={yearTo}
-                    onChange={(e) => setYearTo(e.target.value)}
-                    className="w-1/2 bg-white text-black text-sm rounded-md px-3 py-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-                  />
-                </div>
-              </div>
 
               <div className="flex items-center justify-between pt-2">
                 <button
                   className="text-xs text-white/70 hover:text-white underline underline-offset-4"
-                  onClick={() => { setSelectedDepartment(null); setYearFrom(""); setYearTo(""); }}
+                  onClick={() => { setSelectedDepartment(null); }}
                 >
                   Limpar filtros
                 </button>

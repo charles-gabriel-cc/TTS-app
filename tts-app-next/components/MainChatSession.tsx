@@ -399,7 +399,7 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
             <GraduationCap className="w-6 h-6 text-cyan-400" />
             <div>
               <h1 className="text-lg font-semibold text-white">
-                Assistente Virtual do CCEN
+                Inteligência Artificial do Museu +C
               </h1>
               <p className="text-sm text-white/70">
                 Conheça os professores do CCEN
@@ -416,11 +416,11 @@ export default function MainChatSession({ onBackToGallery, pendingMessage, onCle
             <div className="text-center">
               <MessageCircle className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">
-                Assistente Virtual do CCEN
+              Inteligência Artificial do Museu +C
               </h3>
               <p className="text-white/70 max-w-md">
-                Conheça os professores do CCEN. Obtenha informações sobre os professores, 
-                suas áreas de atuação, acesso aos seus currículos lattes e outras informações.
+                Obtenha informações sobre os professores, 
+                suas áreas de atuação, acesso aos seus currículos Lattes e outras informações.
               </p>
             </div>
           </div>

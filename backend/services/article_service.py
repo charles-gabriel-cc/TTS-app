@@ -7,7 +7,7 @@ import pandas as pd
 from llama_index.readers.file import PDFReader
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 # from llama_index.embeddings.google import GoogleGenerativeAIEmbedding  # Não disponível na versão atual
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+# from langchain_google_genai import GoogleGenerativeAIEmbeddings  # Importado dinamicamente
 from qdrant_client import QdrantClient, models
 from qdrant_client.models import Distance, VectorParams, PointStruct
 from utils.logger import setup_logger
@@ -20,8 +20,14 @@ class ArticleService:
         self.embed_model_name = embed_model_name
         self.collection_name = "ccen-artigos"
         
-        # Inicializar modelo de embedding
-        self.embed_model = GoogleGenerativeAIEmbeddings(model=embed_model_name)
+        # Inicializar modelo de embedding dinamicamente
+        try:
+            from langchain_google_genai import GoogleGenerativeAIEmbeddings
+            self.embed_model = GoogleGenerativeAIEmbeddings(model=embed_model_name)
+        except ImportError:
+            logger.warning("langchain_google_genai não disponível, usando embeddings customizados")
+            from services.embeddings import GeminiEmbeddings
+            self.embed_model = GeminiEmbeddings()
         # SemanticSplitterNodeParser não funciona com GoogleGenerativeAIEmbeddings
         # Usar parser simples por enquanto
         from llama_index.core.node_parser import SentenceSplitter

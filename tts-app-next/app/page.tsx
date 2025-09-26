@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import IdleScreen from '@/components/ui/idle-screen'
+import SelectionScreen from '@/components/ui/selection-screen'
+import VideoScreen from '@/components/ui/video-screen'
 import { api } from '@/services/api'
 import { ChatProvider, useChatContext } from '@/contexts/ChatContext'
 import { GalleryProvider } from '@/contexts/GalleryContext'
@@ -147,7 +149,7 @@ const ArticleChatSession = dynamic(() => import('@/components/ArticleChatSession
 function HomeContent() {
   const [showIdleScreen, setShowIdleScreen] = useState(true)
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
-  const [currentView, setCurrentView] = useState<'gallery' | 'chat' | 'article-chat'>('gallery')
+  const [currentView, setCurrentView] = useState<'selection' | 'gallery' | 'chat' | 'article-chat' | 'video'>('selection')
   const [isFromIdle, setIsFromIdle] = useState(false)
   const [articleChatData, setArticleChatData] = useState<{
     professorName: string
@@ -183,7 +185,7 @@ function HomeContent() {
           console.log('[Idle] Mostrando tela de idle por inatividade')
           setShowIdleScreen(true)
           setHasUserInteracted(false)
-          setCurrentView('gallery') // Sempre voltar para galeria ao entrar em idle
+          setCurrentView('selection') // Sempre voltar para tela de seleção ao entrar em idle
           // Limpar todas as sessões e resetar session_id quando voltar para idle
           clearAllSessions()
           await api.resetSession()
@@ -237,10 +239,10 @@ function HomeContent() {
   }, [isFromIdle])
 
   const handleIdleScreenDismiss = async () => {
-    console.log('[Idle] Tela de idle fechada pelo usuário - indo para galeria e gerando novo session_id')
+    console.log('[Idle] Tela de idle fechada pelo usuário - indo para seleção e gerando novo session_id')
     setShowIdleScreen(false)
     setHasUserInteracted(true)
-    setCurrentView('gallery') // Sempre ir para galeria após sair da tela de idle
+    setCurrentView('selection') // Ir para tela de seleção primeiro
     setIsFromIdle(true) // Marcar que voltou do modo idle
     // Gerar novo session_id quando sair da tela de idle
     await api.resetSession()
@@ -274,7 +276,7 @@ function HomeContent() {
     console.log("Voltando para tela de idle - limpando sessões e resetando session_id")
     setShowIdleScreen(true)
     setHasUserInteracted(false)
-    setCurrentView('gallery')
+    setCurrentView('selection')
     // Limpar todas as sessões e resetar session_id da API
     clearAllSessions()
     await api.resetSession()
@@ -287,6 +289,31 @@ function HomeContent() {
         <AcademicBackground />
         
         <AnimatePresence mode="wait">
+        {currentView === 'selection' && (
+          <motion.div
+            key="selection"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20, transition: { duration: 0.3, ease: 'easeInOut' } }}
+            transition={{ duration: 0.4, ease: [0.4, 0.0, 0.2, 1], delay: 0.1 }}
+            className="absolute inset-0 z-20"
+          >
+            <SelectionScreen
+              isVisible={true}
+              onSelectGallery={() => setCurrentView('gallery')}
+              onSelectChat={() => setCurrentView('chat')}
+              onSelectVideo={() => setCurrentView('video')}
+              onBackToIdle={async () => {
+                setShowIdleScreen(true)
+                setHasUserInteracted(false)
+                setCurrentView('selection')
+                clearAllSessions()
+                await api.resetSession()
+              }}
+            />
+          </motion.div>
+        )}
+
         {currentView === 'gallery' && (
           <motion.div
             key="gallery"
@@ -314,6 +341,7 @@ function HomeContent() {
               onNavigateToChat={handleNavigateToChat}
               onNavigateToArticleChat={handleNavigateToArticleChat}
               isFromIdle={isFromIdle}
+              onBack={() => setCurrentView('selection')}
             />
             {/* <motion.button
               initial={{ opacity: 0, y: -20, scale: 0.9 }}
@@ -330,6 +358,19 @@ function HomeContent() {
           </motion.div>
         )}
         
+        {currentView === 'video' && (
+          <motion.div
+            key="video"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20, transition: { duration: 0.3, ease: 'easeInOut' } }}
+            transition={{ duration: 0.4, ease: [0.4, 0.0, 0.2, 1], delay: 0.1 }}
+            className="absolute inset-0 z-20"
+          >
+            <VideoScreen isVisible={true} onBack={() => setCurrentView('selection')} />
+          </motion.div>
+        )}
+
         {currentView === 'article-chat' && articleChatData && (
           <motion.div
             key="article-chat"
@@ -385,7 +426,7 @@ function HomeContent() {
             className="absolute inset-0 z-20"
           >
             <MainChatSession 
-              onBackToGallery={handleBackToGallery}
+              onBackToGallery={() => setCurrentView('selection')}
               pendingMessage={pendingMessage}
               onClearPendingMessage={clearPendingMessage}
             />

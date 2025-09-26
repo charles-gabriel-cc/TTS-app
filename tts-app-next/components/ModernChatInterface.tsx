@@ -819,7 +819,7 @@ export default function ModernChatInterface({ onResetChat, resetTrigger }: Moder
           <div>
             <h1 className="text-xl font-semibold text-white flex items-center gap-2">
               <GraduationCap className="w-6 h-6 text-cyan-400" />
-              Assistente Virtual do CCEN
+              Inteligência Artifical do Museu
             </h1>
             <p className="text-sm text-white/70">Conheça os professores do CCEN</p>
           </div>
