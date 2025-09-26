@@ -1,6 +1,5 @@
 import openai
 from langchain_ollama import OllamaLLM, ChatOllama
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from utils.logger import setup_logger
 from qdrant_client import QdrantClient, models
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -120,7 +119,9 @@ class ChatService:
         self.collection_name = collection_name
         # Tentar usar Gemini Pro primeiro, fallback para Ollama se necessário
         try:
-            self.embeddings = GoogleGenerativeAIEmbeddings(model=embed_model)
+            # Importação tardia para evitar dependência obrigatória em tempo de import do módulo
+            from services.embeddings import GeminiEmbeddings
+            self.embeddings = GeminiEmbeddings(model=embed_model)
             logger.info(f"✅ Usando Gemini Pro para embeddings: {embed_model}")
         except Exception as e:
             logger.warning(f"⚠️ Falha ao inicializar Gemini Pro: {e}")

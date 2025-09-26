@@ -10,15 +10,47 @@ import hashlib
 import pandas as pd
 from typing import List, Dict
 
+
+class GeminiEmbeddings:
+    """Wrapper simples para usar embeddings do Google Gemini via google-generativeai."""
+
+    def __init__(self, model: str = "models/embedding-001"):
+        try:
+            import google.generativeai as genai
+        except Exception as import_error:
+            raise RuntimeError("google-generativeai não está instalado. Instale para usar embeddings do Gemini.") from import_error
+
+        import os
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key or not api_key.strip():
+            raise RuntimeError("GOOGLE_API_KEY não definido. Configure no .env para usar embeddings do Gemini.")
+
+        genai.configure(api_key=api_key)
+        self._genai = genai
+        self._model = model
+
+    def embed_query(self, text: str) -> List[float]:
+        try:
+            res = self._genai.embed_content(model=self._model, content=text)
+            # Novas versões retornam {'embedding': {'values': [...]}} ou {'embedding': [...]}
+            embedding = res.get("embedding")
+            if isinstance(embedding, dict):
+                return embedding.get("values", [])
+            return embedding or []
+        except Exception as e:
+            raise RuntimeError(f"Falha ao gerar embedding com Gemini: {e}")
+
 def create_curriculos_collection(embed_model, qdrant_client, collection_name, diretorio):
     """
     Cria e popula a coleção de currículos dos professores.
     """
     print(f"🚀 Criando coleção de currículos: {collection_name}")
     
-    # Usar LangChain GoogleGenerativeAIEmbeddings em vez de LlamaIndex
-    from langchain_google_genai import GoogleGenerativeAIEmbeddings
-    embed_model = GoogleGenerativeAIEmbeddings(model=embed_model)
+    # Preferir Gemini direto; se falhar, levantar erro claro
+    try:
+        embed_model = GeminiEmbeddings(model=embed_model)
+    except Exception as e:
+        raise RuntimeError(f"Embeddings Gemini indisponível: {e}")
     # SemanticSplitterNodeParser não funciona com GoogleGenerativeAIEmbeddings
     from llama_index.core.node_parser import SentenceSplitter
     parser = SentenceSplitter(chunk_size=1024, chunk_overlap=200)
@@ -241,9 +273,11 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
     """
     print(f"🚀 Criando coleção de artigos: {collection_name}")
     
-    # Usar LangChain GoogleGenerativeAIEmbeddings em vez de LlamaIndex
-    from langchain_google_genai import GoogleGenerativeAIEmbeddings
-    embed_model = GoogleGenerativeAIEmbeddings(model=embed_model)
+    # Preferir Gemini direto; se falhar, levantar erro claro
+    try:
+        embed_model = GeminiEmbeddings(model=embed_model)
+    except Exception as e:
+        raise RuntimeError(f"Embeddings Gemini indisponível: {e}")
     # SemanticSplitterNodeParser não funciona com GoogleGenerativeAIEmbeddings
     from llama_index.core.node_parser import SentenceSplitter
     parser = SentenceSplitter(chunk_size=1024, chunk_overlap=200)

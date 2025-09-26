@@ -106,10 +106,9 @@ services:
         sleep 1;
       done;
       echo '✅ Redis está disponível!';
-      echo '📦 Instalando dependências runtime...';
-      python -m pip install -q --no-cache-dir gunicorn uvicorn redis || true;
-      echo '📦 Executando instalador simples do Gemini...';
-      python install_gemini_simple.py || echo '⚠️ Instalador do Gemini falhou, mas continuando...';
+      echo '📦 Instalando dependências runtime mínimas...';
+      python -m pip install -q --no-cache-dir --upgrade pip || true;
+      python -m pip install -q --no-cache-dir gunicorn uvicorn redis langchain-core==0.3.67 langchain-ollama==0.3.3 langchain==0.3.26 langchain-community==0.3.26 langchain-text-splitters==0.3.8 google-generativeai==0.7.2 || true;
       echo '🚀 Iniciando Gunicorn com múltiplos workers...';
       exec gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
@@ -151,7 +150,7 @@ services:
       - NODES_INCLUDE=n8n-nodes-qdrant
     volumes:
       - n8n_data:/home/node/.n8n
-      - 'D:/projetos/TTS-app/backend/articles:/articles'
+      - ./articles:/articles
     restart: unless-stopped
     networks:
       - tts-network
