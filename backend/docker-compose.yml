@@ -77,7 +77,7 @@ services:
       done;
       echo '✅ Redis está disponível!';
       echo '🚀 Iniciando Gunicorn com múltiplos workers...';
-      exec gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
+      exec gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
     networks:
       - tts-network

@@ -100,8 +100,12 @@ async def get_pdf_articles():
             logger.warning("Pasta articles não encontrada")
             return []
         
-        # Buscar todos os arquivos PDF na pasta articles
-        pdf_files = glob.glob(str(articles_dir / "*.pdf"))
+        # Buscar todos os arquivos PDF na pasta articles e SUBPASTAS
+        pdf_files = []
+        for root, _, files in os.walk(articles_dir):
+            for f in files:
+                if f.lower().endswith('.pdf'):
+                    pdf_files.append(str(Path(root) / f))
         
         articles = []
         for pdf_path in pdf_files:
@@ -150,8 +154,12 @@ async def get_pdf_by_professor(professor_name: str):
         if not articles_dir.exists():
             raise HTTPException(status_code=404, detail="Pasta articles não encontrada")
         
-        # Buscar arquivo PDF específico
-        pdf_files = glob.glob(str(articles_dir / f"*{professor_name}*.pdf"))
+        # Buscar arquivo PDF específico, varrendo subpastas
+        pdf_files = []
+        for root, _, files in os.walk(articles_dir):
+            for f in files:
+                if f.lower().endswith('.pdf') and professor_name.lower() in f.lower():
+                    pdf_files.append(str(Path(root) / f))
         
         if not pdf_files:
             raise HTTPException(status_code=404, detail=f"PDF não encontrado para o professor: {professor_name}")
@@ -192,8 +200,12 @@ async def download_pdf(professor_name: str):
         if not articles_dir.exists():
             raise HTTPException(status_code=404, detail="Pasta articles não encontrada")
         
-        # Buscar arquivo PDF específico
-        pdf_files = glob.glob(str(articles_dir / f"*{professor_name}*.pdf"))
+        # Buscar arquivo PDF específico, varrendo subpastas
+        pdf_files = []
+        for root, _, files in os.walk(articles_dir):
+            for f in files:
+                if f.lower().endswith('.pdf') and professor_name.lower() in f.lower():
+                    pdf_files.append(str(Path(root) / f))
         
         if not pdf_files:
             raise HTTPException(status_code=404, detail=f"PDF não encontrado para o professor: {professor_name}")
@@ -280,8 +292,12 @@ async def get_pdf_articles_with_metadata():
             logger.warning("Pasta articles não encontrada")
             return []
         
-        # Buscar todos os arquivos PDF na pasta articles
-        pdf_files = glob.glob(str(articles_dir / "*.pdf"))
+        # Buscar todos os arquivos PDF na pasta articles e SUBPASTAS
+        pdf_files = []
+        for root, _, files in os.walk(articles_dir):
+            for f in files:
+                if f.lower().endswith('.pdf'):
+                    pdf_files.append(str(Path(root) / f))
         
         articles = []
         for pdf_path in pdf_files:

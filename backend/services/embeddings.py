@@ -337,6 +337,11 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
                 try:
                     caminho_pdf = os.path.join(root, file)
                     nome_professor = os.path.splitext(file)[0]
+                    # Limpar prefixo numérico tipo "12 - " no início
+                    try:
+                        nome_professor = re.sub(r"^\d+\s*-\s*", "", nome_professor)
+                    except Exception:
+                        pass
 
                     # Verifica se já foi processado
                     response = qdrant_client.scroll(
@@ -363,6 +368,14 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
                     
                     # Extrair metadados
                     metadata = extract_article_metadata(caminho_pdf, nome_professor, professor_metadata)
+                    # Garantir limpeza também nos metadados principais
+                    try:
+                        if 'nome_professor' in metadata:
+                            metadata['nome_professor'] = re.sub(r"^\d+\s*-\s*", "", metadata['nome_professor'])
+                        if 'nome_completo_professor' in metadata:
+                            metadata['nome_completo_professor'] = re.sub(r"^\d+\s*-\s*", "", metadata['nome_completo_professor'])
+                    except Exception:
+                        pass
                     print(f"📝 Título: {metadata['titulo'][:60]}...")
                     if metadata['ano']:
                         print(f"📅 Ano: {metadata['ano']}")

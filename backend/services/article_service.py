@@ -278,6 +278,11 @@ class ArticleService:
                         
                         # Nome do professor é o nome do arquivo sem extensão
                         nome_professor = os.path.splitext(file)[0]
+                        # Limpar prefixo numérico tipo "12 - " no início
+                        try:
+                            nome_professor = re.sub(r"^\d+\s*-\s*", "", nome_professor)
+                        except Exception:
+                            pass
                         
                         # Verificar se já foi processado
                         if self._article_already_processed(nome_professor, caminho_pdf):
@@ -288,6 +293,14 @@ class ArticleService:
                         
                         # Extrair metadados
                         metadata = self._extract_article_metadata(caminho_pdf, nome_professor)
+                        # Garantir limpeza também nos metadados principais
+                        try:
+                            if 'nome_professor' in metadata:
+                                metadata['nome_professor'] = re.sub(r"^\d+\s*-\s*", "", metadata['nome_professor'])
+                            if 'nome_completo_professor' in metadata:
+                                metadata['nome_completo_professor'] = re.sub(r"^\d+\s*-\s*", "", metadata['nome_completo_professor'])
+                        except Exception:
+                            pass
                         
                         # Processar PDF e criar embeddings
                         self._process_article_pdf(caminho_pdf, metadata)
