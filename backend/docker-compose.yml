@@ -1,29 +1,6 @@
 version: '3.8'
 
 services:
-  # Serviço Ollama para modelos locais
-  ollama:
-    image: ollama/ollama:latest
-    container_name: tts-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - CUDA_VISIBLE_DEVICES=0
-    restart: unless-stopped
-    networks:
-      - tts-network
-    # Suporte para GPU (requer NVIDIA Docker runtime)
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
   # Serviço Qdrant standalone (opcional - pode usar o integrado)
   qdrant:
     image: qdrant/qdrant:latest
@@ -81,7 +58,6 @@ services:
       - LANGSMITH_PROJECT=backend
     depends_on:
       - qdrant
-      - ollama
     restart: on-failure
     command: >
       bash -c "
@@ -94,23 +70,14 @@ services:
         sleep 2;
       done;
       echo '✅ Qdrant está disponível!';
-      echo '⏳ Aguardando Ollama ficar disponível...';
-      until curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
-        echo '   Ollama ainda não disponível, aguardando...';
-        sleep 3;
-      done;
-      echo '✅ Ollama está disponível!';
       echo '⏳ Aguardando Redis ficar disponível (tcp/6379)...';
       until bash -c 'echo > /dev/tcp/redis/6379' 2>/dev/null; do
         echo '   Redis ainda não disponível, aguardando...';
         sleep 1;
       done;
       echo '✅ Redis está disponível!';
-      echo '📦 Instalando dependências runtime mínimas...';
-      python -m pip install -q --no-cache-dir --upgrade pip || true;
-      python -m pip install -q --no-cache-dir gunicorn uvicorn redis langchain-core==0.3.67 langchain-ollama==0.3.3 langchain==0.3.26 langchain-community==0.3.26 langchain-text-splitters==0.3.8 google-generativeai==0.7.2 || true;
       echo '🚀 Iniciando Gunicorn com múltiplos workers...';
-      exec gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
+      exec gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
     networks:
       - tts-network

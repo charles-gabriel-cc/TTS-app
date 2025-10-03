@@ -26,3 +26,7 @@ redis>=5.0.0
 httpx
 google-generativeai==0.7.2
 langchain-google-genai==1.0.10
+
+#echo '📦 Instalando dependências runtime mínimas...';
+#python -m pip install -q --no-cache-dir --upgrade pip || true;
+#python -m pip install -q --no-cache-dir gunicorn uvicorn redis langchain-core==0.3.67 langchain-ollama==0.3.3 langchain==0.3.26 langchain-community==0.3.26 langchain-text-splitters==0.3.8 google-generativeai==0.7.2 || true;
