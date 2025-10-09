@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
+// Imports de ícones removidos - controles não são mais exibidos
 
 type VideoScreenProps = {
   isVisible: boolean;
@@ -12,9 +12,9 @@ type VideoScreenProps = {
 // Configuração do vídeo - facilita a troca futura
 const VIDEO_CONFIG = {
   // Para usar o vídeo oficial, substitua o src abaixo
-  src: "/videos/teste.mp4", // Vídeo atual
+  src: "/videos/videoccen.mp4", // Vídeo atual
   // src: "/videos/video-oficial.mp4", // Descomente quando tiver o vídeo oficial
-  title: "Vídeo Introdutório - CCEN",
+  title: "Conheça o CCEN",
   description: "Conheça mais sobre o Centro de Ciências Exatas e da Natureza"
 };
 
@@ -29,33 +29,7 @@ export default function VideoScreen({ isVisible, onBack }: VideoScreenProps) {
 
   if (!isVisible) return null;
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement && containerRef.current) {
-      containerRef.current.requestFullscreen();
-      setIsFullscreen(true);
-    } else if (document.exitFullscreen) {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
+  // Funções de controle removidas - vídeo reproduz automaticamente sem interação do usuário
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -69,13 +43,7 @@ export default function VideoScreen({ isVisible, onBack }: VideoScreenProps) {
     }
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = parseFloat(e.target.value);
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
-  };
+  // Função handleSeek removida - não há mais controles de progresso
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -91,6 +59,27 @@ export default function VideoScreen({ isVisible, onBack }: VideoScreenProps) {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Autoplay quando o componente for montado
+  useEffect(() => {
+    if (isVisible && videoRef.current) {
+      const playVideo = async () => {
+        try {
+          // Garantir que o vídeo não esteja mutado
+          if (videoRef.current) {
+            videoRef.current.muted = false;
+            setIsMuted(false);
+          }
+          await videoRef.current?.play();
+          setIsPlaying(true);
+        } catch (error) {
+          console.log('Autoplay falhou:', error);
+          // Se o autoplay falhar (políticas do navegador), o usuário pode clicar para reproduzir
+        }
+      };
+      playVideo();
+    }
+  }, [isVisible]);
 
   return (
     <div 
@@ -137,151 +126,23 @@ export default function VideoScreen({ isVisible, onBack }: VideoScreenProps) {
             <video
               ref={videoRef}
               src={VIDEO_CONFIG.src}
-              className="absolute inset-0 w-full h-full object-contain bg-black"
+              className="absolute inset-0 w-full h-full object-contain bg-black pointer-events-none"
+              autoPlay
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
-              onClick={togglePlay}
+              onEnded={onBack}
             />
 
-            {/* Video Controls Overlay - Responsivo */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
-              <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 lg:p-6">
-                {/* Progress Bar */}
-                <div className="mb-3 md:mb-4 lg:mb-6">
-                  <input
-                    type="range"
-                    min="0"
-                    max={duration || 0}
-                    value={currentTime}
-                    onChange={handleSeek}
-                    className="w-full h-1 md:h-2 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                </div>
-
-                {/* Controls */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 md:space-x-4 lg:space-x-6">
-                    <button
-                      onClick={togglePlay}
-                      className="p-2 md:p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8 text-white" />
-                      ) : (
-                        <Play className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8 text-white" />
-                      )}
-                    </button>
-
-                    <button
-                      onClick={toggleMute}
-                      className="p-2 md:p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-white" />
-                      ) : (
-                        <Volume2 className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-white" />
-                      )}
-                    </button>
-
-                    <span className="text-white text-xs md:text-sm lg:text-lg font-medium hidden sm:block">
-                      {formatTime(currentTime)} / {formatTime(duration)}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={toggleFullscreen}
-                    className="p-2 md:p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                  >
-                    <Maximize className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-white" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            {/* Video Controls Overlay - OCULTADO */}
+            {/* Controles removidos para impedir interação do usuário */}
 
           </div>
         </div>
       </div>
 
-      <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          background: #ffffff;
-          cursor: pointer;
-          border: 2px solid #000;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .slider::-moz-range-thumb {
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          background: #ffffff;
-          cursor: pointer;
-          border: 2px solid #000;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .slider::-webkit-slider-track {
-          height: 4px;
-          border-radius: 2px;
-        }
-        
-        .slider::-moz-range-track {
-          height: 4px;
-          border-radius: 2px;
-        }
-
-        @media (min-width: 768px) {
-          .slider::-webkit-slider-thumb {
-            width: 18px;
-            height: 18px;
-            border: 3px solid #000;
-          }
-          
-          .slider::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            border: 3px solid #000;
-          }
-
-          .slider::-webkit-slider-track {
-            height: 6px;
-            border-radius: 3px;
-          }
-          
-          .slider::-moz-range-track {
-            height: 6px;
-            border-radius: 3px;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .slider::-webkit-slider-thumb {
-            width: 20px;
-            height: 20px;
-          }
-          
-          .slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-          }
-
-          .slider::-webkit-slider-track {
-            height: 8px;
-            border-radius: 4px;
-          }
-          
-          .slider::-moz-range-track {
-            height: 8px;
-            border-radius: 4px;
-          }
-        }
-      `}</style>
+      {/* Estilos CSS removidos - controles não são mais exibidos */}
     </div>
   );
 }

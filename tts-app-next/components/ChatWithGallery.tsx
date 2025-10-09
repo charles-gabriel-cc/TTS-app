@@ -480,7 +480,7 @@ export default function ChatWithGallery({ onNavigateToChat, onNavigateToArticleC
         ) : filteredArticles.length > 0 ? (
           filteredArticles.map((article) => (
             <motion.div
-              key={article.id}
+              key={`${article.id || ''}-${article.filename || ''}-${article.url || ''}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.random() * 0.2 }}

@@ -61,7 +61,7 @@ export default function SelectionScreen({ isVisible, onSelectGallery, onSelectCh
             className="h-28 md:h-32 bg-white/5 hover:bg-white/10 border-white/20 text-white flex flex-col items-center justify-center gap-3"
           >
             <PlayCircle className="w-6 h-6" />
-            <span className="text-base">Conheça o CCEN (em breve)</span>
+            <span className="text-base">Conheça o CCEN</span>
           </Button>
         </div>
       </div>
