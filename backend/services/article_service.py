@@ -349,9 +349,22 @@ class ArticleService:
             
             # Criar pontos para inserção
             points = []
+            skipped_chunks = 0
             for i, node in enumerate(nodes):
                 texto = node.text
-                vetor = self.embed_model.embed_query(texto)
+                
+                # Validar texto antes de gerar embedding
+                if not texto or not texto.strip() or len(texto.strip()) < 3:
+                    logger.warning(f"Pulando chunk {i} do artigo {metadata.get('nome_professor', 'desconhecido')}: conteúdo vazio ou muito curto")
+                    skipped_chunks += 1
+                    continue
+                
+                try:
+                    vetor = self.embed_model.embed_query(texto)
+                except Exception as e:
+                    logger.warning(f"Erro ao gerar embedding para chunk {i} do artigo {metadata.get('nome_professor', 'desconhecido')}: {e}")
+                    skipped_chunks += 1
+                    continue
                 
                 # Adicionar metadados específicos do chunk
                 chunk_metadata = metadata.copy()
@@ -375,6 +388,10 @@ class ArticleService:
                     points=points
                 )
                 logger.info(f"✅ Inseridos {len(points)} chunks do artigo {metadata['nome_professor']}")
+                if skipped_chunks > 0:
+                    logger.warning(f"⚠️ {skipped_chunks} chunks foram pulados (conteúdo vazio ou erro)")
+            else:
+                logger.warning(f"⚠️ Nenhum chunk válido encontrado no artigo {metadata['nome_professor']}")
             
         except Exception as e:
             logger.error(f"Erro ao processar PDF {pdf_path}: {e}")

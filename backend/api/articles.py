@@ -379,11 +379,39 @@ async def get_pdf_articles_with_metadata():
                 logger.error(f"Erro ao processar arquivo {pdf_path}: {str(e)}")
                 continue
         
+        # Deduplicar por professor (author), escolhendo o item com mais metadados preenchidos
+        def completeness_score(a: ArticleWithMetadata) -> int:
+            score = 0
+            if a.publication_title: score += 2
+            if a.year: score += 1
+            if a.journal: score += 1
+            if a.doi: score += 1
+            if a.abstract: score += 1
+            if a.keywords: score += min(len(a.keywords), 5)  # limitar peso de keywords
+            # pequeno desempate pelo tamanho do arquivo (maior tende a ser o PDF principal)
+            score += 1 if a.size and a.size > 0 else 0
+            return score
+
+        dedup_by_author: Dict[str, ArticleWithMetadata] = {}
+        for a in articles:
+            key = (a.author or a.title or "").strip().lower()
+            if not key:
+                # se não há author/título utilizável, mantém como está usando filename
+                key = (a.filename or "").strip().lower()
+            if key in dedup_by_author:
+                current = dedup_by_author[key]
+                if completeness_score(a) > completeness_score(current):
+                    dedup_by_author[key] = a
+            else:
+                dedup_by_author[key] = a
+
+        deduped_list = list(dedup_by_author.values())
+
         # Ordenar por título da publicação ou nome do professor
-        articles.sort(key=lambda x: (x.publication_title or x.title).lower())
-        
-        logger.info(f"Retornando {len(articles)} artigos PDF com metadados")
-        return articles
+        deduped_list.sort(key=lambda x: (x.publication_title or x.title).lower())
+
+        logger.info(f"Retornando {len(deduped_list)} artigos PDF com metadados (deduplicados por professor)")
+        return deduped_list
         
     except Exception as e:
         logger.error(f"Erro ao buscar artigos PDF com metadados: {str(e)}")

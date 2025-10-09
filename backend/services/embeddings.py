@@ -31,7 +31,16 @@ class GeminiEmbeddings:
 
     def embed_query(self, text: str) -> List[float]:
         try:
-            res = self._genai.embed_content(model=self._model, content=text)
+            # Validar se o texto não está vazio ou contém apenas espaços
+            if not text or not text.strip():
+                raise ValueError("Conteúdo vazio ou inválido para gerar embedding")
+            
+            # Limpar o texto removendo caracteres problemáticos
+            cleaned_text = text.strip()
+            if len(cleaned_text) < 3:  # Muito curto para ser útil
+                raise ValueError(f"Texto muito curto para gerar embedding: '{cleaned_text}'")
+            
+            res = self._genai.embed_content(model=self._model, content=cleaned_text)
             # Novas versões retornam {'embedding': {'values': [...]}} ou {'embedding': [...]}
             embedding = res.get("embedding")
             if isinstance(embedding, dict):
@@ -386,9 +395,22 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
 
                     # Criar pontos para inserção
                     points = []
+                    skipped_chunks = 0
                     for i, node in enumerate(nodes):
                         texto = node.text
-                        vetor = embed_model.embed_query(texto)
+                        
+                        # Validar texto antes de gerar embedding
+                        if not texto or not texto.strip() or len(texto.strip()) < 3:
+                            print(f"⚠️ Pulando chunk {i} do artigo {nome_professor}: conteúdo vazio ou muito curto")
+                            skipped_chunks += 1
+                            continue
+                        
+                        try:
+                            vetor = embed_model.embed_query(texto)
+                        except Exception as e:
+                            print(f"⚠️ Erro ao gerar embedding para chunk {i} do artigo {nome_professor}: {e}")
+                            skipped_chunks += 1
+                            continue
                         
                         chunk_metadata = metadata.copy()
                         chunk_metadata.update({
@@ -411,8 +433,13 @@ def create_artigos_collection(embed_model, qdrant_client, collection_name, diret
 
                     if points:
                         qdrant_client.upsert(collection_name=collection_name, points=points)
-                        print(f"✅ Inseridos {len(points)} chunks do artigo")
+                        print(f"✅ Inseridos {len(points)} chunks do artigo {nome_professor}")
+                        if skipped_chunks > 0:
+                            print(f"⚠️ {skipped_chunks} chunks foram pulados (conteúdo vazio ou erro)")
                         processed_count += 1
+                    else:
+                        print(f"⚠️ Nenhum chunk válido encontrado no artigo {nome_professor}")
+                        error_count += 1
                         
                 except Exception as e:
                     print(f"❌ Erro ao processar artigo '{file}': {e}")
