@@ -51,11 +51,12 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     
-    <!-- Optional: for better audio handling -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    
     <!-- Kiosk Mode permissions -->
     <uses-permission android:name="android.permission.REORDER_TASKS" />
+    
+    <!-- Keyguard/Keylock permissions -->
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     
     <!-- Feature declarations -->
     <uses-feature 

@@ -1,10 +1,13 @@
 package com.ttsapp.android;
 
 import android.app.ActivityManager;
+import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -16,16 +19,28 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     
     private static final String TAG = "KioskMode";
+    private KeyguardManager keyguardManager;
+    private KeyguardManager.KeyguardLock keyguardLock;
+    private boolean isOutOfKioskMode = false;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Inicializa o KeyguardManager para controlar a tela de bloqueio
+        keyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        if (keyguardManager != null) {
+            keyguardLock = keyguardManager.newKeyguardLock(TAG);
+        }
         
         // Habilita o modo fullscreen/imersivo
         setupFullscreenMode();
         
         // Tenta ativar o kiosk mode
         setupKioskMode();
+        
+        // Desabilita a tela de bloqueio para evitar que o usuário fique "preso"
+        disableKeyguard();
     }
     
     private void setupFullscreenMode() {
@@ -47,11 +62,14 @@ public class MainActivity extends BridgeActivity {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         );
         
-        // Flags adicionais para kiosk mode
+        // Flags adicionais para kiosk mode e prevenção de tela de bloqueio
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+        
+        // Flag adicional para evitar que o sistema vá para tela de bloqueio
+        window.addFlags(WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES);
     }
     
     private void setupKioskMode() {
@@ -91,6 +109,68 @@ public class MainActivity extends BridgeActivity {
             Toast.LENGTH_LONG).show();
     }
     
+    /**
+     * Desabilita o keyguard (tela de bloqueio) para evitar que o usuário fique "preso"
+     */
+    private void disableKeyguard() {
+        try {
+            if (keyguardLock != null) {
+                keyguardLock.disableKeyguard();
+                Log.i(TAG, "Keyguard desabilitado - tela de bloqueio não será exibida");
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Não foi possível desabilitar keyguard: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Reabilita o keyguard (chamado quando o app é destruído)
+     */
+    private void enableKeyguard() {
+        try {
+            if (keyguardLock != null) {
+                keyguardLock.reenableKeyguard();
+                Log.i(TAG, "Keyguard reabilitado");
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Não foi possível reabilitar keyguard: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Verifica se o app saiu do modo kiosk e toma ações preventivas
+     */
+    private void handleKioskModeExit() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            int lockTaskModeState = activityManager.getLockTaskModeState();
+            
+            if (lockTaskModeState == ActivityManager.LOCK_TASK_MODE_NONE) {
+                if (!isOutOfKioskMode) {
+                    Log.i(TAG, "App saiu do modo kiosk - aplicando medidas preventivas");
+                    isOutOfKioskMode = true;
+                    
+                    // Garante que a tela de bloqueio não apareça
+                    disableKeyguard();
+                    
+                    // Reaplica o modo fullscreen
+                    setupFullscreenMode();
+                    
+                    // Mostra uma mensagem informativa para o usuário
+                    Toast.makeText(this, 
+                        "App em modo normal. Botões voltar/home pedirão PIN para desbloquear modo fixado", 
+                        Toast.LENGTH_LONG).show();
+                }
+            } else {
+                if (isOutOfKioskMode) {
+                    Log.i(TAG, "App voltou ao modo kiosk");
+                    isOutOfKioskMode = false;
+                    Toast.makeText(this, "Modo kiosk reativado", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+    
     @Override
     public void onResume() {
         super.onResume();
@@ -99,6 +179,12 @@ public class MainActivity extends BridgeActivity {
         
         // Verifica se ainda está em kiosk mode
         checkKioskMode();
+        
+        // Verifica se saiu do modo kiosk e aplica medidas preventivas
+        handleKioskModeExit();
+        
+        // Garante que o keyguard permaneça desabilitado
+        disableKeyguard();
     }
     
     private void checkKioskMode() {
@@ -118,6 +204,10 @@ public class MainActivity extends BridgeActivity {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
             setupFullscreenMode();
+            // Verifica se saiu do modo kiosk quando a janela ganha foco
+            handleKioskModeExit();
+            // Garante que o keyguard permaneça desabilitado
+            disableKeyguard();
         }
     }
     
@@ -132,8 +222,52 @@ public class MainActivity extends BridgeActivity {
             }
         }
         
+        // Se saiu do modo kiosk, intercepta o botão voltar para evitar tela de bloqueio
+        if (isOutOfKioskMode) {
+            Log.i(TAG, "Botão voltar interceptado - evitando tela de bloqueio");
+            // Simula o comportamento do botão visão geral (pede PIN para desbloquear modo fixado)
+            requestUnpinTask();
+            return;
+        }
+        
         // Comportamento normal se não estiver em kiosk mode
         super.onBackPressed();
+    }
+    
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Intercepta o botão home quando fora do modo kiosk
+        if (isOutOfKioskMode && keyCode == KeyEvent.KEYCODE_HOME) {
+            Log.i(TAG, "Botão home interceptado - evitando tela de bloqueio");
+            // Simula o comportamento do botão visão geral (pede PIN para desbloquear modo fixado)
+            requestUnpinTask();
+            return true; // Consome o evento
+        }
+        
+        return super.onKeyDown(keyCode, event);
+    }
+    
+    /**
+     * Solicita o desbloqueio do modo fixado (comportamento similar ao botão visão geral)
+     */
+    private void requestUnpinTask() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+                int lockTaskModeState = activityManager.getLockTaskModeState();
+                
+                if (lockTaskModeState == ActivityManager.LOCK_TASK_MODE_NONE) {
+                    // Se não está em lock task mode, tenta iniciar novamente
+                    startLockTaskModeIfSupported();
+                } else {
+                    // Se está em lock task mode, para o modo (isso pedirá PIN/digital)
+                    stopLockTask();
+                    Log.i(TAG, "Solicitado desbloqueio do modo fixado");
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Erro ao solicitar desbloqueio: " + e.getMessage());
+        }
     }
     
 
@@ -148,6 +282,13 @@ public class MainActivity extends BridgeActivity {
                 Log.w(TAG, "Erro ao parar lock task mode: " + e.getMessage());
             }
         }
+        
+        // Reabilita o keyguard quando o app é destruído
+        enableKeyguard();
+        
+        // Reseta o estado
+        isOutOfKioskMode = false;
+        
         super.onDestroy();
     }
 }
