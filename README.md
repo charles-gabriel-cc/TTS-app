@@ -40,16 +40,16 @@ Um sistema completo de conversação por voz e texto com IA, desenvolvido especi
 
 ```mermaid
 graph TB
-    A[👤 Usuário] --> B[📱 Frontend React/Next.js]
-    B --> C[🔌 API FastAPI]
-    C --> D[🎤 Whisper STT]
-    C --> E[🧠 n8n (Orquestração IA)]
-    E --> F[🧩 Google Gemini (LLM + Embeddings)]
-    E --> G[📊 Qdrant Vector DB]
-    C --> H[🔊 Google TTS]
-    I[🐋 Docker Compose] --> J[📦 Qdrant Container]
-    I --> K[🐍 Backend Container]
-    G --> L[📚 Base CCEN]
+    A[Usuario] --> B[Frontend Next.js]
+    B --> C[API FastAPI]
+    C --> D[Whisper STT]
+    C --> E[n8n Orquestracao IA]
+    E --> F[Google Gemini LLM]
+    E --> G[Qdrant Vector DB]
+    C --> H[Google TTS]
+    I[Docker Compose] --> J[Qdrant Container]
+    I --> K[Backend Container]
+    G --> L[Base CCEN]
 ```
 
 ## 🚀 Instalação e Configuração
