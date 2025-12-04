@@ -12,8 +12,9 @@ llama-index-core
 llama-index-readers-file
 llama-index-embeddings-ollama
 langchain-community>=0.0.10
-langchain-ollama>=0.1.0
-langgraph
+langchain-core==0.3.15
+langchain-ollama==0.2.1
+langgraph==0.2.39
 gradio>=4.0.0
 sentence-transformers
 gtts
@@ -29,3 +30,8 @@ umap-learn
 matplotlib
 trainer
 coqpit 
+PyMuPDF==1.16.14
+PyPDF2>=3.0.0
+httpx
+google-generativeai==0.7.2
+langchain-google-genai==1.0.10

@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configurações do servidor
-SERVER_HOST = os.getenv("SERVER_HOST")
-SERVER_PORT = os.getenv("SERVER_PORT")
+SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")
+SERVER_PORT = os.getenv("SERVER_PORT", "8000")
 
 # Configurações do Whisper
 WHISPER_MODEL = "medium"  # ou "tiny", "small", "medium", "large"
@@ -14,12 +14,23 @@ WHISPER_MODEL = "medium"  # ou "tiny", "small", "medium", "large"
 # Configurações do Chat
 USE_LOCAL_MODEL = True  # Alternar entre modelo local e OpenAI
 MODEL_NAME = os.getenv("MODEL_NAME")
-EMBED_MODEL = "all-minilm:l6-v2"
+EMBED_MODEL = "models/text-embedding-004"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 USE_LOCAL_COLLECTION = True
-COLLECTION_NAME = "ccen-docentes"
+
+# Configurações das Coleções Qdrant
+COLLECTION_NAME = "ccen-docentes"  # Coleção para currículos dos professores
+ARTICLES_COLLECTION_NAME = "ccen-artigos"  # Coleção para artigos científicos
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 DOCS = "ccen-docentes"
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")
+
+# Configurações do Gemini
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# Configuração do Webhook
+# Para Docker: use host.docker.internal para acessar o host
+# Alternativa: 172.17.0.1 (gateway padrão do Docker)
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "http://172.17.0.1:15678/webhook/cfcade94-5e28-4017-8668-938ecf82f7a9")

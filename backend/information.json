@@ -1,0 +1,2129 @@
+[
+  {
+    "allData": [
+      {
+        "filename": "ABRAÃO DAVID COSTA DO NASCIMENTO.pdf",
+        "title": "Score-type statistics in pattern classification",
+        "departamento": "Estatística",
+        "keywords": [
+          "estatística",
+          "classificação de padrões",
+          "correção de Bartlett"
+        ],
+        "ano": 2013
+      },
+      {
+        "filename": "ALDO WILLIAM MEDINA GARAY.pdf",
+        "title": "Censored linear regression models for irregularly observed longitudinal data using the multivariate-t distribution",
+        "departamento": "Estatística",
+        "keywords": [
+          "Modelos de regressão censurados",
+          "Dados longitudinais",
+          "Distribuição t multivariada"
+        ],
+        "ano": 2014
+      },
+      {
+        "filename": "ALEXANDRE DE ANDRADE.pdf",
+        "title": "WIENER INTEGRAL IN THE SPACE OF SEQUENCES OF REAL NUMBERS",
+        "departamento": "Matemática",
+        "keywords": [
+          "Wiener integral",
+          "espaço de sequências",
+          "cálculo de Malliavin"
+        ],
+        "ano": 2000
+      },
+      {
+        "filename": "ALEX DIAS RAMOS.pdf",
+        "title": "AN IMPROVED LOWER BOUND FOR THE CRITICAL PARAMETER OF STAVSKAYA’S PROCESS",
+        "departamento": "Matemática",
+        "keywords": [
+          "Stavskaya’s process",
+          "critical parameter",
+          "probabilistic cellular automata"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "ALINE BARBOSA TSUYUGUCHI.pdf",
+        "title": "Analysis of correlated Birnbaum–Saunders data based on estimating equations",
+        "departamento": "Estatística",
+        "keywords": [
+          "Distribuição Birnbaum–Saunders",
+          "Dados correlacionados",
+          "Equações de estimação"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "ANDRÉ LEITE WANDERLEY.pdf",
+        "title": "Low-complexity 8-point DCT approximation based on angle similarity for image and video coding",
+        "departamento": "Física",
+        "keywords": [
+          "DCT approximation",
+          "image coding",
+          "low-complexity"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "AUDREY HELEN MARIZ DE AQUINO CYSNEIROS.pdf",
+        "title": "The beta generalized logistic distribution",
+        "departamento": "Estatística",
+        "keywords": [
+          "distribuição beta generalizada logística",
+          "método da máxima verossimilhança",
+          "funções de quantil"
+        ],
+        "ano": 2013
+      },
+      {
+        "filename": "BETSABÉ GRIMALDA BLAS.pdf",
+        "title": "Statistical analysis of controlled calibration model with replicates",
+        "departamento": "Estatística",
+        "keywords": [
+          "modelo de calibração controlado",
+          "análise de influência local",
+          "erro de medição"
+        ],
+        "ano": 2013
+      },
+      {
+        "filename": "CALITEIA SANTANA DE SOUSA.pdf",
+        "title": "Variable-length analog of Stavskaya process: A new example of misleading simulation",
+        "departamento": "Matemática",
+        "keywords": [
+          "Processos de Stavskaya",
+          "simulação computacional",
+          "processos estocásticos"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "CRISTIANO FERRAZ.pdf",
+        "title": "Finite population estimation under generalized linear model assistance",
+        "departamento": "Estatística",
+        "keywords": [
+          "estatística computacional",
+          "modelos lineares generalizados",
+          "estimação de população finita"
+        ],
+        "ano": 2012
+      },
+      {
+        "filename": "FERNANDA DE BASTIANI.pdf",
+        "title": "Principal component regression in GAMLSS applied to Greek–German government bond yield spreads",
+        "departamento": "Estatística",
+        "keywords": [
+          "Principal component regression",
+          "GAMLSS",
+          "Financial indicators"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "FRANCISCO CRIBARI NETO.pdf",
+        "title": "Bias and variance residuals for machine learning nonlinear simplex regressions",
+        "departamento": "Estatística",
+        "keywords": [
+          "Simplex regression",
+          "Machine learning",
+          "Residual analysis"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "FRANCISCO JOSE DE AZEVEDO CYSNEIROS.pdf",
+        "title": "psda: A tool for extracting knowledge from symbolic data with an application in Brazilian educational data",
+        "departamento": "Estatística",
+        "keywords": [
+          "Análise de dados simbólicos",
+          "Dados poligonais simbólicos",
+          "Análise de regressão"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "FRANCYELLE DE LIMA MEDINA.pdf",
+        "title": "Bayesian analysis of the p-order integer-valued AR process with zero-inflated Poisson innovations",
+        "departamento": "Estatística",
+        "keywords": [
+          "Análise Bayesiana",
+          "Séries temporais",
+          "Inovações Poisson com excesso de zeros"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "GAUSS MOUTINHO CORDEIRO.pdf",
+        "title": "An extended Maxwell semiparametric regression for censored and uncensored data",
+        "departamento": "Estatística",
+        "keywords": [
+          "Regressão semiparamétrica",
+          "Dados censurados",
+          "Distribuição de Maxwell"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "GEIZA CRISTINA DA SILVA.pdf",
+        "title": "The dynamic space allocation problem: Applying hybrid GRASP and Tabu search metaheuristics",
+        "departamento": "Estatística",
+        "keywords": [
+          "Problema de Alocação Dinâmica de Espaço",
+          "Metaheurísticas",
+          "Otimização Combinatória"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "GETULIO JOSE AMORIM DO AMARAL.pdf",
+        "title": "Entropy-based pivotal statistics for multi-sample problems in planar shape",
+        "departamento": "Estatística",
+        "keywords": [
+          "Estatística",
+          "Entropia",
+          "Análise de forma"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "HÉLIO MAGALHÃES DE OLIVEIRA.pdf",
+        "title": "Fragile watermarking using finite field trigonometrical transforms",
+        "departamento": "Estatística",
+        "keywords": [
+          "Fragile watermarking",
+          "Number theoretic transforms",
+          "Finite field trigonometry"
+        ],
+        "ano": 2009
+      },
+      {
+        "filename": "JULIANA MARTINS DE ASSIS.pdf",
+        "title": "Auditory Stimuli Coding by Postsynaptic Potential and Local Field Potential Features",
+        "departamento": "Física",
+        "keywords": [
+          "Potenciais Pós-sinápticos",
+          "Potenciais de Campo Local",
+          "Codificação de Estímulos Auditivos"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "KLAUS LEITE PINTO VASCONCELLOS.pdf",
+        "title": "On shifted integer-valued autoregressive model for count time series showing equidispersion, underdispersion or overdispersion",
+        "departamento": "Estatística",
+        "keywords": [
+          "modelos autorregressivos de valor inteiro",
+          "séries temporais de contagem",
+          "dispersão"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "MANOEL RAIMUNDO DE SENA JUNIOR.pdf",
+        "title": "Clustering of oral and general health risk behaviors among adolescents",
+        "departamento": "Estatística",
+        "keywords": [
+          "Saúde bucal",
+          "Comportamento de saúde",
+          "Análise de cluster"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "MARIA CRISTINA FALCÃO RAPOSO.pdf",
+        "title": "Reproducibility of the pressure biofeedback unit in measuring transversus abdominis muscle activity in patients with chronic nonspecific low back pain",
+        "departamento": "Física",
+        "keywords": [
+          "unidade de biofeedback de pressão",
+          "músculo transverso abdominal",
+          "reprodutibilidade"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "MARIA DO CARMO SOARES DE LIMA.pdf",
+        "title": "The Gamma-Chen distribution: a new family of distributions with applications",
+        "departamento": "Estatística",
+        "keywords": [
+          "distribuição gamma-Chen",
+          "Máxima verossimilhança",
+          "Estudo de simulação"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "PATRÍCIA LEONE ESPINHEIRA OSPINA.pdf",
+        "title": "On the characterization of the space of derivations in evolution algebras",
+        "departamento": "Matemática",
+        "keywords": [
+          "evolution algebras",
+          "derivations",
+          "graph theory"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "PABLO MARTIN RODRIGUEZ.pdf",
+        "title": "Modified likelihood ratio tests for unit gamma regressions",
+        "departamento": "Estatística",
+        "keywords": [
+          "likelihood ratio test",
+          "unit gamma regression",
+          "statistical inference"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "RAYDONAL OSPINA.pdf",
+        "title": "Model Selection Criteria on Beta Regression for Machine Learning",
+        "departamento": "Estatística",
+        "keywords": [
+          "Regressão Beta",
+          "Aprendizado de Máquina",
+          "Seleção de Modelo"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "RENATO JOSÉ DE SOBRAL CINTRA.pdf",
+        "title": "Leakage Prevention and Real-Time Internal Detection in Pipelines Using a Built-In Wireless Information and Communication Network",
+        "departamento": "Engenharia",
+        "keywords": [
+          "detecção de vazamentos",
+          "tubulação",
+          "rede sem fio"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "ROBERTO FERREIRA MANGHI.pdf",
+        "title": "On elliptical multilevel models",
+        "departamento": "Estatística",
+        "keywords": [
+          "Modelos multinível",
+          "Distribuições elípticas",
+          "Análise de resíduos"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "VINÍCIUS QUINTAS SOUTO MAIOR.pdf",
+        "title": "SYMARMA: a new dynamic model for temporal data on conditional symmetric distribution",
+        "departamento": "Estatística",
+        "keywords": [
+          "SYMARMA",
+          "séries temporais",
+          "distribuições simétricas"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "JHONNATA BEZERRA DE CARVALHO.pdf",
+        "title": "A combined Fourier analysis and support vector machine for EEG classification",
+        "departamento": "Estatística",
+        "keywords": [
+          "Análise de Fourier",
+          "Máquina de Vetores de Suporte",
+          "Classificação de EEG"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "JODAVID DE ARAÚJO FERREIRA.pdf",
+        "title": "A family of divergence-based classifiers for Polarimetric Synthetic Aperture Radar (PolSAR) imagery",
+        "departamento": "Estatística",
+        "keywords": [
+          "Polarimetric Synthetic Aperture Radar (PolSAR)",
+          "Classificadores baseados em divergência",
+          "Ruído Speckle"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "MARIA IONERIS OLIVEIRA SILVA.pdf",
+        "title": "Bivariate Birnbaum-Saunders accelerated lifetime model: estimation and diagnostic analysis",
+        "departamento": "Estatística",
+        "keywords": [
+          "Bivariate Birnbaum-Saunders",
+          "frailty models",
+          "diagnostic analysis"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "THYAGO CELSO CAVALCANTE NEPOMUCENO.pdf",
+        "title": "Exogenous crimes and the assessment of public safety efficiency and effectiveness",
+        "departamento": "Estatística",
+        "keywords": [
+          "Eficiência policial",
+          "Análise de dados",
+          "Variáveis exógenas"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "VINICIUS TEODORO SCHER.pdf",
+        "title": "Goodness‐of‐fit tests for βARMA hydrological time series modeling",
+        "departamento": "Estatística",
+        "keywords": [
+          "modelagem hidrológica",
+          "séries temporais",
+          "testes de qualidade"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "CLAUDIA REGINA OLIVEIRA DE PAIVA LIMA.pdf",
+        "title": "Prevalence of urinary incontinence in high-impact sports athletes and their association with knowledge, attitude and practice about this dysfunction",
+        "departamento": "Estatística",
+        "keywords": [
+          "Incontinência urinária",
+          "Atletas",
+          "Prática"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "CARLA CLAUDIA DA ROCHA REGO MONTEIRO.pdf",
+        "title": "Logistic Biclustering Models for Protein Network Inference",
+        "departamento": "Estatística",
+        "keywords": [
+          "Modelos de biclustering",
+          "Inferência de rede proteica",
+          "Dados filogenéticos"
+        ],
+        "ano": 2009
+      },
+      {
+        "filename": "CESAR DIOGO BEZERRA DA SILVA.pdf",
+        "title": "Locality of the interaction affects dynamics in probabilistic cellular automata",
+        "departamento": "Estatística",
+        "keywords": [
+          "Autômatos celulares probabilísticos",
+          "Dinâmica",
+          "Localidade da interação"
+        ],
+        "ano": 2022
+      },
+      {
+        "filename": "NATALIA RAQUEL DE SOUZA PIRES.pdf",
+        "title": "Efeito de alocação de amostra em planos amostrais em dois estágios com estratificação",
+        "departamento": "Estatística",
+        "keywords": [
+          "plano amostral",
+          "estratificação",
+          "dois estágios"
+        ],
+        "ano": 2008
+      },
+      {
+        "filename": "ALFREDO MAYALL SIMAS.pdf",
+        "title": "Stereoisomerism in Lanthanide Complexes: Enumeration, Chirality, Identification, Random Coordination Ratios",
+        "departamento": "Química",
+        "keywords": [
+          "estereoisomerismo",
+          "quiralidade",
+          "complexos de lantânio"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "ANA PAULA SILVEIRA PAIM.pdf",
+        "title": "A new capping ligand, 2-mercaptoethanesulfonate (MES), for CdTe quantum dots passivation provide high selectivity and sensitivity in Hg(II) determination",
+        "departamento": "Química",
+        "keywords": [
+          "Quantum dots",
+          "Mercury detection",
+          "CdTe"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "ANDRE GALEMBECK.pdf",
+        "title": "Polyphosphate gel/methyl orange supramolecular composites",
+        "departamento": "Química",
+        "keywords": [
+          "Polyphosphate gel",
+          "methyl orange",
+          "supramolecular composites"
+        ],
+        "ano": 2003
+      },
+      {
+        "filename": "ARMANDO JUAN NAVARRO VAZQUEZ.pdf",
+        "title": "A DFT/machine‐learning hybrid method for the prediction of 3JHCCH couplings",
+        "departamento": "Química",
+        "keywords": [
+          "DFT",
+          "machine learning",
+          "vicinal couplings"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "CLAUDETE FERNANDES PEREIRA.pdf",
+        "title": "Determination of Se(IV) by anodic stripping voltammetry using gold electrodes made from recordable CDs",
+        "departamento": "Química",
+        "keywords": [
+          "Selênio(IV)",
+          "Eletrodos de ouro",
+          "CDs graváveis"
+        ],
+        "ano": 2006
+      },
+      {
+        "filename": "DANIELA MARIA DO AMARAL FERRAZ NAVARRO.pdf",
+        "title": "Pollination ecology and floral scent chemistry of Philodendron fragrantissimum (Araceae)",
+        "departamento": "Química",
+        "keywords": [
+          "ecologia de polinização",
+          "química do aroma floral",
+          "Philodendron fragrantissimum"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "DARLISSON DE ALEXANDRIA SANTOS.pdf",
+        "title": "Hydrolysis of cellulose from sugarcane bagasse by cellulases from marine-derived fungi strains",
+        "departamento": "Química",
+        "keywords": [
+          "Fungos de origem marinha",
+          "Produção de celulase",
+          "Sacarificação da bagaceira de cana"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "DENYS EWERTON DA SILVA SANTOS.pdf",
+        "title": "Surface Assessment via Grid Evaluation (SuAVE) for Every Surface Curvature and Cavity Shape",
+        "departamento": "Química",
+        "keywords": [
+          "Avaliação de Superfície",
+          "Avaliação por Grade",
+          "Interfaces Químicas"
+        ],
+        "ano": 2022
+      },
+      {
+        "filename": "EDUARDO HENRIQUE LAGO FALCÃO.pdf",
+        "title": "Carbon allotropes: beyond graphite and diamond",
+        "departamento": "Química",
+        "keywords": [
+          "alotropes de carbono",
+          "carbono amorfo",
+          "nanotubos de carbono"
+        ],
+        "ano": 2007
+      },
+      {
+        "filename": "ELTON DE LIMA BORGES.pdf",
+        "title": "Synthesis of Enantiomerically Pure Bis(2,2-dimethyl-1,3-dioxolanylmethyl)chalcogenides and Dichalcogenides",
+        "departamento": "Química",
+        "keywords": [
+          "Organochalcogen compounds",
+          "Enantioselective synthesis",
+          "Chalcogenides"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "FILIPE DA SILVA LIMA.pdf",
+        "title": "Molecular Dynamics Shows That Ion Pairing and Counterion Anchoring Control the Properties of Triflate Micelles: A Comparison with Triflate at the Air/Water Interface",
+        "departamento": "Química",
+        "keywords": [
+          "Simulações de Dinâmica Molecular",
+          "Emparelhamento Iônico",
+          "Micelas de Triflato"
+        ],
+        "ano": 2014
+      },
+      {
+        "filename": "GABRIEL AIRES URQUIZA DE CARVALHO.pdf",
+        "title": "Efficient algorithm for expanding theoretical electron densities in canterakis–zernike functions",
+        "departamento": "Química",
+        "keywords": [
+          "momentos de Canterakis–Zernike",
+          "expansão da densidade eletrônica",
+          "impressões digitais moleculares"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "GILBERTO FERNANDES DE SÁ.pdf",
+        "title": "Novel core–shell (TiO2@Silica) nanoparticles for scattering medium in a random laser: higher efficiency, lower laser threshold and lower photodegradation",
+        "departamento": "Física",
+        "keywords": [
+          "nanopartículas",
+          "laser aleatório",
+          "meio de espalhamento"
+        ],
+        "ano": 2013
+      },
+      {
+        "filename": "GIOVANNA MACHADO.pdf",
+        "title": "Structural control of gold nanoparticles self-assemblies by layer-by-layer process",
+        "departamento": "Química",
+        "keywords": [
+          "nanopartículas de ouro",
+          "camada por camada",
+          "propriedades ópticas"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "IVANI MALVESTITI.pdf",
+        "title": "Exploring the mechanism of in situ formation of oxalic acid for producing mixed fumarato-oxalato lanthanide (Eu, Tb and Gd) frameworks",
+        "departamento": "Química",
+        "keywords": [
+          "ácido oxálico",
+          "MOFs lanthanide",
+          "tratamento hidrotermal"
+        ],
+        "ano": 2012
+      },
+      {
+        "filename": "JANAÍNA VERSIANI DOS ANJOS.pdf",
+        "title": "A second generation of 1,2,4-oxadiazole derivatives with enhanced solubility for inhibition of 3-hydroxykynurenine transaminase (HKT) from Aedes aegypti",
+        "departamento": "Química",
+        "keywords": [
+          "Derivados de 1,2,4-oxadiazol",
+          "Inibição de HKT",
+          "Aedes aegypti"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "JOANNA ELZBIETA KULESZA BARROS.pdf",
+        "title": "Calixthioamides as Ionophores for Transition- and Heavy-Metal Cations",
+        "departamento": "Química",
+        "keywords": [
+          "Calixarenes",
+          "Ionophores",
+          "Heavy-metal ions"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "JORGE LUIZ NEVES.pdf",
+        "title": "Probing the interaction of carbonaceous dots with transferrin and albumin: Impact on the protein structure and non-synergetic metal release",
+        "departamento": "Química",
+        "keywords": [
+          "carbon quantum dots",
+          "transferrin",
+          "albumin"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "LAIS ARAUJO SOUZA.pdf",
+        "title": "Flow-through dynamic microextraction system for automatic in vitro assessment of chyme bioaccessibility in food commodities",
+        "departamento": "Química",
+        "keywords": [
+          "Bioacessibilidade",
+          "Extração dinâmica",
+          "Ensaio in vitro"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "MARCELO NAVARRO.pdf",
+        "title": "The Green ChemisTREE: 20 years after taking root with the 12 principles",
+        "departamento": "Química",
+        "keywords": [
+          "nanocristais",
+          "eletrossíntese",
+          "propriedades fototérmicas"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "MARIA FERNANDA PIMENTEL.pdf",
+        "title": "Handheld near infrared spectrometer and machine learning methods applied to the monitoring of multiple process stages in industrial sugar production",
+        "departamento": "Química",
+        "keywords": [
+          "Espectrômetro NIR",
+          "Produção de açúcar",
+          "Aprendizado de máquina"
+        ],
+        "ano": 2022
+      },
+      {
+        "filename": "GIOVANNIA ARAUJO DE LIMA PEREIRA.pdf",
+        "title": "Evaluation of [Ln(H 2 cmp)(H 2 O)] Metal Organic Framework Materials for Potential Application as Magnetic Resonance Imaging Contrast Agents",
+        "departamento": "Química",
+        "keywords": [
+          "Metal Organic Frameworks",
+          "MRI contrast agents",
+          "Lanthanide ions"
+        ],
+        "ano": 2010
+      },
+      {
+        "filename": "MARIANA PAOLA CABRERA.pdf",
+        "title": "Polyaniline-coated magnetic diatomite nanoparticles as a matrix for immobilizing enzymes",
+        "departamento": "Química",
+        "keywords": [
+          "nanopartículas magnéticas",
+          "imobilização de enzimas",
+          "terra de diatomáceas"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "NATHALIA BEZERRA DE LIMA.pdf",
+        "title": "Cement-based materials: Pozzolanic activities of mineral additions are compromised by the presence of reactive oxides",
+        "departamento": "Química",
+        "keywords": [
+          "materiais cimentícios",
+          "atividade pozolânica",
+          "óxidos reativos"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "OSCAR MANOEL LOUREIRO MALTA.pdf",
+        "title": "Synthesis and photoluminescence properties of [Eu(dbm)3·PX] and [Eu(acac)3·PX] complexes",
+        "departamento": "Química",
+        "keywords": [
+          "complexos de európio",
+          "luminescência",
+          "propriedades fotofísicas"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "PAULO HENRIQUE MENEZES DA SILVA.pdf",
+        "title": "Stereoselective Synthesis and Antitumoral Activity of Z-Enyne Pseudoglycosides",
+        "departamento": "Química",
+        "keywords": [
+          "Síntese Estereosseletiva",
+          "Pseudoglicosídeos Ene-ino",
+          "Atividade Antitumoral"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "PETRUS D AMORIM SANTA CRUZ OLIVEIRA.pdf",
+        "title": "Lead–germanate glasses: an easy growth process for silver nanoparticles and their promising applications in photonics and catalysis",
+        "departamento": "Química",
+        "keywords": [
+          "nanopartículas de prata",
+          "vidros de germanato de chumbo",
+          "catálise"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "RICARDO LUIZ LONGO.pdf",
+        "title": "Simulation of the Adsorption and Release of Large Drugs by ZIF‑8",
+        "departamento": "Química",
+        "keywords": [
+          "Adsorção",
+          "Liberação de drogas",
+          "ZIF-8"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "RICARDO OLIVEIRA DA SILVA.pdf",
+        "title": "1H NMR-based metabonomics for infertility diagnosis in men with varicocele",
+        "departamento": "Química",
+        "keywords": [
+          "Metabonomics",
+          "1H NMR",
+          "Varicocele"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "RODOLFO HIDEKI VICENTE NISHIMURA.pdf",
+        "title": "Recent applications of magnesium- and Zinc-TMP amides in the synthesis of bioactive targets",
+        "departamento": "Química",
+        "keywords": [
+          "Amidas de Magnésio",
+          "Amidas de Zinco",
+          "Síntese Orgânica"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "SEVERINO ALVES JUNIOR.pdf",
+        "title": "Photophysical studies of coordination polymers and composites based on heterometallic lanthanide succinate",
+        "departamento": "Química",
+        "keywords": [
+          "polímeros de coordenação",
+          "lanthanídeos",
+          "nanocompósitos"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "SIMONE MARIA DA CRUZ GONÇALVES.pdf",
+        "title": "Europium Complexes: Luminescence Boost by a Single Efficient Antenna Ligand",
+        "departamento": "Química",
+        "keywords": [
+          "Complexos de Európio",
+          "Luminescência",
+          "Ligantes"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "VAGNER BEZERRA DOS SANTOS.pdf",
+        "title": "Formation of isomers of anionic hemiesters of sugars and carbonic acid in aqueous medium",
+        "departamento": "Química",
+        "keywords": [
+          "Hemiester de ácido carbônico",
+          "Espectroscopia de RMN de 13C",
+          "Isômeros de açúcar"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "WALTER MENDES DE AZEVEDO.pdf",
+        "title": "A new and straightforward synthesis route for preparing Cds quantum Dots",
+        "departamento": "Química",
+        "keywords": [
+          "CdS Quantum Dots",
+          "Solvothermal technique",
+          "Polyol process"
+        ],
+        "ano": 2012
+      },
+      {
+        "filename": "ANTONIO CARLOS PAVÃO.pdf",
+        "title": "Intercalation of small molecules in alkali metal fullerides superconductors",
+        "departamento": "Química",
+        "keywords": [
+          "Supercondutores de fulereno",
+          "Análise QSPR",
+          "Cálculos DFT"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "FLAMARION BORGES DINIZ.pdf",
+        "title": "A comparative study of epoxy and polyurethane based coatings containing polyaniline-DBSA pigments for corrosion protection on mild steel",
+        "departamento": "Química",
+        "keywords": [
+          "revestimentos orgânicos",
+          "proteção contra corrosão",
+          "aço carbono"
+        ],
+        "ano": 2013
+      },
+      {
+        "filename": "JOÃO BOSCO PARAÍSO DA SILVA.pdf",
+        "title": "Adenine Formation without HCN",
+        "departamento": "Química",
+        "keywords": [
+          "Formação de Adenina",
+          "Análise Retrossintética",
+          "Moléculas Interstelares"
+        ],
+        "ano": 2014
+      },
+      {
+        "filename": "MARCOS VINICIUS FOGUEL.pdf",
+        "title": "Amperometric Immunosensor for Chagas Disease Using Gold CD-R Transducer",
+        "departamento": "Química",
+        "keywords": [
+          "Imunossensor Amperométrico",
+          "Doença de Chagas",
+          "Transdutor CD-R de Ouro"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "DANILO FERNANDES COELHO.pdf",
+        "title": "The influence of biotinylation on the ability of a computer designed protein to detect B-cells producing anti-HIV-1 2F5 antibodies",
+        "departamento": "Química",
+        "keywords": [
+          "Biotinylation",
+          "HIV-1 2F5 antibodies",
+          "Protein engineering"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "GUSTAVO LAUREANO COELHO DE MOURA.pdf",
+        "title": "Two-Photon Absorption by Fluorene Derivatives: Systematic Molecular Design",
+        "departamento": "Química",
+        "keywords": [
+          "Absorção de dois fótons",
+          "Derivados de fluoreno",
+          "Design molecular"
+        ],
+        "ano": 2010
+      },
+      {
+        "filename": "MARCELLA AUXILIADORA DE MELO LUCENA.pdf",
+        "title": "Application of the MOF [Eu(BTC)] as a Luminescent Marker for GSR: A Synthesis, Characterization and Toxicity Study.",
+        "departamento": "Química",
+        "keywords": [
+          "MOF",
+          "marcador luminescente",
+          "resíduos de chumbo de disparo"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "ROBERTA AYRES DE OLIVEIRA.pdf",
+        "title": "Copper-catalyzed amination of potassium aryl trifluoroborates using aqueous ammonia",
+        "departamento": "Química",
+        "keywords": [
+          "Potassium organotrifluoroborates",
+          "Aryl amines",
+          "Copper-catalyzed amination"
+        ],
+        "ano": 2012
+      },
+      {
+        "filename": "LOTHAR WILHELM BIEBER.pdf",
+        "title": "Reductive alkylation of nitrobenzene promoted by zinc and tin in protic solvents",
+        "departamento": "Química",
+        "keywords": [
+          "alkylation",
+          "nitrobenzene",
+          "organometallic reactions"
+        ],
+        "ano": 2000
+      },
+      {
+        "filename": "BENÍCIO DE BARROS NETO.pdf",
+        "title": "Core Electron Energies, Infrared Intensities, and Atomic Charges",
+        "departamento": "Química",
+        "keywords": [
+          "Energias de Elétrons Centrais",
+          "Intensidades Infravermelhas",
+          "Cargas Atômicas"
+        ],
+        "ano": 1997
+      },
+      {
+        "filename": "CESAR AUGUSTO RODRIGUES CASTILHO.pdf",
+        "title": "Regularization of Restricted 3-Body Problems",
+        "departamento": "Matemática",
+        "keywords": [
+          "Problema restrito de três corpos",
+          "Regularização",
+          "Mecânica geométrica"
+        ],
+        "ano": 2009
+      },
+      {
+        "filename": "CILON VALDEZ FERREIRA PERUSATO.pdf",
+        "title": "Decay rates for the magneto-micropolar system in L^2(R^n)",
+        "departamento": "Matemática",
+        "keywords": [
+          "Decay rates",
+          "magneto-micropolar system",
+          "L2(Rn)"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "CLAUDIO RODRIGO CUEVAS HENRIQUEZ.pdf",
+        "title": "-boundedness properties for Volterra difference equations",
+        "departamento": "Matemática",
+        "keywords": [
+          "l p-boundedness",
+          "Volterra functional difference equation",
+          "Phase space"
+        ],
+        "ano": 2013
+      },
+      {
+        "filename": "EDUARDO SHIRLIPPE GOES LEANDRO.pdf",
+        "title": "Structure and Stability of the Rhombus Family of Relative Equilibria under General Homogeneous Forces",
+        "departamento": "Matemática",
+        "keywords": [
+          "N-body problem",
+          "Relative equilibria",
+          "Linear stability"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "FABIO REIS DOS SANTOS.pdf",
+        "title": "Rigidity of Surfaces with Constant Extrinsic Curvature in Riemannian Product Spaces",
+        "departamento": "Matemática",
+        "keywords": [
+          "curvatura extrínseca",
+          "espaços produto",
+          "superfícies de rigidez"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "FELIPE WERGETE CRUZ.pdf",
+        "title": "On the strong solutions of the 3D magneto-micropolar equations",
+        "departamento": "Matemática",
+        "keywords": [
+          "equações magneto-micropolar",
+          "soluções fortes",
+          "existência e unicidade"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "JOÃO MARCOS BEZERRA DO Ó.pdf",
+        "title": "Nehari Manifold for Fractional Kirchhoff Systems with Critical Nonlinearity",
+        "departamento": "Matemática",
+        "keywords": [
+          "Nehari manifold",
+          "fractional Kirchhoff system",
+          "critical exponent"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "JOSE CARLOS DE ALBUQUERQUE MELO JUNIOR.pdf",
+        "title": "Existence of solutions for a fractional Choquard-type equation in with critical exponential growth",
+        "departamento": "Matemática",
+        "keywords": [
+          "equação fracionária de Choquard",
+          "crescimento exponencial crítico",
+          "desigualdade de Trudinger–Moser"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "MANOEL JOSE MACHADO SOARES LEMOS.pdf",
+        "title": "Improving a chain theorem for triangle-free 3-connected matroids",
+        "departamento": "Matemática",
+        "keywords": [
+          "Matroides",
+          "Teoria combinatória",
+          "Grafos"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "MIGUEL FIDENCIO LOAYZA LOZANO.pdf",
+        "title": "A nonlocal in time parabolic system whose Fujita critical exponent is not given by scaling",
+        "departamento": "Matemática",
+        "keywords": [
+          "Expoente crítico de Fujita",
+          "Sistema parabólico não local",
+          "Explosão"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "PABLO GUSTAVO ALBUQUERQUE BRAZ E SILVA.pdf",
+        "title": "An asymptotic supnorm estimate for solutions of 1-D systems of convection–diffusion equations",
+        "departamento": "Matemática",
+        "keywords": [
+          "equações de convecção-difusão",
+          "estimativa supnorm",
+          "sistemas diferenciais"
+        ],
+        "ano": 2015
+      },
+      {
+        "filename": "ROBERTO DE ALMEIDA CAPISTRANO FILHO.pdf",
+        "title": "Neumann boundary controllability of the Gear–Grimshaw system with critical size restrictions on the spatial domain",
+        "departamento": "Matemática",
+        "keywords": [
+          "Gear–Grimshaw system",
+          "Exact boundary controllability",
+          "Neumann boundary conditions"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "RODRIGO JOSÉ GONDIM NEVES.pdf",
+        "title": "On cubic hypersurfaces with vanishing hessian",
+        "departamento": "Matemática",
+        "keywords": [
+          "hipersuperfícies",
+          "hessiana nula",
+          "geometria algébrica"
+        ],
+        "ano": 2014
+      },
+      {
+        "filename": "SILVIA SASTRE GÓMEZ.pdf",
+        "title": "Mean Flow Velocities and Mass Transport for Equatorially-Trapped Water Waves with an Underlying Current",
+        "departamento": "Matemática",
+        "keywords": [
+          "ondas de água",
+          "transporte de massa",
+          "corrente subjacente"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "SOLANGE DA FONSECA RUTZ.pdf",
+        "title": "Evolution of symbiosis in hermatypic corals: A model of the past, present, and future",
+        "departamento": "Matemática",
+        "keywords": [
+          "Geometria de Finsler",
+          "Simbiose de corais",
+          "Evolução"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "VICTOR HUGO GONZALEZ MARTINEZ.pdf",
+        "title": "Asymptotic stability for a strongly coupled Klein-Gordon system in an inhomogeneous medium with locally distributed damping",
+        "departamento": "Matemática",
+        "keywords": [
+          "Klein-Gordon system",
+          "asymptotic stability",
+          "inhomogeneous medium"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "ANTONIO FERNANDO PEREIRA DE SOUSA.pdf",
+        "title": "Optimal Upper Estimates for the First Eigenvalue of a Jacobi Type Operator in Spherical and Hyperbolical Spaces",
+        "departamento": "Matemática",
+        "keywords": [
+          "Jacobi type operator",
+          "eigenvalue estimates",
+          "hypersurfaces"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "EUDES NAZIAZENO GALVÃO.pdf",
+        "title": "The Logical Complexity of Finitely Generated Commutative Rings",
+        "departamento": "Matemática",
+        "keywords": [
+          "anéis comutativos",
+          "bi-interpretabilidade",
+          "complexidade lógica"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "FERNANDO ANTÔNIO NÓBREGA SANTOS.pdf",
+        "title": "Topological approach to microcanonical thermodynamics and phase transition of interacting classical spins",
+        "departamento": "Física",
+        "keywords": [
+          "termodinâmica",
+          "topologia",
+          "transição de fase"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "HENRIQUE DE BARROS CORREIA VITORIO.pdf",
+        "title": "On Fermat's principle for causal curves in time oriented Finsler spacetimes",
+        "departamento": "Matemática",
+        "keywords": [
+          "Princípio de Fermat",
+          "curvas causais",
+          "espaço-tempo Finsler"
+        ],
+        "ano": 2012
+      },
+      {
+        "filename": "HILDEBERTO EULALIO CABRAL.pdf",
+        "title": "Subharmonic Solutions of a Pendulum Under Vertical Anharmonic Oscillations of the Point of Suspension",
+        "departamento": "Física",
+        "keywords": [
+          "subharmonic solutions",
+          "pendulum",
+          "anharmonic oscillations"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "RICARDO TUROLLA BORTOLOTTI.pdf",
+        "title": "Physical measures for certain partially hyperbolic attractors on 3-manifolds",
+        "departamento": "Matemática",
+        "keywords": [
+          "Atratores parcialmente hiperbólicos",
+          "Medidas físicas",
+          "Teoria ergódica"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "AIRTON TEMÍSTOCLES GONÇALVES DE CASTRO.pdf",
+        "title": "Maximal Regularity of the Discrete Harmonic Oscillator Equation",
+        "departamento": "Matemática",
+        "keywords": [
+          "Equação do oscilador harmônico discreto",
+          "Regularidade máxima",
+          "Espaço de Banach"
+        ],
+        "ano": 2009
+      },
+      {
+        "filename": "ALAN DO NASCIMENTO MUNIZ.pdf",
+        "title": "Codimension one distributions of degree 2 on the three-dimensional projective space",
+        "departamento": "Matemática",
+        "keywords": [
+          "Distribuições holomorfas",
+          "Fibras",
+          "Esquema singular"
+        ],
+        "ano": 2022
+      },
+      {
+        "filename": "ALCIDES DE CARVALHO JUNIOR.pdf",
+        "title": "Conformal Kaehler Euclidean submanifolds",
+        "departamento": "Matemática",
+        "keywords": [
+          "submanifold",
+          "Kaehler manifold",
+          "conformal immersion"
+        ],
+        "ano": 2022
+      },
+      {
+        "filename": "ANDRÉ LUIZ MEIRELES ARAÚJO.pdf",
+        "title": "Counting cones over reducible cubic scrolls",
+        "departamento": "Matemática",
+        "keywords": [
+          "scroll cúbico redutível",
+          "cones",
+          "geometria enumerativa"
+        ],
+        "ano": 2010
+      },
+      {
+        "filename": "CLEIDE SOARES MARTINS.pdf",
+        "title": "A Theorem on Reconstruction of Random Graphs",
+        "departamento": "Matemática",
+        "keywords": [
+          "Combinatorics",
+          "Random Graphs",
+          "Graph Reconstruction"
+        ],
+        "ano": 1993
+      },
+      {
+        "filename": "DOUGLAS DE SOUZA QUEIROZ.pdf",
+        "title": "On the theory of generalized Ulrich modules",
+        "departamento": "Matemática",
+        "keywords": [
+          "Ulrich modules",
+          "Cohen–Macaulay rings",
+          "Gorenstein rings"
+        ],
+        "ano": 2023
+      },
+      {
+        "filename": "EDDYGLEDSON SOUZA GAMA.pdf",
+        "title": "Translating Solitons of the Mean Curvature Flow Asymptotic to Hyperplanes in R^{n+1}",
+        "departamento": "Matemática",
+        "keywords": [
+          "Translating Solitons",
+          "Mean Curvature Flow",
+          "Hyperplanes"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "GLEIDSON GOMES DA SILVA.pdf",
+        "title": "A new analysis of the GJ581 extrasolar planetary system",
+        "departamento": "Física",
+        "keywords": [
+          "Sistema planetário extrasolar GJ581",
+          "Determinação orbital",
+          "Zona habitável"
+        ],
+        "ano": 2012
+      },
+      {
+        "filename": "HELIO MACHADO DA SILVA PORTO NETO.pdf",
+        "title": "The N -vortex problem on a symmetric ellipsoid: A perturbation approach",
+        "departamento": "Matemática",
+        "keywords": [
+          "Problema de N-vórtices",
+          "Teoria de perturbação",
+          "Sistemas Hamiltonianos"
+        ],
+        "ano": 2008
+      },
+      {
+        "filename": "HENRIQUE JOSE MORAIS DE ARAUJO.pdf",
+        "title": "Critical Points of the Total Scalar Curvature plus Total Mean Curvature Functional",
+        "departamento": "Matemática",
+        "keywords": [
+          "Pontos críticos",
+          "Métricas Riemannianas",
+          "Curvatura escalar"
+        ],
+        "ano": 2003
+      },
+      {
+        "filename": "JOAO ANTONIO MIRANDA GONDIM.pdf",
+        "title": "Preventing epidemics by wearing masks: An application to COVID-19",
+        "departamento": "Matemática",
+        "keywords": [
+          "Epidemias",
+          "COVID-19",
+          "SEIR model"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "JORGE NICOLAS CARO MONTOYA.pdf",
+        "title": "On the generalized Bohnenblust–Hille inequality for real scalars",
+        "departamento": "Matemática",
+        "keywords": [
+          "Bohnenblust–Hille inequality",
+          "Multilinear norms",
+          "Littlewood inequality"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "LILIANA GABRIELA RUSSO.pdf",
+        "title": "APOLLONIUS PROBLEM:\nIN PURSUIT OF A NATURAL SOLUTION",
+        "departamento": "Matemática",
+        "keywords": [
+          "Problema de Apolônio",
+          "reciprocidade polar",
+          "cônicas"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "LUIZ PAULO FREIRE MOREIRA.pdf",
+        "title": "On the Anti-Ramsey Threshold for Non-Balanced Graphs",
+        "departamento": "Matemática",
+        "keywords": [
+          "Anti-Ramsey Threshold",
+          "Rainbow Copy",
+          "Graph Coloring"
+        ],
+        "ano": 2024
+      },
+      {
+        "filename": "PETER MALCOLM JOHNSON.pdf",
+        "title": "GEOMETRIC HYPERPLANES IN GENERALIZED HEXAGONS OF ORDER (2,2)",
+        "departamento": "Matemática",
+        "keywords": [
+          "geometric hyperplanes",
+          "generalized hexagons",
+          "order (2,2)"
+        ],
+        "ano": 1994
+      },
+      {
+        "filename": "RAFAEL FERREIRA HOLANDA.pdf",
+        "title": "Bass and Betti numbers of a module and its deficiency modules",
+        "departamento": "Matemática",
+        "keywords": [
+          "Bass numbers",
+          "Betti numbers",
+          "deficiency modules"
+        ],
+        "ano": 2024
+      },
+      {
+        "filename": "SERGIO D AMORIM SANTA CRUZ.pdf",
+        "title": "Twistor Geometry for Hyperkähler Metrics on Complex Adjoint Orbits",
+        "departamento": "Matemática",
+        "keywords": [
+          "Twistor Geometry",
+          "Hyperkähler Metrics",
+          "Complex Adjoint Orbits"
+        ],
+        "ano": 1997
+      },
+      {
+        "filename": "WILLIAM ARTILES ROQUETA.pdf",
+        "title": "An Exact Equation for the Free Surface of a Fluid in a Porous Medium",
+        "departamento": "Física",
+        "keywords": [
+          "evolução de superfície livre",
+          "meios porosos",
+          "transformação conforme"
+        ],
+        "ano": 2007
+      },
+      {
+        "filename": "XIAOCHUAN LIU.pdf",
+        "title": "On flushed partitions and concave compositions",
+        "departamento": "Matemática",
+        "keywords": [
+          "Partições",
+          "Composições",
+          "Combinatória"
+        ],
+        "ano": 2012
+      },
+      {
+        "filename": "ANDRE VICTOR DE ALBUQUERQUE ARAUJO.pdf",
+        "title": "Classification of schizophrenic traits in transcriptions of audio spectra from patient literature: artificial intelligence models enhanced by geometric properties",
+        "departamento": "Física",
+        "keywords": [
+          "esquizofrenia",
+          "modelos de classificação",
+          "inteligência artificial"
+        ],
+        "ano": 2024
+      },
+      {
+        "filename": "BRANDON MARCELINO CARHUAS DE LA TORRE.pdf",
+        "title": "A semilinear heat equation with variable reaction and singular initial data",
+        "departamento": "Matemática",
+        "keywords": [
+          "Variable exponent",
+          "semilinear heat equation",
+          "singular initial data"
+        ],
+        "ano": 2025
+      },
+      {
+        "filename": "ERICK CAETANO ALVES DO NASCIMENTO.pdf",
+        "title": "Equa¸c˜oes diofantinas lineares e n˜ao lineares: uma abordagem por meio de quest˜oes de Olimp´ıadas de Matem´atica",
+        "departamento": "Matemática",
+        "keywords": [
+          "Equações Diofantinas",
+          "Olimpíadas de Matemática",
+          "Aritmética dos Inteiros"
+        ],
+        "ano": 2022
+      },
+      {
+        "filename": "ESTEVAN LUIZ DA SILVA.pdf",
+        "title": "Hessian Lane-Emden Type Systems with Measures Involving Sub-natural Growth Terms",
+        "departamento": "Matemática",
+        "keywords": [
+          "k-Hessian equations",
+          "Lane-Emden system",
+          "Wolff potentials"
+        ],
+        "ano": 2024
+      },
+      {
+        "filename": "JACKELLYNY DASSY DO NASCIMENTO CARVALHO.pdf",
+        "title": "Stability and eigenvalue bounds for micropolar shear flows",
+        "departamento": "Matemática",
+        "keywords": [
+          "Estabilidade hidrodinâmica",
+          "Fluidos de micropolar",
+          "Equações de Orr-Sommerfeld"
+        ],
+        "ano": 2024
+      },
+      {
+        "filename": "TIAGO DE ALBUQUERQUE AMORIM.pdf",
+        "title": "Subharmonic Solutions of a Pendulum Under Vertical Anharmonic Oscillations of the Point of Suspension",
+        "departamento": "Física",
+        "keywords": [
+          "pendulum",
+          "subharmonic solutions",
+          "anharmonic oscillations"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "JALILA RIOS DOS SANTOS.pdf",
+        "title": "PARTICIPAÇÃO DE MATRÓIDES, CONJUNTOS CO-GERADORES E BRIDGE-IT",
+        "departamento": "Matemática",
+        "keywords": [
+          "Matroides",
+          "Conjuntos co-geradores",
+          "Bridge-it"
+        ],
+        "ano": 2003
+      },
+      {
+        "filename": "MICAEL ESTEVÃO DA SILVA.pdf",
+        "title": "Teoria dos Jogos e Dinâmica de Populações",
+        "departamento": "Matemática",
+        "keywords": [
+          "Teoria dos Jogos",
+          "Dinâmica de Populações",
+          "Equação do Replicador"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "MICHELLE GONZAGA DOS SANTOS.pdf",
+        "title": "Bifurcations of Two Symmetric Families of Dziobek Configurations",
+        "departamento": "Matemática",
+        "keywords": [
+          "Bifurcações",
+          "Configurações de Dziobek",
+          "Problema de N corpos"
+        ],
+        "ano": 2023
+      },
+      {
+        "filename": "NELSON LEAL DOS SANTOS JUNIOR.pdf",
+        "title": "CONTROLE ÓTIMO APLICADO A ESTRATÉGIAS DE CONTENÇÃO DE DOENÇAS INFECCIOSAS: UM ESTUDO COM DADOS DO BRASIL",
+        "departamento": "Matemática",
+        "keywords": [
+          "Controle Ótimo",
+          "Doenças Infecciosas",
+          "Modelagem Matemática"
+        ],
+        "ano": 2024
+      },
+      {
+        "filename": "PEDRO CAMPOS ARAUJO.pdf",
+        "title": "On the Anti-Ramsey Threshold for Non-Balanced Graphs",
+        "departamento": "Matemática",
+        "keywords": [
+          "Anti-Ramsey",
+          "Teoria dos Grafos",
+          "Coloração de Arestas"
+        ],
+        "ano": 2024
+      },
+      {
+        "filename": "RAFAEL DOS SANTOS CAVALCANTI.pdf",
+        "title": "Modeling Coral Reef Bleaching Recovery Through KCC-Theory",
+        "departamento": "Matemática",
+        "keywords": [
+          "KCC-theory",
+          "Volterra-Hamilton",
+          "Coral Reef Recovery"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "ALDO WILLIAM MEDINA GARAY.pdf",
+        "title": "Censored linear regression models for irregularly observed longitudinal data using the multivariate-t distribution",
+        "departamento": "Estatística",
+        "keywords": [
+          "Modelos de regressão com censura",
+          "Dados longitudinais",
+          "Distribuição t multivariada"
+        ],
+        "ano": 2014
+      },
+      {
+        "filename": "ARON SIMIS.pdf",
+        "title": "Effective criteria for bigraded birational maps",
+        "departamento": "Matemática",
+        "keywords": [
+          "mapas biracionais",
+          "mapas bigraded",
+          "cálculo algébrico"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "ANTONIO AZEVEDO DA COSTA.pdf",
+        "title": "Electrical detection of ferromagnetic resonance in single layers of permalloy: Evidence of magnonic charge pumping",
+        "departamento": "Física",
+        "keywords": [
+          "ferromagnetic resonance",
+          "magnonic charge pumping",
+          "spin rectification"
+        ],
+        "ano": 2015
+      },
+      {
+        "filename": "CLÉCIO CLEMENTE DE SOUZA SILVA.pdf",
+        "title": "Probing the low-frequency vortex dynamics in a nanostructured superconducting strip",
+        "departamento": "Física",
+        "keywords": [
+          "Dinâmica de Vórtices",
+          "Supercondutividade",
+          "Microscopia de Suscetibilidade"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "DANIEL FELINTO PIRES BARBOSA.pdf",
+        "title": "Theory for direct frequency-comb spectroscopy",
+        "departamento": "Física",
+        "keywords": [
+          "espectroscopia de frequência",
+          "átomos multinível",
+          "pulso ultracurto"
+        ],
+        "ano": 2009
+      },
+      {
+        "filename": "EDUARDO OLIMPIO RIBEIRO DIAS.pdf",
+        "title": "Interfacial patterns in magnetorheological fluids: Azimuthal field-induced structures",
+        "departamento": "Física",
+        "keywords": [
+          "Fluidos magnetoreológicos",
+          "Padrões interfaciais",
+          "Célula de Hele-Shaw"
+        ],
+        "ano": 2015
+      },
+      {
+        "filename": "EDUARDO PADRÓN HERNÁNDEZ.pdf",
+        "title": "Amplification of Spin Waves by Thermal Spin-Transfer Torque",
+        "departamento": "Física",
+        "keywords": [
+          "Ondas de spin",
+          "Torque de transferência de spin térmico",
+          "Efeito spin-Seebeck"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "ERNESTO CARNEIRO PESSOA RAPOSO.pdf",
+        "title": "Evidence of a Floquet Phase in a Photonic System",
+        "departamento": "Física",
+        "keywords": [
+          "Fase de Floquet",
+          "Laser de Fibra Ótica",
+          "Vidro de Spin Fotônico"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "FERNANDO LUIS DE ARAUJO MACHADO.pdf",
+        "title": "Half-wave rectification of ac-magnetic-field effects by mixing thermal spin and charge currents in a NiO/Pt nanostructure",
+        "departamento": "Física",
+        "keywords": [
+          "efeitos de campo magnético ac",
+          "correntes de spin e carga",
+          "nanostrutura NiO/Pt"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "FERNANDO ROBERTO DE LUNA PARISIO FILHO.pdf",
+        "title": "Reverse rotations in the circularly driven motion of a rigid body",
+        "departamento": "Física",
+        "keywords": [
+          "rotações reversas",
+          "corpo rígido",
+          "movimento circular"
+        ],
+        "ano": 2008
+      },
+      {
+        "filename": "JOAO CARLOS DE AQUINO CARVALHO.pdf",
+        "title": "Retardation effects in spectroscopic measurements of the Casimir-Polder interaction",
+        "departamento": "Física",
+        "keywords": [
+          "Interação Casimir-Polder",
+          "Espectroscopia",
+          "Efeitos de retardo"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "JOSÉ ALBINO-AGUIAR.pdf",
+        "title": "Structural and magnetic properties of NiS doped Bi-2212 superconductors",
+        "departamento": "Física",
+        "keywords": [
+          "supercondutores",
+          "doping NiS",
+          "Bi-2212"
+        ],
+        "ano": 2001
+      },
+      {
+        "filename": "JOSÉ AMÉRICO DE MIRANDA NETO.pdf",
+        "title": "Coriolis effects on rotating Hele-Shaw flows: A conformal-mapping approach",
+        "departamento": "Física",
+        "keywords": [
+          "Efeitos de Coriolis",
+          "Fluxos de Hele-Shaw",
+          "mapeamento conforme"
+        ],
+        "ano": 2010
+      },
+      {
+        "filename": "ANTÔNIO MURILO SANTOS MACEDO.pdf",
+        "title": "Universality classes of fluctuation dynamics in hierarchical complex systems",
+        "departamento": "Física",
+        "keywords": [
+          "Dinâmica de Flutuações",
+          "Sistemas Complexos",
+          "Modelo Estocástico"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "JOSE WELLINGTON ROCHA TABOSA.pdf",
+        "title": "Light grating storage in cold atoms",
+        "departamento": "Física",
+        "keywords": [
+          "armazenamento de luz",
+          "átomos frios",
+          "grade de luz"
+        ],
+        "ano": 2007
+      },
+      {
+        "filename": "LEONARDO DE SOUZA MENEZES.pdf",
+        "title": "Phonon-assisted cooperative energy transfer and frequency upconversion in a Yb 3+ / Tb 3+ codoped fluoroindate glass",
+        "departamento": "Física",
+        "keywords": [
+          "transferência de energia",
+          "upconversion de frequência",
+          "vidro fluoroindate"
+        ],
+        "ano": 2003
+      },
+      {
+        "filename": "LIDIA CARVALHO GOMES.pdf",
+        "title": "PHYSICAL REVIEW B 92, 085406 (2015)\nPhosphorene analogues: Isoelectronic two-dimensional group-IV monochalcogenides with orthorhombic structure",
+        "departamento": "Física",
+        "keywords": [
+          "monocalcogenetos",
+          "materiais bidimensionais",
+          "propriedades eletrônicas"
+        ],
+        "ano": 2015
+      },
+      {
+        "filename": "LUIZ FELIPE CAVALCANTI PEREIRA.pdf",
+        "title": "Investigating mechanical properties and thermal conductivity of 2D carbon-based materials by computational experiments",
+        "departamento": "Física",
+        "keywords": [
+          "propriedades mecânicas",
+          "condutividade térmica",
+          "materiais 2D de carbono"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "MARCELO ANDRADE DE FILGUEIRAS GOMES.pdf",
+        "title": "Structural properties of crumpled cream layers",
+        "departamento": "Física",
+        "keywords": [
+          "Propriedades estruturais",
+          "Camadas de creme amassadas",
+          "Dimensão fractal"
+        ],
+        "ano": 2007
+      },
+      {
+        "filename": "MARCIO HERACLYTO GONCALVES DE MIRANDA.pdf",
+        "title": "Controlling the quantum stereodynamics of ultracold bimolecular reactions",
+        "departamento": "Física",
+        "keywords": [
+          "quantum stereodynamics",
+          "ultracold bimolecular reactions",
+          "polar molecules"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "MAURICIO DOMINGUES COUTINHO FILHO.pdf",
+        "title": "Magnetic and nonmagnetic phases in doped AB2 t-J Hubbard chains",
+        "departamento": "Física",
+        "keywords": [
+          "t-J Hubbard chains",
+          "magnetic phases",
+          "Nagaoka ferromagnetism"
+        ],
+        "ano": 2014
+      },
+      {
+        "filename": "MAURO COPELLI LOPES DA SILVA.pdf",
+        "title": "Excitable scale free networks",
+        "departamento": "Física",
+        "keywords": [
+          "redes livres de escala",
+          "redes excitáveis",
+          "intervalo dinâmico"
+        ],
+        "ano": 2007
+      },
+      {
+        "filename": "MICHAEL CABRERA BAEZ.pdf",
+        "title": "Effect of yttrium substitution in Fe-doped ZnO nanoparticles: An EPR study",
+        "departamento": "Física",
+        "keywords": [
+          "Nanopartículas",
+          "Ressonância Paramagnética Eletrônica",
+          "Interações Magnéticas"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "NADJA KOLB BERNARDES.pdf",
+        "title": "Environmental correlations and Markovian to non-Markovian transitions in collisional models",
+        "departamento": "Física",
+        "keywords": [
+          "Sistemas quânticos abertos",
+          "Dinâmica não-Markoviana",
+          "Modelos colisionais"
+        ],
+        "ano": 2014
+      },
+      {
+        "filename": "ALEXANDRE RICALDE RODRIGUES.pdf",
+        "title": "Synthesis of a-Fe particles using a modified metal-membrane incorporation technique",
+        "departamento": "Física",
+        "keywords": [
+          "partículas de a-Fe",
+          "técnica de incorporação em membrana metálica",
+          "propriedades magnéticas"
+        ],
+        "ano": 2007
+      },
+      {
+        "filename": "PAULO ROBERTO DE ARAUJO CAMPOS.pdf",
+        "title": "Effect of Landscape Structure on Species Diversity",
+        "departamento": "Física",
+        "keywords": [
+          "Estrutura da paisagem",
+          "Diversidade de espécies",
+          "Modelos de paisagem neutra"
+        ],
+        "ano": 2013
+      },
+      {
+        "filename": "PEDRO VALADÃO CARELLI.pdf",
+        "title": "Deterministic chaos in an ytterbium-doped mode-locked fiber laser",
+        "departamento": "Física",
+        "keywords": [
+          "caos determinístico",
+          "laser de fibra dopado com érbio",
+          "dinâmica não linear"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "RAI MACIEL DE MENEZES.pdf",
+        "title": "Spin textures in chiral magnetic monolayers with suppressed nearest-neighbor exchange",
+        "departamento": "Física",
+        "keywords": [
+          "texturas de spin",
+          "monocamadas magnéticas quirais",
+          "troca suprimida"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "SANDRA SAMPAIO VIANNA.pdf",
+        "title": "Sub-Doppler two-photon absorption induced by the combination of a single-mode laser and a frequency comb",
+        "departamento": "Física",
+        "keywords": [
+          "Absorção de dois fótons",
+          "Pente de frequência",
+          "Espectroscopia sub-Doppler"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "SERGIO MACHADO REZENDE.pdf",
+        "title": "Theory for phonon pumping by magnonic spin currents",
+        "departamento": "Física",
+        "keywords": [
+          "Corrente de spin magnônica",
+          "Bombeamento de fónons",
+          "Espintrônica"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "SHAHRAM JALALZADEH.pdf",
+        "title": "Covariant extrinsic gravity and the geometric origin of dark energy",
+        "departamento": "Física",
+        "keywords": [
+          "Extrinsic induced gravity",
+          "extra dimensions",
+          "dark energy"
+        ],
+        "ano": 2015
+      },
+      {
+        "filename": "CELSO PINTO DE MELO.pdf",
+        "title": "Non-Coherent Charge Transport in Donor Acceptor Systems: A Self-Consistent Description of the Intramolecular Charge Flow",
+        "departamento": "Física",
+        "keywords": [
+          "transporte de carga",
+          "orbitais moleculares",
+          "evitamento de cruzamento"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "JOSE ROBERTO RIOS LEITE.pdf",
+        "title": "Deterministic Optical Rogue Waves",
+        "departamento": "Física",
+        "keywords": [
+          "Ondas Rogue Ópticas",
+          "Laser Semicondutor",
+          "Processo Não Linear"
+        ],
+        "ano": 2011
+      },
+      {
+        "filename": "CARLOS ALBERTO BATISTA DA SILVA FILHO.pdf",
+        "title": "Integrability conditions for Killing-Yano tensors and conformal Killing-Yano tensors",
+        "departamento": "Física",
+        "keywords": [
+          "Killing-Yano tensors",
+          "conformal Killing-Yano tensors",
+          "integrability conditions"
+        ],
+        "ano": 2015
+      },
+      {
+        "filename": "EDILSON LUCENA FALCÃO FILHO.pdf",
+        "title": "Robust Two-Dimensional Spatial Solitons in Liquid Carbon Disulfide",
+        "departamento": "Física",
+        "keywords": [
+          "solitons espaciais",
+          "não-linearidade cúbica-quintica",
+          "dióxido de carbono líquido"
+        ],
+        "ano": 2013
+      },
+      {
+        "filename": "ANDERSON MONTEIRO AMARAL.pdf",
+        "title": "Toward single-shot characterization of nonlinear optical refraction, absorption, and scattering of turbid media",
+        "departamento": "Física",
+        "keywords": [
+          "Óptica não linear",
+          "Meios turvos",
+          "Dispersão de luz"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "FLÁVIO MENEZES DE AGUIAR.pdf",
+        "title": "Experimental Microwave Scattering in Polygonal Billiards",
+        "departamento": "Física",
+        "keywords": [
+          "Espalhamento de micro-ondas",
+          "Espalhamento caótico",
+          "Teoria de matrizes aleatórias"
+        ],
+        "ano": 2019
+      },
+      {
+        "filename": "LEONARDO RIBEIRO EULALIO CABRAL.pdf",
+        "title": "Vortex configurations in thin superconducting equilateral triangles",
+        "departamento": "Física",
+        "keywords": [
+          "configurações de vórtices",
+          "triângulos supercondutores",
+          "limite de London"
+        ],
+        "ano": 2009
+      },
+      {
+        "filename": "LÚCIO HORA ACIOLI.pdf",
+        "title": "Zero-Area Single-Photon Pulses",
+        "departamento": "Física",
+        "keywords": [
+          "pulsos de fóton único",
+          "gases atômicos",
+          "informação quântica"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "MARCELO DE MOURA LEITE.pdf",
+        "title": "Chiral closed strings: four massless states scattering amplitude",
+        "departamento": "Física",
+        "keywords": [
+          "Amplitudes de dispersão",
+          "Teoria de cordas",
+          "Cordas quirais"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "MICHELLE OLIVEIRA DE ARAUJO.pdf",
+        "title": "Decay dynamics in the coupled-dipole model",
+        "departamento": "Física",
+        "keywords": [
+          "superradiância",
+          "subradiância",
+          "modelo de dipolo acoplado"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "RENE RODRIGUES MONTENEGRO FILHO.pdf",
+        "title": "Frustration-induced quantum phase transitions in a quasi-one-dimensional ferrimagnet: Hard-core boson map and the Tonks-Girardeau limit",
+        "departamento": "Física",
+        "keywords": [
+          "frustration",
+          "ferrimagnet",
+          "quantum phase transitions"
+        ],
+        "ano": 2008
+      },
+      {
+        "filename": "SÉRGIO WLADEMIR DA SILVA APOLINARIO.pdf",
+        "title": "Melting of anisotropically confined Coulomb balls",
+        "departamento": "Física",
+        "keywords": [
+          "Wigner crystal",
+          "melting process",
+          "anisotropic confinement"
+        ],
+        "ano": 2008
+      },
+      {
+        "filename": "WILSON BARROS JUNIOR.pdf",
+        "title": "Surface pattern formation in a swelling gel",
+        "departamento": "Física",
+        "keywords": [
+          "gel hinchable",
+          "formación de patrones superficiales",
+          "resonancia magnética nuclear"
+        ],
+        "ano": 2012
+      },
+      {
+        "filename": "ALYSON JOSE ALVES CARVALHO.pdf",
+        "title": "Enhanced absorption of weak ultrashort light pulses by a narrowband atomic medium",
+        "departamento": "Física",
+        "keywords": [
+          "absorção de luz",
+          "pulso ultracurto",
+          "meio atômico"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "PEDRO FELIX DA SILVA JUNIOR.pdf",
+        "title": "Estimated Age of the Universe in Fractional Cosmology",
+        "departamento": "Física",
+        "keywords": [
+          "Cosmologia Fracionária",
+          "Idade do Universo",
+          "Problema da Sincronicidade"
+        ],
+        "ano": 2023
+      },
+      {
+        "filename": "ANDERSON STEVENS LEONIDAS GOMES.pdf",
+        "title": "Observation of Lévy distribution and replica symmetry breaking in random lasers from a single set of measurements",
+        "departamento": "Física",
+        "keywords": [
+          "laser aleatório",
+          "distribuição de Lévy",
+          "quebra de simetria de réplica"
+        ],
+        "ano": 2016
+      },
+      {
+        "filename": "PEDRO HENRIQUE AMORIM ANJOS.pdf",
+        "title": "Controlling fingering instabilities in Hele-Shaw flows in the presence of wetting film effects",
+        "departamento": "Física",
+        "keywords": [
+          "Instabilidades de Dedo",
+          "Fluxos de Hele-Shaw",
+          "Efeitos de Molhagem"
+        ],
+        "ano": 2021
+      },
+      {
+        "filename": "EGLANIO JOSE PESSOA DA SILVA JUNIOR.pdf",
+        "title": "Ground-state phase diagram and thermodynamics of coupled trimer chains",
+        "departamento": "Física",
+        "keywords": [
+          "Diagrama de fase",
+          "Cadeias de trímeros acoplados",
+          "Magnetização"
+        ],
+        "ano": 2022
+      },
+      {
+        "filename": "PEDRO LINCK MACIEL.pdf",
+        "title": "Dynamics and computation in linear open quantum walks",
+        "departamento": "Física",
+        "keywords": [
+          "Open Quantum Walks",
+          "Quantum Computation",
+          "Simulation Protocol"
+        ],
+        "ano": 2025
+      },
+      {
+        "filename": "RAONI SÁVIO DE NEGREIROS MOREIRA.pdf",
+        "title": "Toward an experimental test for the finite-time wave function collapse",
+        "departamento": "Física",
+        "keywords": [
+          "Função de onda",
+          "Colapso",
+          "Emaranhamento"
+        ],
+        "ano": 2018
+      },
+      {
+        "filename": "RUBENS HENRIQUE DAMASCENA DE SOUZA.pdf",
+        "title": "Coexisting orbits and chaotic dynamics of a confined self-propelled particle",
+        "departamento": "Física",
+        "keywords": [
+          "partícula auto-propulsada",
+          "dinâmica caótica",
+          "potenciais de confinamento"
+        ],
+        "ano": 2022
+      },
+      {
+        "filename": "ANDRE LUIZ ALVES LIMA.pdf",
+        "title": "Conformal scale factor inversion for domain walls and holography",
+        "departamento": "Física",
+        "keywords": [
+          "Inversão de fator de escala conformal",
+          "Paredes de domínio",
+          "Holografia"
+        ],
+        "ano": 2020
+      },
+      {
+        "filename": "AZADEH MOHAMMADI.pdf",
+        "title": "Induced fermionic currents in de Sitter spacetime in the presence of a compactified cosmic string",
+        "departamento": "Física",
+        "keywords": [
+          "Corrente fermiônica",
+          "espaço-tempo de Sitter",
+          "corda cósmica"
+        ],
+        "ano": 2015
+      },
+      {
+        "filename": "BRUNO GERALDO CARNEIRO DA CUNHA.pdf",
+        "title": "Large gravitons and near-horizon diffeomorphisms",
+        "departamento": "Física",
+        "keywords": [
+          "simetrias assintóticas",
+          "buracos negros",
+          "gravitons"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "CID BARTOLOMEU DE ARAÚJO.pdf",
+        "title": "Lévy Statistics and the Glassy Behavior of Light in Random Fiber Lasers",
+        "departamento": "Física",
+        "keywords": [
+          "Laser de fibra aleatório",
+          "Estatística de Lévy",
+          "Comportamento vítreo"
+        ],
+        "ano": 2017
+      },
+      {
+        "filename": "ALBERT EINSTEIN.pdf",
+        "title": "ON THE ELECTRODYNAMICS OF MOVING BODIES",
+        "departamento": "Física",
+        "keywords": [
+          "Eletrodinâmica",
+          "Corpos em movimento",
+          "Teoria da relatividade"
+        ],
+        "ano": 1905
+      },
+      {
+        "filename": "CÉSAR LATTES.pdf",
+        "title": "n4047.indd",
+        "departamento": "Física",
+        "keywords": [
+          "Física",
+          "Natureza",
+          "Publicação"
+        ],
+        "ano": 1947
+      }
+    ]
+  }
+]

@@ -1,0 +1,608 @@
+{
+  "name": "n8n backend",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.message }}",
+        "options": {
+          "systemMessage": "=## PERSONA\n\nVocê é um assistente de IA amigável, prestativo e entusiasmado, atuando como um guia informativo sobre os professores e a produção acadêmica do CCEN da UFPE. Sua comunicação deve ser como a de um anfitrião em uma feira de ciências ou evento acadêmico: acolhedora, clara e acessível para um público geral.\n\n## TAREFA PRINCIPAL\n\nResponder às perguntas do usuário sobre os professores do CCEN, suas áreas de pesquisa, currículo e trabalhos acadêmicos, utilizando o `MATERIAL DE CONSULTA` fornecido. O objetivo é tornar a ciência e a pesquisa do centro acessíveis e interessantes para todos.\n\n## DIRETRIZES E REGRAS\n\n1.  **Idioma:** Responda **SEMPRE** em Português do Brasil.\n2.  **Tom e Estilo:** Adote um tom acolhedor e entusiasmado. Explique conceitos complexos e termos técnicos de forma simples, como se estivesse conversando com um visitante curioso com pouco conhecimento prévio na área.\n3.  **Diretividade:** Seja direto e evite frases de preenchimento como \"com base nas informações que tenho\" ou \"de acordo com o documento\". Vá direto ao ponto de forma natural.\n4.  **Tradução:** Se o `MATERIAL DE CONSULTA` estiver em inglês, traduza as informações relevantes para o português de forma fluida e natural durante a explicação. Não faça uma tradução literal, mas sim uma interpretação clara do conteúdo.\n5.  **Gerenciamento de Incerteza (CRÍTICO):**\n    * **Não faça suposições.** Se uma informação não estiver explicitamente no material, não a invente.\n    * Se você **não souber a resposta**, admita de forma clara e prestativa. Exemplo: \"Não encontrei detalhes sobre a pesquisa X do Professor Y, mas posso te contar sobre a área de atuação geral dele, que é...\"\n    * Se você **souber parcialmente**, entregue o que sabe e indique a lacuna. Exemplo: \"O curriculo fala sobre o desenvolvimento de um novo algoritmo para otimização, mas não detalha em qual linguagem de programação ele foi implementado.\"\n6.  **Foco no Relevante:** Ao falar foque em responder à pergunta do usuário e em resumir os pontos principais: Qual foi o problema estudado? Qual foi a solução ou descoberta? E por que isso é importante? Evite se perder em detalhes excessivamente técnicos.\n\n## FORMATO DA RESPOSTA\n\n* Sua resposta deve ser em texto corrido, como um parágrafo conversacional.\n* Evite formatações rígidas como JSON ou listas de marcadores, a menos que seja a forma mais clara de apresentar uma informação específica (ex: listar as 3 principais publicações).\n* A resposta deve fluir como uma conversa natural e humana."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        672
+      ],
+      "id": "36e0fc60-663e-46f5-9660-967fd03937e4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cfcade94-5e28-4017-8668-938ecf82f7a9",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -768,
+        928
+      ],
+      "id": "80c7dc17-7dc2-43d5-a175-655bf9472706",
+      "name": "Webhook",
+      "webhookId": "cfcade94-5e28-4017-8668-938ecf82f7a9"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"response\": $json.output } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1728,
+        672
+      ],
+      "id": "b3c5dd6e-89c9-41bc-a7fb-ff8446ebb1e3",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e810245a-f2a4-4c3e-b03e-6c300fbfdb3c",
+                    "leftValue": "={{ $json.body.context }}",
+                    "rightValue": "general",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "GENERAL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.context }}",
+                    "rightValue": "article_chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "45766485-e972-4814-9dec-10c46c001209"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ARTICLE_CHAT"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -544,
+        928
+      ],
+      "id": "75c86c16-f7a6-4290-8a06-cc3454405db7",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "=## PERSONA & CONTEXTO\nVocê é o \"Assessor Científico Digital\", um assistente de IA especialista na produção científica do Professor `{{ $json.body.professor_name }}` do CCEN da UFPE. Sua missão é explicar, de forma clara, acessível e entusiasmada, as informações contidas em um artigo científico específico, aja como se estivesse ajudando uma visitante numa feira de ciências. Sua única fonte de conhecimento é este documento, e sua interação com ele é feita através de uma ferramenta de busca vetorial.\n\n## FERRAMENTA OBRIGATÓRIA\n- **Nome da Ferramenta:** `busca_artigo`\n- **Função:** Buscar e recuperar trechos relevantes *exclusivamente* de dentro do artigo científico em sua base de conhecimento. O uso desta ferramenta é mandatório para formular qualquer resposta.\n\n## TAREFA PRINCIPAL (PLANO DE AÇÃO)\nPara cada pergunta do usuário, você DEVE seguir rigorosamente este processo:\n1.  **Analisar a pergunta** do usuário para extrair a intenção principal.\n2.  **Executar a ferramenta `busca_artigo`** com uma consulta otimizada para encontrar os trechos mais relevantes do artigo que respondem à pergunta.\n3.  **Sintetizar a resposta** baseando-se **estritamente** nos trechos retornados pela ferramenta.\n4.  **Apresentar a resposta** ao usuário de forma didática, simplificando termos técnicos e seguindo todas as regras abaixo.\n\n## REGRAS E DIRETRIZES DE EXECUÇÃO\n1.  **IDIOMA:** Responda **SEMPRE** em português brasileiro.\n2.  **ESCOPO DA RESPOSTA (CRÍTICO):** Responda **apenas** com informações encontradas no artigo através da ferramenta. Se a pergunta sair deste escopo, use a seguinte resposta padrão, sem adicionar mais nada:\n    > \"Minha especialidade é o artigo do professor `{{ $json.body.professor_name }}`. A informação que você pediu não está neste documento, mas posso detalhar qualquer ponto da pesquisa que ele aborda.\"\n3.  **FONTE DA INFORMAÇÃO:** Integre a informação de forma natural na sua resposta. Diga \"No estudo, o professor aponta que...\" em vez de \"A ferramenta de busca retornou que...\". Sua persona é a de um especialista no artigo, não um operador da ferramenta.\n4.  **TOM E LINGUAGEM:** Seja acolhedor, didático e entusiástico. Simplifique jargões técnicos e use analogias se for o caso. Evite frases genéricas e explique o *porquê* das coisas com base nos dados do artigo.\n5.  **PROIBIÇÃO:** É expressamente proibido inventar, adivinhar ou completar informações que não foram retornadas pela ferramenta `qdrant_vector_store`.\n\n## FORMATO DA RESPOSTA\n- Texto corrido, em formato de conversa natural e informativa.\n\n## DADOS DE ENTRADA\n- **Nome do Professor:** `{{ $json.body.professor_name }}`"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -160,
+        1184
+      ],
+      "id": "f366c1d4-94d4-4610-9f82-57e402e2f661",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.session_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -192,
+        1408
+      ],
+      "id": "2d33747b-aaef-4dc9-8b11-b7006109f4fb",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"response\": $json.output } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        592,
+        1184
+      ],
+      "id": "c53638f2-a834-4865-9a0f-20f7661b3925",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## CONTEXTO\n\nVocê é uma IA de análise de texto altamente especializada. Seu único propósito é identificar e extrair com precisão entidades-chave de perguntas sobre pesquisadores, seus departamentos e áreas de pesquisa.\n\n---\n\n## TAREFA\n\nAnalise a \"MENSAGEM DO USUÁRIO PARA PROCESSAR\" abaixo e extraia as seguintes entidades: `nome_professor`, `departamento` e `palavras_chave`.\n\n---\n\n## INSTRUÇÕES\n\n1.  Leia atentamente a mensagem do usuário.\n2.  Identifique o **nome do professor** (`nome_professor`). Geralmente é um nome próprio, muitas vezes precedido por títulos como \"professor\", \"professora\", \"Dr.\" ou \"Dra.\".\n3.  Identifique o **departamento** ou área acadêmica (`departamento`). Procure por termos como \"do departamento de\", \"da área de\", \"em\", seguido por um campo de estudo.\n4.  **REGRA DE DEPARTAMENTO:** A chave `departamento` só pode ter um dos seguintes valores: \"**quimica**\", \"**fisica**\", \"**estatistica**\" ou \"**matematica**\". Se o departamento mencionado na mensagem não for um desses, omita a chave `departamento` da saída.\n5.  Extraia as **palavras-chave** ou tópicos de pesquisa (`palavras_chave`). São os principais conceitos ou áreas de estudo sobre os quais o usuário está perguntando. Eles podem aparecer após frases como \"pesquisas em\", \"trabalhos sobre\", \"estudos de\".\n6.  **REGRA CRÍTICA:** Se você não conseguir identificar explicitamente alguma dessas entidades na mensagem (ou se elas não atenderem às regras acima), simplesmente **omita a chave** correspondente da saída final. Inclua no JSON **apenas** os dados que você tem certeza que encontrou.\n\n---\n\n## FORMATO DE SAÍDA\n\n* Retorne os resultados em um formato JSON estruturado.\n* O objeto JSON deve conter apenas as chaves para as entidades que foram encontradas.\n* `nome_professor`: O nome do professor como uma `string`.\n* `departamento`: O nome do departamento como uma `string`, restrito a \"quimica\", \"fisica\", \"estatistica\" ou \"matematica\".\n* `palavras_chave`: Os tópicos de pesquisa como um **array de strings**.\n* **Exemplo 1:** Para a mensagem \"Vc conhece o professor Pavão do departamento de quimica, quero saber sobre suas pesquisas em supercondutividade?\", a saída deve ser:\n    ```json\n    {\n      \"nome_professor\": \"Pavão\",\n      \"departamento\": \"quimica\",\n      \"palavras_chave\": [\"supercondutividade\"]\n    }\n    ```\n* **Exemplo 2:** Para a mensagem \"me fale sobre os trabalhos da Ana em inteligência artificial\", a saída deve ser:\n    ```json\n    {\n      \"nome_professor\": \"Ana\",\n      \"palavras_chave\": [\"inteligência artificial\"]\n    }\n    ```\n* **Exemplo 3 (Nova Regra):** Para a mensagem \"Quais as pesquisas do Dr. Silva do departamento de biologia?\", a saída deve ser:\n    ```json\n    {\n      \"nome_professor\": \"Silva\"\n    }\n    ```\n    *(Nota: O departamento \"biologia\" foi omitido porque não está na lista permitida).*\n\n---\n\n## MENSAGEM DO USUÁRIO PARA PROCESSAR\n\n{{ $json.body.message }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -32,
+        576
+      ],
+      "id": "ca19e7d7-3348-47fa-b44d-efb2c6cb522e",
+      "name": "General Orchestrator",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"title\": \"ExtracaoEntidadesAcademicas\",\n  \"type\": \"object\",\n  \"description\": \"Schema para extrair informações sobre professores, departamentos e palavras-chave de pesquisa.\",\n  \"properties\": {\n    \"nome_professor\": {\n      \"type\": \"string\",\n      \"description\": \"Nome do professor ou pesquisador extraído da pergunta do usuário.\"\n    },\n    \"departamento\": {\n      \"type\": \"string\",\n      \"description\": \"Departamento acadêmico, instituto ou área de atuação do professor mencionado.\"\n    },\n    \"palavras_chave\": {\n      \"type\": \"array\",\n      \"description\": \"O principal tópico de pesquisa, conceito ou palavra-chave de interesse mencionada pelo usuário.\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        800
+      ],
+      "id": "d7d4079d-de3c-4e45-b76c-a0cc0a581a5f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Acessa todos os itens que chegam ao nó\nconst items = $input.all();\n\n// Itera sobre cada item no array de entrada\nfor (const item of items) {\n  // --- Bloco de código original para 'departamento' ---\n  if (item.json && item.json.output && item.json.output.departamento) {\n    item.json.output.departamento = item.json.output.departamento.normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\");\n  }\n\n  // --- NOVO BLOCO DE CÓDIGO PARA 'PALAVRAS_CHAVE' ---\n  // Verifica se o campo 'palavras_chave' existe e se é um array\n  if (item.json && item.json.output && Array.isArray(item.json.output.palavras_chave)) {\n    // Concatena os itens do array em uma única string, separados por espaço\n    item.json.output.palavras_chave = item.json.output.palavras_chave.join(' ');\n  }\n}\n\n// Retorna os itens modificados para o próximo nó\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        672
+      ],
+      "id": "571e8a90-4ec0-4c22-b662-e3f6206a9edc",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.session_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        928
+      ],
+      "id": "8242d08d-9b36-4155-b755-7741973afbb8",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        800
+      ],
+      "id": "69fce5ba-5473-439c-8198-216a9ba491db",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "h9rWZQgaEHCCPQLi",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        816,
+        896
+      ],
+      "id": "c91e5f97-e576-49d5-9b06-2506caeeef6b",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "h9rWZQgaEHCCPQLi",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        1408
+      ],
+      "id": "d30191f7-b68c-4435-a5ea-2703d143195e",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "h9rWZQgaEHCCPQLi",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        1104
+      ],
+      "id": "3d1218a6-9142-4d6b-824e-8cc19fab74dc",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "h9rWZQgaEHCCPQLi",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        16,
+        1616
+      ],
+      "id": "7eeb2fb9-818e-4378-ab8b-4c425b751ff7",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "h9rWZQgaEHCCPQLi",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## CONTEXTO\n\nVocê é uma IA de análise de texto altamente especializada. Seu único propósito é identificar e extrair com precisão entidades-chave de perguntas sobre pesquisadores, seus departamentos e áreas de pesquisa.\n\n---\n\n## TAREFA\n\nAnalise a \"MENSAGEM DO USUÁRIO PARA PROCESSAR\" abaixo e extraia as seguintes entidades: `nome_professor`, `departamento` e `palavras_chave`.\n\n---\n\n## INSTRUÇÕES\n\n1.  Leia atentamente a mensagem do usuário.\n2.  Identifique o **nome do professor** (`nome_professor`). Geralmente é um nome próprio, muitas vezes precedido por títulos como \"professor\", \"professora\", \"Dr.\" ou \"Dra.\".\n3.  Identifique o **departamento** ou área acadêmica (`departamento`). Procure por termos como \"do departamento de\", \"da área de\", \"em\", seguido por um campo de estudo.\n4.  **REGRA DE DEPARTAMENTO:** A chave `departamento` só pode ter um dos seguintes valores: \"**quimica**\", \"**fisica**\", \"**estatistica**\" ou \"**matematica**\". Se o departamento mencionado na mensagem não for um desses, omita a chave `departamento` da saída.\n5.  Extraia as **palavras-chave** ou tópicos de pesquisa (`palavras_chave`). São os principais conceitos ou áreas de estudo sobre os quais o usuário está perguntando. Eles podem aparecer após frases como \"pesquisas em\", \"trabalhos sobre\", \"estudos de\".\n6.  **REGRA CRÍTICA:** Se você não conseguir identificar explicitamente alguma dessas entidades na mensagem (ou se elas não atenderem às regras acima), simplesmente **omita a chave** correspondente da saída final. Inclua no JSON **apenas** os dados que você tem certeza que encontrou.\n\n---\n\n## FORMATO DE SAÍDA\n\n* Retorne os resultados em um formato JSON estruturado.\n* O objeto JSON deve conter apenas as chaves para as entidades que foram encontradas.\n* `nome_professor`: O nome do professor como uma `string`.\n* `departamento`: O nome do departamento como uma `string`, restrito a \"quimica\", \"fisica\", \"estatistica\" ou \"matematica\".\n* `palavras_chave`: Os tópicos de pesquisa como um **array de strings**.\n* **Exemplo 1:** Para a mensagem \"Vc conhece o professor Pavão do departamento de quimica, quero saber sobre suas pesquisas em supercondutividade?\", a saída deve ser:\n    ```json\n    {\n      \"nome_professor\": \"Pavão\",\n      \"departamento\": \"quimica\",\n      \"palavras_chave\": [\"supercondutividade\"]\n    }\n    ```\n* **Exemplo 2:** Para a mensagem \"me fale sobre os trabalhos da Ana em inteligência artificial\", a saída deve ser:\n    ```json\n    {\n      \"nome_professor\": \"Ana\",\n      \"palavras_chave\": [\"inteligência artificial\"]\n    }\n    ```\n* **Exemplo 3 (Nova Regra):** Para a mensagem \"Quais as pesquisas do Dr. Silva do departamento de biologia?\", a saída deve ser:\n    ```json\n    {\n      \"nome_professor\": \"Silva\"\n    }\n    ```\n    *(Nota: O departamento \"biologia\" foi omitido porque não está na lista permitida).*\n\n---\n\n## MENSAGEM DO USUÁRIO PARA PROCESSAR\n\n{{ $json.body.message }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -768,
+        240
+      ],
+      "id": "49022a1c-4b9e-4bff-90d8-783e6a1d985e",
+      "name": "General Orchestrator1",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "=Consulta em linguagem natural para busca semântica sobre professor {{ $('Code').item.json.output.nome_professor }}, departamento {{ $('Code').item.json.output.departamento }} ou áreas de pesquisa do CCEN da UFPE. Use termos e conceitos relacionados ao que busca.\n\n##O material retornado é apenas referente a **CURRICULOS**",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "ccen-docentes",
+          "mode": "list",
+          "cachedResultName": "ccen-docentes"
+        },
+        "topK": 5,
+        "options": {
+          "searchFilterJson": "={\n  \"should\": [\n      {\n        \"key\": \"metadata.nome_professor\",\n        \"match\": {\n          \"text\": \"{{ $('Code').item.json.output.nome_professor }}\"\n        }\n      },\n      {\n        \"key\": \"metadata.departamento\",\n        \"match\": {\n          \"text\": \"{{ $('Code').item.json.output.departamento }}\" \n        }\n      },\n      {\n        \"key\": \"content\",\n        \"match\": {\n          \"text\": \"{{ $('Code').item.json.output.palavras_chave }}\" \n        }\n      }\n  ]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        1072,
+        896
+      ],
+      "id": "aa368414-a5d4-4620-98db-8f39459484cf",
+      "name": "busca_curriculos_professores",
+      "notesInFlow": false,
+      "credentials": {
+        "qdrantApi": {
+          "id": "sViEkpXSENhMFJ7f",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "=Ferramente para recuperar informações sobre o artigo do professor {{ $('Switch').item.json.body.professor_name }}",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "ccen-artigos",
+          "mode": "list",
+          "cachedResultName": "ccen-artigos"
+        },
+        "options": {
+          "searchFilterJson": "={\n  \"should\": [\n      {\n        \"key\": \"metadata.nome_professor\",\n        \"match\": {\n          \"text\": \"{{ $('Switch').item.json.body.professor_name }}\"\n        }\n      },\n      {\n        \"key\": \"content\",\n        \"match\": {\n          \"text\": \"{{ $('Switch').item.json.body.message }}\" \n        }\n      }\n  ]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        1408
+      ],
+      "id": "9e49691c-406b-4009-8c52-8cb22cf2934d",
+      "name": "busca_artigo",
+      "notesInFlow": false,
+      "credentials": {
+        "qdrantApi": {
+          "id": "sViEkpXSENhMFJ7f",
+          "name": "QdrantApi account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "body": {
+            "message": "me fale sobre o artigo do professor pavao de quimica",
+            "session_id": "k6dc919b-03d1-4df0-a69a-c63f4fbbd1be",
+            "context": "article_chat",
+            "professor_name": "ANTONIO CARLOS PAVÃO"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "General Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "General Orchestrator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "General Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "General Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "busca_curriculos_professores",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "busca_artigo",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "busca_curriculos_professores": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "busca_artigo": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c38cd9fc-7c5e-415a-8ec8-d0fba5da1cb7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cfb5caf386a94ef6e229d25f5b3cde047a156187b06c23c42b7984a1e78bb221"
+  },
+  "id": "KtzhUmg6AXNFBEqA",
+  "tags": []
+}

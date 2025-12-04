@@ -489,10 +489,10 @@ function ModernChatInterface({ onResetChat, resetTrigger }: ModernChatInterfaceP
   const lastResetTriggerRef = useRef<number>(0);
 
   const suggestedActions: SuggestedAction[] = [
-    { id: "1", text: "Trabalhos sobre matemática discreta", icon: <GraduationCap className="w-3 h-3" />},
-    { id: "2", text: "Fale sobre professores do departamento de matemática", icon: <Users className="w-3 h-3" />},
-    { id: "3", text: "Quais professores trabalham com física quântica?", icon: <MessageCircle className="w-3 h-3" />},
-    { id: "4", text: "Quero saber mais sobre o professor Pavão", icon: <Globe className="w-3 h-3" />}
+    { id: "1", text: "Conte-me sobre os professores do CCEN", icon: <GraduationCap className="w-3 h-3" />},
+    { id: "2", text: "Quais são as áreas de pesquisa do departamento?", icon: <Users className="w-3 h-3" />},
+    { id: "3", text: "Como posso acessar os currículos dos professores?", icon: <MessageCircle className="w-3 h-3" />},
+    { id: "4", text: "Fale sobre as publicações científicas", icon: <Globe className="w-3 h-3" />}
   ];
 
   const playAudio = (audioBase64: string, format: string = 'mp3', messageId?: string) => {

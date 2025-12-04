@@ -1,5 +1,5 @@
 import openai
-from langchain_ollama import OllamaEmbeddings, OllamaLLM, ChatOllama
+from langchain_ollama import OllamaLLM, ChatOllama
 from utils.logger import setup_logger
 from qdrant_client import QdrantClient, models
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -108,17 +108,28 @@ class ChatService:
                 Responde sempre em PORTUGUÊS BRASILEIRO.
                                                  """
         
-        self.agent_executor = create_react_agent(self.llm, self.tools, checkpointer=self.memory, prompt=self.prompt)
-        self.agent_executor.invoke({"messages": [HumanMessage(content="Aquecendo agente")]}, {'configurable': {'thread_id': 0}})
-        print("Agente aquecido")    
+        # Nova API do langgraph não aceita mais prompt como parâmetro
+        self.agent_executor = create_react_agent(self.llm, self.tools, checkpointer=self.memory)
+        # Removido aquecimento do agente devido a bug no langchain_ollama
+        print("Agente inicializado (aquecimento desabilitado)")    
         
 
     def set_collection(self, use_local_collection=False, collection_name=None, embed_model=None, qdrant_url=None, qdrant_api_key=None, path="./", docs=None):
         self.use_local_collection = use_local_collection
         self.collection_name = collection_name
-        import os
-        ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
+        # Tentar usar Gemini Pro primeiro, fallback para Ollama se necessário
+        try:
+            # Importação tardia para evitar dependência obrigatória em tempo de import do módulo
+            from services.embeddings import GeminiEmbeddings
+            self.embeddings = GeminiEmbeddings(model=embed_model)
+            logger.info(f"✅ Usando Gemini Pro para embeddings: {embed_model}")
+        except Exception as e:
+            logger.warning(f"⚠️ Falha ao inicializar Gemini Pro: {e}")
+            logger.info("🔄 Usando fallback Ollama para embeddings")
+            import os
+            from langchain_ollama import OllamaEmbeddings
+            ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            self.embeddings = OllamaEmbeddings(model="all-minilm:l6-v2", base_url=ollama_base_url)
         self.path = path
         self.docs = docs
 
@@ -140,7 +151,7 @@ class ChatService:
         """
         results = self.qdrant_client.facet(
             collection_name=self.collection_name,
-            key="nome_professor",
+            key="metadata.nome_professor",
             limit=50000
         )
         unique_teacher_names = [hit.value for hit in results.hits]
@@ -156,7 +167,7 @@ class ChatService:
         teacher_filter = models.Filter(
             must=[
                 models.FieldCondition(
-                    key="nome_professor",  # O nome do campo no seu payload do Qdrant
+                    key="metadata.nome_professor",  # O nome do campo agora está em metadata
                     #match=models.MatchValue(value=name)  # O valor que você quer que seja igual
                     match=models.MatchText(
                         text=name  # A string de busca para texto completo
@@ -173,9 +184,11 @@ class ChatService:
 
         contexts = []
         for result in results:
-            text = result.payload.get("text", "")
-            professor = result.payload.get("nome_professor", "")
-            dept = result.payload.get("departamento", "")
+            # Nova estrutura: content está no nível superior, metadados em metadata
+            text = result.payload.get("content", "")
+            metadata = result.payload.get("metadata", {})
+            professor = metadata.get("nome_professor", "")
+            dept = metadata.get("departamento", "")
             contexts.append(f"Professor: {professor}\nDepartamento: {dept}\nInformação: {text}\n")
         
         return "\n".join(contexts) if contexts else "Nenhum resultado encontrado."
@@ -198,9 +211,11 @@ class ChatService:
         # Format results
         contexts = []
         for result in results:
-            text = result.payload.get("text", "")
-            professor = result.payload.get("nome_professor", "")
-            dept = result.payload.get("departamento", "")
+            # Nova estrutura: content está no nível superior, metadados em metadata
+            text = result.payload.get("content", "")
+            metadata = result.payload.get("metadata", {})
+            professor = metadata.get("nome_professor", "")
+            dept = metadata.get("departamento", "")
             contexts.append(f"Professor: {professor}\nDepartamento: {dept}\nInformação: {text}\n")
         
         return "\n".join(contexts) if contexts else "Nenhum resultado encontrado."
@@ -216,7 +231,7 @@ class ChatService:
             # Criar filtros
             filters = [
                 models.FieldCondition(
-                    key="tipo_de_documento",
+                    key="metadata.tipo_de_documento",
                     match=models.MatchValue(value="artigo")
                 )
             ]
@@ -225,7 +240,7 @@ class ChatService:
             if professor_name and professor_name.strip():
                 filters.append(
                     models.FieldCondition(
-                        key="nome_professor",
+                        key="metadata.nome_professor",
                         match=models.MatchText(text=professor_name.strip())
                     )
                 )
@@ -241,11 +256,13 @@ class ChatService:
 
             contexts = []
             for result in results:
-                text = result.payload.get("text", "")
-                professor = result.payload.get("nome_professor", "")
-                dept = result.payload.get("departamento", "")
-                title = result.payload.get("titulo", "")
-                year = result.payload.get("ano", "")
+                # Nova estrutura: content está no nível superior, metadados em metadata
+                text = result.payload.get("content", "")
+                metadata = result.payload.get("metadata", {})
+                professor = metadata.get("nome_professor", "")
+                dept = metadata.get("departamento", "")
+                title = metadata.get("titulo", "")
+                year = metadata.get("ano", "")
                 
                 context = f"Professor: {professor}\nDepartamento: {dept}"
                 if title:
@@ -312,4 +329,58 @@ OBJETIVO: Tornar a produção científica do CCEN acessível e interessante para
                 return response.choices[0].message.content
         except Exception as e:
             logger.error(f"Erro ao obter resposta do modelo: {str(e)}")
+            raise
+
+    async def get_article_response(self, message, session_id, professor_name):
+        """
+        Obtém uma resposta do modelo para a mensagem fornecida, focada em artigos de um professor específico.
+        
+        Args:
+            message (str): Mensagem do usuário
+            session_id (str): ID da sessão
+            professor_name (str): Nome do professor para filtrar artigos
+            
+        Returns:
+            str: Resposta do modelo
+        """
+        try:
+            # Buscar artigos do professor específico
+            article_context = self.search_article(message, professor_name)
+            
+            # Criar prompt específico para artigos do professor
+            article_prompt = f"""
+<System>INSTRUÇÃO ESPECÍFICA PARA CHAT DE ARTIGOS:
+
+Você é um assistente especializado em artigos científicos do professor {professor_name} do CCEN da UFPE.
+
+CONTEXTO DOS ARTIGOS:
+{article_context}
+
+DIRETRIZES:
+1. IDIOMA: Responda SEMPRE em português brasileiro
+2. FOCO: Responda apenas sobre artigos e pesquisas do professor {professor_name}
+3. APRESENTAÇÃO: Seja claro e didático ao explicar os conceitos
+4. SIMPLIFICAÇÃO: Traduza termos técnicos para linguagem acessível
+5. TOM: Seja acolhedor e entusiástico sobre as pesquisas
+6. EVITE: Frases genéricas ou informações não relacionadas ao professor
+
+OBJETIVO: Tornar acessível a produção científica do professor {professor_name}.</System>
+
+Usuário: {message}
+"""
+            
+            if self.use_local_model:
+                response = self.agent_executor.invoke({"messages": [HumanMessage(content=article_prompt)]}, {'configurable': {'thread_id': session_id}})
+                return response['messages'][-1].content
+            else:
+                response = await openai.ChatCompletion.acreate(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": article_prompt},
+                        {"role": "user", "content": message}
+                    ]
+                )
+                return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Erro ao obter resposta de artigo do modelo: {str(e)}")
             raise

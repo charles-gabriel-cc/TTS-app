@@ -130,10 +130,32 @@ services:
       bash
       "
 
+  # n8n - Automação de workflows (desenvolvimento)
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: tts-n8n-dev
+    ports:
+      - "15678:5678"
+    environment:
+      - GENERIC_TIMEZONE=America/Recife
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:15678/
+      - N8N_EDITOR_BASE_URL=http://localhost:15678/
+      - DB_SQLITE_VACUUM_ON_STARTUP=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+    networks:
+      - tts-network
+
 volumes:
   qdrant_data:
     driver: local
   ollama_data:
+    driver: local
+  n8n_data:
     driver: local
 
 networks:

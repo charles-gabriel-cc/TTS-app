@@ -30,7 +30,7 @@ docker-compose -f docker-compose.yml down
 
 echo.
 echo 3. Subindo containers...
-docker-compose -f docker-compose.yml up -d
+docker-compose -f docker-compose.yml up --build -d
 
 echo.
 echo 4. Aguardando containers ficarem prontos...
@@ -41,8 +41,8 @@ echo 5. Verificando status dos containers...
 docker-compose -f docker-compose.yml ps
 
 echo.
-echo 6. Entrando no container e executando servidor...
-echo Para sair, pressione Ctrl+C e depois 'exit'
+echo 6. Exibindo logs do backend (Gunicorn)...
+echo Para sair, pressione Ctrl+C
 echo.
 
-docker exec -it tts-app-backend bash -c "python server.py" 
+docker-compose -f docker-compose.yml logs -f tts-app

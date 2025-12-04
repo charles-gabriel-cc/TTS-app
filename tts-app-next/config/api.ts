@@ -5,7 +5,10 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost
 export const API_ENDPOINTS = {
   speechToText: `${API_BASE_URL}/transcribe/`,
   chat: `${API_BASE_URL}/chat/`,
-  chatWithTTS: `${API_BASE_URL}/chat_with_tts/`
+  chatWithTTS: `${API_BASE_URL}/chat_with_tts/`,
+  articleChat: `${API_BASE_URL}/article_chat/`,
+  articleChatWithTTS: `${API_BASE_URL}/article_chat_with_tts/`,
+  backend: API_BASE_URL
 }
 
 // ⚙️ CONFIGURAÇÕES DE TIMEOUT - AJUSTE AQUI
@@ -14,7 +17,7 @@ export const TIMEOUT_CONFIG = {
   SERVER_HEALTH_CHECK: 5,
   
   // Timeout para requisições de chat (em segundos)
-  CHAT_REQUEST: 120,
+  CHAT_REQUEST: 240,
   
   // Timeout para requisições de transcrição de áudio (em segundos)
   TRANSCRIPTION_REQUEST: 60,

@@ -1,0 +1,32 @@
+fastapi
+openai-whisper
+uvicorn
+python-multipart
+langchain>=0.1.0
+openai
+python-dotenv
+dotenv
+ollama
+qdrant-client>=1.6.0
+pdfminer
+pdfminer.six
+llama-index-embeddings-ollama
+llama-index[all]
+langchain-community>=0.0.10
+gradio>=4.0.0
+langchain-core==0.3.15
+langchain-ollama==0.2.1
+sentence-transformers
+qdrant-client[fastembed]
+qdrant-client[fastembed-gpu]
+langgraph==0.2.39
+TTS
+gtts
+redis>=5.0.0
+httpx
+google-generativeai==0.7.2
+langchain-google-genai==1.0.10
+
+#echo '📦 Instalando dependências runtime mínimas...';
+#python -m pip install -q --no-cache-dir --upgrade pip || true;
+#python -m pip install -q --no-cache-dir gunicorn uvicorn redis langchain-core==0.3.67 langchain-ollama==0.3.3 langchain==0.3.26 langchain-community==0.3.26 langchain-text-splitters==0.3.8 google-generativeai==0.7.2 || true;

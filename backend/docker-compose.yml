@@ -1,29 +1,6 @@
 version: '3.8'
 
 services:
-  # Serviço Ollama para modelos locais
-  ollama:
-    image: ollama/ollama:latest
-    container_name: tts-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - CUDA_VISIBLE_DEVICES=0
-    restart: unless-stopped
-    networks:
-      - tts-network
-    # Suporte para GPU (requer NVIDIA Docker runtime)
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
   # Serviço Qdrant standalone (opcional - pode usar o integrado)
   qdrant:
     image: qdrant/qdrant:latest
@@ -65,9 +42,13 @@ services:
       - SERVER_PORT=8000
       - QDRANT_URL=http://qdrant:6333
       - OLLAMA_BASE_URL=http://ollama:11434
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
       - USE_LOCAL_COLLECTION=true
       - COLLECTION_NAME=ccen-docentes
       - USE_LOCAL_MODEL=true
+      # Configurações do Gemini
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       # Configurações CUDA
       - NVIDIA_VISIBLE_DEVICES=all
       - CUDA_VISIBLE_DEVICES=0
@@ -77,39 +58,29 @@ services:
       - LANGSMITH_PROJECT=backend
     depends_on:
       - qdrant
-      - ollama
     restart: on-failure
     command: >
       bash -c "
       echo '=== TTS-APP com CUDA 11.8 e Python $$(python --version) ===';
       echo '🔧 Verificando CUDA...';
-      nvidia-smi;
+      nvidia-smi || true;
+      echo '📦 Instalando dependências runtime mínimas...';
+      python -m pip install -q --no-cache-dir --upgrade pip || true;
+      python -m pip install -q --no-cache-dir gunicorn uvicorn redis langchain-core==0.3.67 langchain-ollama==0.3.3 langchain==0.3.26 langchain-community==0.3.26 langchain-text-splitters==0.3.8 google-generativeai==0.7.2 langchain-google-genai || true;
       echo '⏳ Aguardando Qdrant ficar disponível...';
-      while ! curl -s http://qdrant:6333/health > /dev/null 2>&1; do
+      until curl -s http://qdrant:6333/health > /dev/null 2>&1; do
         echo '   Qdrant ainda não disponível, aguardando...';
         sleep 2;
       done;
       echo '✅ Qdrant está disponível!';
-      echo '⏳ Aguardando Ollama ficar disponível...';
-      while ! curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
-        echo '   Ollama ainda não disponível, aguardando...';
-        sleep 3;
+      echo '⏳ Aguardando Redis ficar disponível (tcp/6379)...';
+      until bash -c 'echo > /dev/tcp/redis/6379' 2>/dev/null; do
+        echo '   Redis ainda não disponível, aguardando...';
+        sleep 1;
       done;
-      echo '✅ Ollama está disponível!';
-      echo '🔥 Aquecendo Ollama...';
-      echo \"   Enviando mensagem inicial para carregar modelo: $${MODEL_NAME}...\";
-      response=$$(curl -s -X POST http://ollama:11434/api/generate -H 'Content-Type: application/json' -d '{\"model\":\"$${MODEL_NAME}\",\"prompt\":\"Hello\",\"stream\":false}' | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data.get(\"response\",\"Erro no parsing\").strip())' 2>/dev/null || echo 'Erro na conexão');
-      echo '🚀 Ollama respondeu:' \"$$response\";
-      echo '';
-      echo '🎯 AMBIENTE PRONTO!';
-      echo '📝 Para iniciar o servidor Python, execute:';
-      echo '   python server.py';
-      echo '';
-      echo '💡 Ou use o container interativamente:';
-      echo '   docker exec -it tts-app-backend bash';
-      echo '';
-      echo '🔄 Mantendo container rodando...';
-      tail -f /dev/null
+      echo '✅ Redis está disponível!';
+      echo '🚀 Iniciando Gunicorn com múltiplos workers...';
+      exec gunicorn --bind 0.0.0.0:8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --keep-alive 5 server:app
       "
     networks:
       - tts-network
@@ -122,10 +93,44 @@ services:
               count: 1
               capabilities: [gpu]
 
+  redis:
+    image: redis:7-alpine
+    container_name: tts-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - tts-network
+
+  # n8n - Automação de workflows
+  n8n:
+    image: n8nio/n8n:1.109.1
+    container_name: tts-n8n
+    ports:
+      - "15678:5678"
+    environment:
+
+      - GENERIC_TIMEZONE=America/Recife
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:15678/
+      - N8N_EDITOR_BASE_URL=http://localhost:15678/
+      - DB_SQLITE_VACUUM_ON_STARTUP=true
+      - NODES_INCLUDE=n8n-nodes-qdrant
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./articles:/articles
+    restart: unless-stopped
+    networks:
+      - tts-network
+
 volumes:
   qdrant_data:
     driver: local
   ollama_data:
+    driver: local
+  n8n_data:
     driver: local
 
 networks:

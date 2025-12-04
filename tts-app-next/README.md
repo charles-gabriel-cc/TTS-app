@@ -6,7 +6,7 @@ Este guia explica como configurar e usar o modo de desenvolvimento para o fronte
 
 - **Node.js** v18 ou superior
 - **npm**
-- **Backend** rodando (veja configuração abaixo)
+- **Backend** rodando (FastAPI + integração com n8n)
 
 ## 🛠️ Configuração Inicial
 
@@ -22,8 +22,8 @@ npm install
 Crie um arquivo `.env.local` na raiz do projeto frontend:
 
 ```env
-# URL da API do backend
-NEXT_PUBLIC_API_URL=http://endereço_local_do_backend:8000
+# URL da API do backend (FastAPI)
+NEXT_PUBLIC_API_URL=http://endereco_do_backend:8000
 ```
 
 ## 🏃‍♂️ Scripts de Desenvolvimento Disponíveis
@@ -82,7 +82,7 @@ npm run dev
 
 ## 🔧 Configuração do Backend
 
-Para o frontend funcionar corretamente, o backend deve estar rodando:
+Para o frontend funcionar corretamente, o backend deve estar rodando **e integrado ao n8n** (consulte o `backend/README.md` para detalhes da configuração do fluxo).
 
 ```bash
 # No diretório backend/

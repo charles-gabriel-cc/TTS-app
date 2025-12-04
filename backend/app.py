@@ -1,14 +1,25 @@
-from langchain_ollama import OllamaEmbeddings, OllamaLLM
+from langchain_ollama import OllamaLLM
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from qdrant_client import QdrantClient
 import gradio as gr
 from langchain_core.prompts import ChatPromptTemplate
 from config import (
     QDRANT_URL,
     QDRANT_API_KEY,
-    COLLECTION_NAME
+    COLLECTION_NAME,
+    EMBED_MODEL,
 )
 
-embeddings = OllamaEmbeddings(model="all-minilm:l6-v2")
+# Tentar usar o modelo de embeddings configurado (por padrão: models/text-embedding-004),
+# com fallback para Ollama se necessário
+try:
+    embeddings = GoogleGenerativeAIEmbeddings(model=EMBED_MODEL)
+    print(f"✅ Usando modelo de embeddings configurado: {EMBED_MODEL}")
+except Exception as e:
+    print(f"⚠️ Falha ao inicializar Gemini Pro: {e}")
+    print("🔄 Usando fallback Ollama para embeddings")
+    from langchain_ollama import OllamaEmbeddings
+    embeddings = OllamaEmbeddings(model="all-minilm:l6-v2")
 qdrant_client = QdrantClient(
     url=QDRANT_URL, 
     api_key=QDRANT_API_KEY
@@ -28,9 +39,11 @@ def search_qdrant(query: str) -> str:
     # Format results
     contexts = []
     for result in results:
-        text = result.payload.get("text", "")
-        professor = result.payload.get("nome_professor", "")
-        dept = result.payload.get("departamento", "")
+        # Nova estrutura: content está no nível superior, metadados em metadata
+        text = result.payload.get("content", "")
+        metadata = result.payload.get("metadata", {})
+        professor = metadata.get("nome_professor", "")
+        dept = metadata.get("departamento", "")
         contexts.append(f"Professor: {professor}\nDepartamento: {dept}\nInformação: {text}\n")
     
     return "\n".join(contexts) if contexts else "Nenhum resultado encontrado."
@@ -58,7 +71,8 @@ Pergunta: {message}
 
 Responda à pergunta acima de forma clara e útil, com linguagem acessível ao público geral."""
 
-    full_prompt = system_prompt
+    # Preenche o template com o contexto recuperado e a mensagem do usuário
+    full_prompt = system_prompt.format(context=context, message=message)
     
     # Get and return response
     return llm.invoke(full_prompt)
