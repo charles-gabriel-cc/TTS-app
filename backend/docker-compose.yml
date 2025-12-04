@@ -66,7 +66,7 @@ services:
       nvidia-smi || true;
       echo '📦 Instalando dependências runtime mínimas...';
       python -m pip install -q --no-cache-dir --upgrade pip || true;
-      python -m pip install -q --no-cache-dir gunicorn uvicorn redis langchain-core==0.3.67 langchain-ollama==0.3.3 langchain==0.3.26 langchain-community==0.3.26 langchain-text-splitters==0.3.8 google-generativeai==0.7.2 || true;
+      python -m pip install -q --no-cache-dir gunicorn uvicorn redis langchain-core==0.3.67 langchain-ollama==0.3.3 langchain==0.3.26 langchain-community==0.3.26 langchain-text-splitters==0.3.8 google-generativeai==0.7.2 langchain-google-genai || true;
       echo '⏳ Aguardando Qdrant ficar disponível...';
       until curl -s http://qdrant:6333/health > /dev/null 2>&1; do
         echo '   Qdrant ainda não disponível, aguardando...';

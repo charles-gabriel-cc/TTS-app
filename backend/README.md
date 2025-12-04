@@ -4,7 +4,8 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10.11-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-latest-green.svg)
-![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-orange.svg)
+![n8n](https://img.shields.io/badge/n8n-Orchestration-purple.svg)
+![Google Gemini](https://img.shields.io/badge/LLM-Gemini-blue.svg)
 ![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-red.svg)
 
 **Backend do Assistente Virtual CCEN - Ambiente de Desenvolvimento**
@@ -13,22 +14,23 @@
 
 ## 🏗️ Arquitetura do Backend
 
-Sistema simples com 3 componentes principais:
+Sistema simples com 4 componentes principais:
 
 ```
 💻 FastAPI (server.py)
    ├── 🎤 Whisper STT
    ├── 🔊 Google TTS  
    └── 💬 Chat com IA
-        ├── 🦙 Ollama (LLM)
-        ├── 📊 Qdrant (Busca)
-        └── 📚 Base CCEN
+        ├── ⚙️ n8n (Orquestração + LLM Google Gemini)
+        ├── 📊 Qdrant (Busca vetorial)
+        └── 📚 Base CCEN (currículos e artigos)
 ```
 
 **Como funciona:**
-1. **FastAPI** - API principal que recebe requisições
-2. **Ollama** - Modelo de IA local para conversas
-3. **Qdrant** - Banco vetorial com dados dos professores
+1. **FastAPI** - API principal que recebe requisições do frontend e cuida de STT/TTS.
+2. **n8n** - Orquestra o fluxo de conversação com IA, chamando o modelo Google Gemini e realizando buscas em Qdrant.
+3. **Qdrant** - Banco vetorial com dados de professores e artigos do CCEN.
+4. **Base CCEN** - PDFs e coleções vetoriais que alimentam as respostas.
 
 ## 📁 Estrutura de Arquivos
 
@@ -95,10 +97,6 @@ python server.py
 ```bash
 # Backend API
 curl http://localhost:8000/health
-
-# Ollama LLM
-curl http://localhost:11434/api/tags
-
 # Qdrant Vector DB
 curl http://localhost:6333/health
 ```
@@ -110,29 +108,52 @@ curl http://localhost:6333/health
 Crie o arquivo `.env` na pasta `backend/`:
 
 ```bash
-# === CONFIGURAÇÕES DE IA ===
-MODEL_NAME="qwen3:4b"              # Modelo Ollama
-EMBED_MODEL="all-minilm:l6-v2"       # Modelo embeddings
+# === MONITORAMENTO (OPCIONAL) ===
+LANGSMITH_TRACING=
+LANGSMITH_ENDPOINT=
+LANGSMITH_PROJECT=
+LANGSMITH_API_KEY=
 
 # === QDRANT (BANCO VETORIAL) ===
 QDRANT_URL="http://qdrant:6333"      # URL Qdrant
 COLLECTION_NAME="ccen-docentes"      # Nome da coleção
 
-# === OLLAMA (LLM LOCAL) ===
-OLLAMA_BASE_URL="http://ollama:11434"
-
-# === MONITORAMENTO (OPCIONAL) ===
-LANGSMITH_TRACING="true"
-LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
-LANGSMITH_PROJECT="backend"
-LANGSMITH_API_KEY="sua-chave-aqui"   # Opcional
+# === MODELOS (CONFORME CONFIGURAÇÃO DO n8n) ===
+MODEL_NAME=
+EMBED_MODEL=
 
 # === DESENVOLVIMENTO ===
 SERVER_HOST="0.0.0.0"
 SERVER_PORT="8000"
-USE_LOCAL_MODEL="true"
-USE_LOCAL_COLLECTION="true"
 ```
+
+### 🤝 Integração com n8n (OBRIGATÓRIA)
+
+O backend utiliza um fluxo no **n8n** para toda a lógica de IA (chat, RAG, busca em currículos e artigos):
+
+1. Suba o servidor n8n e acesse-o pelo navegador.
+2. Importe o workflow `backend/n8n backend.json`.
+3. Configure as credenciais necessárias nos nós:
+   - **Google Gemini** para LLM e embeddings.
+   - **QdrantApi** para acesso às coleções vetoriais (`ccen-docentes`, `ccen-artigos`).
+4. Verifique o nó `Webhook` e copie o endpoint HTTP gerado.
+5. Ative o fluxo (botão **Activate**).
+
+O serviço de chat do backend envia para esse webhook campos como `message`, `session_id`, `context` e, quando aplicável, `professor_name`. O fluxo no n8n:
+
+- Decide se a pergunta é geral ou sobre um artigo específico.
+- Usa Qdrant para recuperar trechos relevantes de currículos e artigos.
+- Usa Google Gemini para sintetizar a resposta em português.
+
+### 🧾 Geração do `information.json`
+
+O workflow `n8n backend` também é utilizado para gerar o arquivo `information.json` no formato consumido pela aplicação:
+
+- Lê os dados vetoriais (por exemplo, da coleção `ccen-artigos`).
+- Monta uma lista `allData` com `filename`, `title`, `departamento`, `keywords`, `ano`, etc.
+- Salva ou retorna o JSON para ser gravado em `backend/information.json`.
+
+Sempre que atualizar a base de PDFs ou coleções no Qdrant, execute novamente o fluxo no n8n para atualizar o `information.json` e, assim, os cards exibidos na interface.
 
 ### 📚 **Baixar Modelos IA**
 
@@ -179,7 +200,7 @@ Serviço principal responsável pela inteligência conversacional:
 
 ```python
 # Funcionalidades principais:
-- 🧠 Integração com Ollama (LLM local)
+- 🧠 Integração com fluxo n8n (Google Gemini + Qdrant)
 - 🔍 Busca semântica no Qdrant
 - 📚 RAG (Retrieval-Augmented Generation)
 - 🎯 Ferramentas especializadas:
@@ -334,10 +355,6 @@ curl http://localhost:8000/pending_responses/user123
 ```bash
 # Logs do backend
 docker-compose -f docker-compose.dev.yml logs -f tts-app
-
-# Logs do Ollama
-docker-compose -f docker-compose.dev.yml logs -f ollama
-
 # Logs do Qdrant
 docker-compose -f docker-compose.dev.yml logs -f qdrant
 
@@ -352,8 +369,8 @@ tail -f logs/app.log
 ```python
 # Em config.py
 WHISPER_MODEL = "medium"        # tiny, small, medium, large
-MODEL_NAME = "qwen3:4b"       # Modelo Ollama
-EMBED_MODEL = "all-minilm:l6-v2" # Modelo embeddings
+MODEL_NAME = ""               # Nome do modelo de linguagem (se usado para telemetria)
+EMBED_MODEL = ""              # Nome do modelo de embeddings (coerente com o n8n)
 ```
 
 ### 🌐 **Configurações de Rede**
@@ -362,7 +379,6 @@ EMBED_MODEL = "all-minilm:l6-v2" # Modelo embeddings
 # docker-compose.dev.yml
 ports:
   - "8000:8000"    # FastAPI
-  - "11434:11434"  # Ollama
   - "6333:6333"    # Qdrant HTTP
   - "6334:6334"    # Qdrant gRPC
 ```
@@ -374,7 +390,6 @@ volumes:
   - ./logs:/app/logs                    # Logs persistentes
   - ./uploads:/app/uploads              # Uploads persistentes  
   - ./ccen-docentes:/app/ccen-docentes  # Base de conhecimento
-  - ollama_data:/root/.ollama           # Modelos Ollama
   - qdrant_data:/qdrant/storage         # Dados Qdrant
 ```
 

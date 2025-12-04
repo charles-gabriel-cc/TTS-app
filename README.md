@@ -17,9 +17,9 @@ Um sistema completo de conversação por voz e texto com IA, desenvolvido especi
 ## 🌟 Principais Funcionalidades
 
 ### 🎯 **Sistema de IA Conversacional**
-- **Chat inteligente** com modelos locais (Ollama)
+- **Chat inteligente** orquestrado via **n8n** usando modelos de linguagem (Google Gemini)
 - **RAG (Retrieval-Augmented Generation)** com base de conhecimento específica do CCEN
-- **Busca vetorial** avançada com Qdrant para respostas precisas
+- **Busca vetorial** avançada com **Qdrant** para respostas precisas
 
 ### 🎤 **Speech-to-Text (STT)**
 - Transcrição de áudio em tempo real com **OpenAI Whisper**
@@ -43,12 +43,12 @@ graph TB
     A[👤 Usuário] --> B[📱 Frontend React/Next.js]
     B --> C[🔌 API FastAPI]
     C --> D[🎤 Whisper STT]
-    C --> E[🧠 Ollama]
-    C --> F[🔊 Google TTS]
-    C --> G[📊 Qdrant Vector DB]
-    H[🐋 Docker Compose] --> I[🦙 Ollama Container]
-    H --> J[📦 Qdrant Container]
-    H --> K[🐍 Backend Container]
+    C --> E[🧠 n8n (Orquestração IA)]
+    E --> F[🧩 Google Gemini (LLM + Embeddings)]
+    E --> G[📊 Qdrant Vector DB]
+    C --> H[🔊 Google TTS]
+    I[🐋 Docker Compose] --> J[📦 Qdrant Container]
+    I --> K[🐍 Backend Container]
     G --> L[📚 Base CCEN]
 ```
 
@@ -102,19 +102,48 @@ Configurar arquivo .env em backend
 Exemplo de como criar o arquivo `.env` no diretório `backend/`:
 
 ```bash
-# === CONFIGURAÇÕES DE IA ===
-MODEL_NAME="qwen3:4b" # Modelo Ollama local
-EMBED_MODEL="all-minilm:l6-v2"
-
-# === CONFIGURAÇÕES QDRANT ===
-COLLECTION_NAME="ccen-docentes"
-
 # === MONITORAMENTO (OPCIONAL) ===
-LANGSMITH_TRACING="true"
-LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
-LANGSMITH_PROJECT="backend"
-LANGSMITH_API_KEY="sua-chave-langsmith"
+LANGSMITH_TRACING=
+LANGSMITH_ENDPOINT=
+LANGSMITH_PROJECT=
+LANGSMITH_API_KEY=
+
+# === MODELOS (CONFORME CONFIGURAÇÃO DO n8n) ===
+MODEL_NAME=
+EMBED_MODEL=
 ```
+
+Exemplo de `.env.local` no diretório `tts-app-next/` (frontend):
+
+```bash
+# URL da API do backend (FastAPI)
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### ⚙️ Configuração do n8n (OBRIGATÓRIA)
+
+Para que o chat com IA funcione, é obrigatório configurar o fluxo no **n8n**:
+
+1. Suba o servidor n8n (docker, desktop ou servidor próprio).
+2. Acesse o n8n pelo navegador (ex.: `http://localhost:5678`).
+3. Importe o workflow `backend/n8n backend.json`.
+4. No n8n, configure as credenciais necessárias:
+   - Acesso ao **Google Gemini** (nós `Google Gemini Chat Model` e `Embeddings Google Gemini`).
+   - Acesso ao **Qdrant** (credenciais `QdrantApi account`).
+5. Abra o nó `Webhook` e verifique o **endpoint HTTP POST** gerado.
+6. Ative o workflow (botão **Activate** no topo da tela).
+
+O backend FastAPI consome esse webhook, enviando dados como mensagem do usuário, `session_id`, contexto de chat e, quando necessário, o nome do professor/artigo.
+
+### 🧾 Geração do `information.json` via n8n
+
+O fluxo `n8n backend` também é responsável por gerar o arquivo `backend/information.json` no formato esperado pela aplicação:
+
+- Consolida informações de artigos e currículos (título, departamento, palavras‑chave, ano, etc.).
+- Organiza os dados em uma estrutura única (`allData`) consumida pelo backend/frontend.
+- Esse arquivo é utilizado para montar **cards** de artigos/professores na interface.
+
+Quando houver atualização na base (novos PDFs ou mudanças em Qdrant), execute novamente o fluxo no n8n para regenerar o `information.json`.
 
 ### Processamento de documentos
 
