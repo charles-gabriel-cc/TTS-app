@@ -71,7 +71,8 @@ Pergunta: {message}
 
 Responda à pergunta acima de forma clara e útil, com linguagem acessível ao público geral."""
 
-    full_prompt = system_prompt
+    # Preenche o template com o contexto recuperado e a mensagem do usuário
+    full_prompt = system_prompt.format(context=context, message=message)
     
     # Get and return response
     return llm.invoke(full_prompt)
