@@ -242,11 +242,18 @@ async def view_pdf(professor_name: str):
         if not articles_dir.exists():
             raise HTTPException(status_code=404, detail="Pasta articles não encontrada")
         
-        # Buscar arquivo PDF específico
-        pdf_files = glob.glob(str(articles_dir / f"*{professor_name}*.pdf"))
+        # Buscar arquivo PDF específico, varrendo subpastas (comportamento consistente com outros endpoints)
+        pdf_files = []
+        for root, _, files in os.walk(articles_dir):
+            for f in files:
+                if f.lower().endswith('.pdf') and professor_name.lower() in f.lower():
+                    pdf_files.append(str(Path(root) / f))
         
         if not pdf_files:
-            raise HTTPException(status_code=404, detail=f"PDF não encontrado para o professor: {professor_name}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"PDF não encontrado para o professor: {professor_name}"
+            )
         
         # Retornar o primeiro arquivo encontrado
         pdf_path = Path(pdf_files[0])
@@ -298,6 +305,16 @@ async def get_pdf_articles_with_metadata():
             for f in files:
                 if f.lower().endswith('.pdf'):
                     pdf_files.append(str(Path(root) / f))
+
+        # Buscar artigos no Qdrant apenas uma vez (cache local desta requisição)
+        qdrant_articles = []
+        if article_service:
+            try:
+                qdrant_articles = article_service.get_articles_for_gallery(limit=100)
+                logger.debug(f"{len(qdrant_articles)} artigos carregados do Qdrant para a galeria")
+            except Exception as e:
+                logger.warning(f"Erro ao buscar metadados do Qdrant: {e}")
+                qdrant_articles = []
         
         articles = []
         for pdf_path in pdf_files:
@@ -321,6 +338,7 @@ async def get_pdf_articles_with_metadata():
                 )
                 
                 # Tentar encontrar dados correspondentes no information.json
+                has_information_title = False  # controla se já temos título vindo do information.json
                 if filename in article_info:
                     info_data = article_info[filename]
                     
@@ -329,6 +347,7 @@ async def get_pdf_articles_with_metadata():
                     article.year = info_data.get('ano')
                     article.keywords = info_data.get('keywords', [])
                     article.department = info_data.get('departamento')
+                    has_information_title = bool(info_data.get('title'))
                     
                     # Usar o título da publicação como título principal se disponível
                     if info_data.get('title'):
@@ -338,40 +357,33 @@ async def get_pdf_articles_with_metadata():
                 else:
                     logger.debug(f"Nenhum dado encontrado no information.json para {filename}")
                 
-                # Tentar buscar metadados adicionais do Qdrant se o serviço estiver disponível
-                if article_service:
-                    try:
-                        # Buscar artigos do Qdrant que correspondam ao professor
-                        qdrant_articles = article_service.get_articles_for_gallery(limit=100)
-                        
-                        # Procurar por artigos que correspondam ao nome do professor
-                        for qdrant_article in qdrant_articles:
-                            if (qdrant_article['author'].lower() == professor_name.lower() or 
-                                professor_name.lower() in qdrant_article['author'].lower()):
-                                
-                                # Preencher metadados do Qdrant apenas se não estiverem no information.json
-                                if not article.publication_title:
-                                    article.publication_title = qdrant_article.get('title', '')
-                                if not article.year:
-                                    article.year = qdrant_article.get('year', '')
-                                if not article.journal:
-                                    article.journal = qdrant_article.get('journal', '')
-                                if not article.doi:
-                                    article.doi = qdrant_article.get('doi', '')
-                                if not article.abstract:
-                                    article.abstract = qdrant_article.get('abstract', '')
-                                if not article.keywords:
-                                    article.keywords = qdrant_article.get('keywords', [])
-                                
-                                # Se encontrou metadados e não tem título do information.json, usar o título da publicação
-                                if article.publication_title and not info_data.get('title'):
-                                    article.title = article.publication_title
-                                
-                                break  # Usar o primeiro artigo encontrado
-                        
-                    except Exception as e:
-                        logger.warning(f"Erro ao buscar metadados do Qdrant para {professor_name}: {e}")
-                        # Continuar sem metadados
+                # Tentar preencher metadados adicionais do Qdrant usando o cache carregado fora do loop
+                if qdrant_articles:
+                    # Procurar por artigos que correspondam ao nome do professor
+                    for qdrant_article in qdrant_articles:
+                        if (qdrant_article['author'].lower() == professor_name.lower() or 
+                            professor_name.lower() in qdrant_article['author'].lower()):
+                            
+                            # Preencher metadados do Qdrant apenas se não estiverem no information.json
+                            if not article.publication_title:
+                                article.publication_title = qdrant_article.get('title', '')
+                            if not article.year:
+                                article.year = qdrant_article.get('year', '')
+                            if not article.journal:
+                                article.journal = qdrant_article.get('journal', '')
+                            if not article.doi:
+                                article.doi = qdrant_article.get('doi', '')
+                            if not article.abstract:
+                                article.abstract = qdrant_article.get('abstract', '')
+                            if not article.keywords:
+                                article.keywords = qdrant_article.get('keywords', [])
+                            
+                            # Se encontrou metadados e não tem título do information.json, usar o título da publicação
+                            # Usa o título da publicação apenas se nenhum título foi definido via information.json
+                            if article.publication_title and not has_information_title:
+                                article.title = article.publication_title
+                            
+                            break  # Usar o primeiro artigo encontrado
                 
                 articles.append(article)
                 
