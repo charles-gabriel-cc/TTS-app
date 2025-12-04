@@ -6,13 +6,15 @@ from langchain_core.prompts import ChatPromptTemplate
 from config import (
     QDRANT_URL,
     QDRANT_API_KEY,
-    COLLECTION_NAME
+    COLLECTION_NAME,
+    EMBED_MODEL,
 )
 
-# Tentar usar Gemini Pro primeiro, fallback para Ollama se necessário
+# Tentar usar o modelo de embeddings configurado (por padrão: models/text-embedding-004),
+# com fallback para Ollama se necessário
 try:
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    print("✅ Usando Gemini Pro para embeddings")
+    embeddings = GoogleGenerativeAIEmbeddings(model=EMBED_MODEL)
+    print(f"✅ Usando modelo de embeddings configurado: {EMBED_MODEL}")
 except Exception as e:
     print(f"⚠️ Falha ao inicializar Gemini Pro: {e}")
     print("🔄 Usando fallback Ollama para embeddings")
