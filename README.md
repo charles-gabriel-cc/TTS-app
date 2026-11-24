@@ -1,12 +1,16 @@
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:1e1b4b,50:2563eb,100:06b6d4&height=170&section=header&text=Assistente%20Virtual%20CCEN&fontSize=42&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=TTS%20%26%20STT%20com%20IA%20Conversacional%20(Whisper%2C%20FastAPI%2C%20Qdrant%2C%20n8n%20e%20Next.js)&descAlignY=65&descSize=15" width="100%" alt="Assistente Virtual CCEN Banner" />
+</div>
+
 # Assistente Virtual CCEN - TTS App
 
 <div align="center">
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/Python-3.10.11-blue.svg)
-![React](https://img.shields.io/badge/React-18.2.0-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-latest-green.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-10b981?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.10.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 **Assistente Virtual Inteligente para o Centro de Ciências Exatas e da Natureza (CCEN) da UFPE**
 
@@ -93,7 +97,7 @@ Download: https://developer.nvidia.com/cuda-11-8-0-download-archive
 
 ```bash
 # 1. Clonar repositório
-git clone https://github.com/seu-usuario/TTS-app.git
+git clone https://github.com/charles-gabriel-cc/TTS-app.git
 ```
 Configurar arquivo .env em backend
 
