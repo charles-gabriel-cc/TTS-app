@@ -1,6 +1,6 @@
-<div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:1e1b4b,50:2563eb,100:06b6d4&height=170&section=header&text=Assistente%20Virtual%20CCEN&fontSize=42&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=TTS%20%26%20STT%20com%20IA%20Conversacional%20(Whisper%2C%20FastAPI%2C%20Qdrant%2C%20n8n%20e%20Next.js)&descAlignY=65&descSize=15" width="100%" alt="Assistente Virtual CCEN Banner" />
-</div>
+<p align="center">
+  <img src=".github/banner.svg" alt="Assistente Virtual CCEN" width="100%" />
+</p>
 
 # Assistente Virtual CCEN - TTS App
 
